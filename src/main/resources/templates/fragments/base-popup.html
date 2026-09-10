@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="popup">
+    <div class="d-none" aria-hidden="true">
+        <span th:if="${success}"
+              data-base-flash
+              data-popup-type="success"
+              th:text="${success}"></span>
+        <span th:if="${error}"
+              data-base-flash
+              data-popup-type="error"
+              th:text="${error}"></span>
+    </div>
+
+    <dialog class="base-confirm-dialog" data-base-confirm-dialog aria-labelledby="baseConfirmTitle" aria-describedby="baseConfirmMessage">
+        <div class="base-confirm-card">
+            <div class="base-confirm-icon" data-base-confirm-icon aria-hidden="true">!</div>
+            <div class="base-confirm-copy">
+                <div class="base-confirm-eyebrow">XÁC NHẬN</div>
+                <h2 class="base-confirm-title" id="baseConfirmTitle" data-base-confirm-title>Xác nhận thao tác</h2>
+                <p class="base-confirm-message" id="baseConfirmMessage" data-base-confirm-message>Bạn có chắc muốn tiếp tục?</p>
+            </div>
+            <div class="base-confirm-actions">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-base-confirm-cancel>Hủy</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4" data-base-confirm-submit>Xóa</button>
+            </div>
+        </div>
+    </dialog>
+
+    <div class="base-toast-container" data-base-toast-container aria-live="polite" aria-relevant="additions"></div>
+</div>
+</body>
+</html>

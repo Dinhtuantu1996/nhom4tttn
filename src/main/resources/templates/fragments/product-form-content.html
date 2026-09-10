@@ -11,16 +11,17 @@
     </div>
 
     <div class="modal-body pt-4">
-        <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+        <div class="d-none" th:if="${error != null}" data-product-form-error th:text="${error}"></div>
 
         <form th:action="@{/products/save}"
               th:object="${form}"
               method="post"
               enctype="multipart/form-data"
-              class="row g-4">
+              class="product-form-stack"
+              data-product-editor-form>
             <input type="hidden" th:field="*{id}">
 
-            <div class="col-lg-8">
+            <section class="product-form-section">
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Tên sản phẩm *</label>
                     <input class="form-control form-control-lg"
@@ -32,95 +33,197 @@
                          th:errors="*{name}"></div>
                 </div>
 
-                <div class="mb-4">
+                <div class="product-form-commercial-grid mb-4">
+                    <div>
+                        <label class="form-label fw-semibold">Giá tiền</label>
+                        <div class="product-money-input">
+                            <input class="form-control"
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   inputmode="numeric"
+                                   th:field="*{price}"
+                                   placeholder="0">
+                            <span>VNĐ</span>
+                        </div>
+                        <div class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('price')}"
+                             th:errors="*{price}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Số lượng</label>
+                        <input class="form-control"
+                               type="number"
+                               min="0"
+                               step="1"
+                               inputmode="numeric"
+                               th:field="*{quantity}"
+                               placeholder="0">
+                        <div class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('quantity')}"
+                             th:errors="*{quantity}"></div>
+                    </div>
+                </div>
+
+                <div>
                     <label class="form-label fw-semibold">Mô tả *</label>
                     <textarea class="form-control"
-                              rows="8"
+                              rows="6"
                               th:field="*{description}"
                               placeholder="Mô tả chi tiết sản phẩm"></textarea>
                     <div class="text-danger small mt-1"
                          th:if="${#fields.hasErrors('description')}"
                          th:errors="*{description}"></div>
                 </div>
+            </section>
 
-                <div>
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                        <label class="form-label fw-semibold mb-0">Ảnh sản phẩm</label>
-                        <span class="small text-secondary">Giữ nguyên tên và định dạng file</span>
+            <section class="product-form-section">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <label class="form-label fw-semibold mb-0">Ảnh sản phẩm</label>
+                    <span class="small text-secondary">Có thể chọn nhiều ảnh</span>
+                </div>
+                <input class="form-control" type="file" name="imageFiles" multiple accept="image/*">
+
+                <div class="row g-3 mt-2" th:if="${product != null && !#lists.isEmpty(product.images)}">
+                    <div class="col-6 col-md-4 col-lg-3" th:each="image : ${product.images}">
+                        <div class="image-admin-card">
+                            <img th:src="${image.url}" th:alt="${image.filename}">
+                            <div class="p-2">
+                                <div class="small text-truncate" th:text="${image.filename}"></div>
+                                <label class="form-check mt-2 text-danger small">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           th:field="*{deleteImageIds}"
+                                           th:value="${image.id}">
+                                    Xóa ảnh này
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <input class="form-control" type="file" name="imageFiles" multiple accept="image/*">
-                    <div class="form-text">Lưu tại <code>uploads/products/{productId}/tên-file-gốc</code>.</div>
+                </div>
+            </section>
 
-                    <div class="row g-3 mt-2" th:if="${product != null && !#lists.isEmpty(product.images)}">
-                        <div class="col-6 col-md-4" th:each="image : ${product.images}">
-                            <div class="image-admin-card">
-                                <img th:src="${image.url}" th:alt="${image.filename}">
-                                <div class="p-2">
-                                    <div class="small text-truncate" th:text="${image.filename}"></div>
-                                    <label class="form-check mt-2 text-danger small">
-                                        <input class="form-check-input"
+            <section class="product-form-section">
+                <label class="form-label fw-semibold">Danh mục *</label>
+                <div class="filter-combobox product-editor-combobox" data-product-category-combo>
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-product-combo-trigger>
+                        <span class="filter-combobox-value" data-product-category-label>Chọn danh mục</span>
+                        <span class="filter-combobox-count d-none" data-product-category-count></span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu product-editor-combo-menu" data-product-combo-menu>
+                        <div class="product-editor-combo-head">
+                            <div>
+                                <div class="fw-bold">Chọn danh mục</div>
+                                <div class="small text-secondary">Có thể chọn nhiều danh mục.</div>
+                            </div>
+                            <button type="button" class="attribute-tree-clear" data-product-category-clear>Xóa chọn</button>
+                        </div>
+                        <div class="filter-combobox-search-wrap">
+                            <input type="search" class="filter-combobox-search" placeholder="Tìm danh mục..." autocomplete="off" data-product-category-search>
+                        </div>
+                        <div class="product-editor-tree" data-product-category-tree>
+                            <div class="product-editor-tree-group"
+                                 th:each="root : ${categories}"
+                                 th:attr="data-search-text=${root.name}"
+                                 data-product-category-group>
+                                <label class="product-editor-tree-root">
+                                    <input class="form-check-input m-0"
+                                           type="checkbox"
+                                           th:field="*{categoryIds}"
+                                           th:value="${root.id}"
+                                           th:attr="data-label=${root.name}"
+                                           data-product-category-option>
+                                    <span th:text="${root.name}"></span>
+                                </label>
+                                <div class="product-editor-tree-children" th:if="${!#lists.isEmpty(root.children)}">
+                                    <label class="product-editor-tree-value"
+                                           th:each="child : ${root.children}"
+                                           th:attr="data-search-text=${child.name}">
+                                        <input class="form-check-input m-0"
                                                type="checkbox"
-                                               th:field="*{deleteImageIds}"
-                                               th:value="${image.id}">
-                                        Xóa ảnh này
+                                               th:field="*{categoryIds}"
+                                               th:value="${child.id}"
+                                               th:attr="data-label=${child.name}"
+                                               data-product-category-option>
+                                        <span th:text="${child.name}"></span>
                                     </label>
                                 </div>
                             </div>
+                            <div class="filter-combobox-empty d-none" data-product-category-empty>Không tìm thấy danh mục.</div>
                         </div>
                     </div>
                 </div>
-            </div>
+                <div class="text-danger small mt-1"
+                     th:if="${#fields.hasErrors('categoryIds')}"
+                     th:errors="*{categoryIds}"></div>
+            </section>
 
-            <div class="col-lg-4">
-                <div class="product-form-side p-3 rounded-4">
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Danh mục *</label>
-                        <div class="category-checklist">
-                            <div class="mb-3" th:each="root : ${categories}">
-                                <label class="form-check fw-semibold">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           th:field="*{categoryIds}"
-                                           th:value="${root.id}">
-                                    <span th:text="${root.name}"></span>
-                                </label>
-                                <label class="form-check ms-4 mt-2" th:each="child : ${root.children}">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           th:field="*{categoryIds}"
-                                           th:value="${child.id}">
-                                    <span th:text="${child.name}"></span>
-                                </label>
+            <section class="product-form-section">
+                <label class="form-label fw-semibold">Thuộc tính</label>
+                <div class="filter-combobox product-editor-combobox" data-product-attribute-combo th:if="${!#lists.isEmpty(attributes)}">
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-product-combo-trigger>
+                        <span class="filter-combobox-value" data-product-attribute-label>Chọn thuộc tính</span>
+                        <span class="filter-combobox-count d-none" data-product-attribute-count></span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu product-editor-combo-menu" data-product-combo-menu>
+                        <div class="product-editor-combo-head">
+                            <div>
+                                <div class="fw-bold">Chọn thuộc tính</div>
+                                <div class="small text-secondary">Chọn các giá trị phù hợp với sản phẩm.</div>
                             </div>
+                            <button type="button" class="attribute-tree-clear" data-product-attribute-clear>Xóa chọn</button>
                         </div>
-                        <div class="text-danger small mt-1"
-                             th:if="${#fields.hasErrors('categoryIds')}"
-                             th:errors="*{categoryIds}"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Giới tính</label>
-                        <select class="form-select" th:field="*{gender}">
-                            <option value="">Không phân loại</option>
-                            <option th:each="item : ${genders}" th:value="${item}" th:text="${item.label}"></option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Độ tuổi</label>
-                        <select class="form-select" th:field="*{ageGroup}">
-                            <option value="">Không phân loại</option>
-                            <option th:each="item : ${ageGroups}" th:value="${item}" th:text="${item.label}"></option>
-                        </select>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-dark btn-lg rounded-pill" type="submit">Lưu sản phẩm</button>
-                        <a th:if="${form.id != null}"
-                           th:href="@{/products/{id}(id=${form.id})}"
-                           class="btn btn-outline-secondary rounded-pill">Xem sản phẩm</a>
+                        <div class="filter-combobox-search-wrap">
+                            <input type="search" class="filter-combobox-search" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-product-attribute-search>
+                        </div>
+                        <div class="product-editor-tree attribute-tree" data-product-attribute-tree>
+                            <div class="attribute-tree-group"
+                                 th:each="root : ${attributes}"
+                                 th:if="${!#lists.isEmpty(root.children)}"
+                                 data-product-attribute-group
+                                 th:attr="data-search-text=${root.name}">
+                                <div class="attribute-tree-root-row">
+                                    <label class="attribute-tree-root-check">
+                                        <input type="checkbox" class="form-check-input m-0" data-product-attribute-root-check>
+                                        <span th:text="${root.name}"></span>
+                                    </label>
+                                    <button type="button" class="attribute-tree-toggle" aria-expanded="true" data-product-attribute-toggle>
+                                        <span class="tree-toggle-chevron" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="attribute-tree-children">
+                                    <label class="attribute-tree-value"
+                                           th:each="child : ${root.children}"
+                                           th:attr="data-search-text=${child.name}">
+                                        <input class="form-check-input m-0"
+                                               type="checkbox"
+                                               th:field="*{attributeIds}"
+                                               th:value="${child.id}"
+                                               th:attr="data-label=${child.name}"
+                                               data-product-attribute-option>
+                                        <span th:text="${child.name}"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="filter-combobox-empty d-none" data-product-attribute-empty>Không tìm thấy thuộc tính.</div>
+                        </div>
                     </div>
                 </div>
+                <div class="small text-secondary border rounded-3 p-3" th:if="${#lists.isEmpty(attributes)}">
+                    Chưa có thuộc tính.
+                </div>
+            </section>
+
+            <div class="product-form-actions">
+                <a th:if="${form.id != null}"
+                   th:href="@{/products/{id}(id=${form.id})}"
+                   class="btn btn-outline-secondary rounded-pill px-4">Xem sản phẩm</a>
+                <button class="btn btn-dark rounded-pill px-4" type="submit" data-product-save-button>
+                    <span data-product-save-label>Lưu sản phẩm</span>
+                    <span class="spinner-border spinner-border-sm ms-2 d-none" aria-hidden="true" data-product-save-spinner></span>
+                </button>
             </div>
         </form>
     </div>

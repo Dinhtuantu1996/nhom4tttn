@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sản phẩm - nhom4tttn</title>
+    <title>Sản phẩm - N4</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
@@ -17,66 +18,181 @@
             <h1 class="display-6 fw-bold mt-2 mb-1">Khám phá sản phẩm</h1>
             <p class="text-secondary mb-0" th:text="${products.totalElements + ' sản phẩm phù hợp'}"></p>
         </div>
-        <button th:if="${isAdmin}"
-                type="button"
-                class="btn btn-primary rounded-pill px-4"
-                th:attr="data-product-form-url=@{/products/form}">
-            + Thêm sản phẩm
-        </button>
+        <div class="d-flex flex-wrap gap-2" th:if="${isAdmin}">
+            <button type="button" class="btn btn-outline-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#categoryModal" data-category-manager-open>Quản lý danh mục</button>
+            <button type="button"
+                    class="btn btn-outline-dark rounded-pill px-4"
+                    data-bs-toggle="modal"
+                    data-bs-target="#attributeModal"
+                    data-attribute-manager-open>
+                Quản lý thuộc tính
+            </button>
+            <button type="button"
+                    class="btn btn-primary rounded-pill px-4"
+                    th:attr="data-product-form-url=@{/products/form}">
+                + Thêm sản phẩm
+            </button>
+        </div>
     </div>
 
-    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-    <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+    <form method="get" th:action="@{/products}" class="filter-panel catalog-filter-panel p-3 p-lg-4 mb-4" data-catalog-filter>
+        <div class="filter-toolbar">
+            <div class="filter-field filter-field-search">
+                <label class="filter-label" for="productKeyword">Tìm kiếm</label>
+                <div class="filter-search-control">
+                    <input id="productKeyword"
+                           type="search"
+                           class="form-control form-control-lg"
+                           name="keyword"
+                           th:value="${keyword}"
+                           placeholder="Tìm theo tên sản phẩm..."
+                           autocomplete="off"
+                           data-product-search>
+                    <button type="button" class="filter-search-clear" aria-label="Xóa từ khóa" data-product-search-clear>×</button>
+                </div>
+            </div>
 
-    <form method="get" th:action="@{/products}" class="filter-panel p-3 p-lg-4 mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-lg-4">
-                <label class="form-label fw-semibold">Tìm kiếm</label>
-                <input type="search" class="form-control form-control-lg" name="keyword" th:value="${keyword}" placeholder="Tên sản phẩm...">
+            <div class="filter-field filter-field-category">
+                <label class="filter-label">Danh mục</label>
+                <div class="filter-combobox" data-filter-combobox data-category-filter>
+                    <input type="hidden" name="categoryId" th:value="${categoryId}" data-category-value>
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                        <span class="filter-combobox-value" data-category-label>Tất cả danh mục</span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu category-filter-menu" data-filter-combobox-menu>
+                        <div class="filter-combobox-search-wrap">
+                            <input type="search" class="filter-combobox-search" placeholder="Tìm danh mục..." autocomplete="off" data-category-search>
+                        </div>
+                        <div class="filter-combobox-options" data-category-options>
+                            <button type="button"
+                                    class="filter-combobox-option category-filter-option"
+                                    data-category-option
+                                    data-value=""
+                                    data-search-text="Tất cả danh mục"
+                                    data-label="Tất cả danh mục"
+                                    th:classappend="${categoryId == null ? ' is-selected' : ''}">
+                                <span class="category-filter-dot"></span>
+                                <span>Tất cả danh mục</span>
+                                <span class="filter-option-check">✓</span>
+                            </button>
+                            <div class="category-filter-group" th:each="root : ${categories}" data-category-filter-group>
+                                <button type="button"
+                                        class="filter-combobox-option category-filter-option category-filter-root"
+                                        data-category-option
+                                        th:attr="data-value=${root.id},data-search-text=${root.name},data-label=${root.name}"
+                                        th:classappend="${categoryId == root.id ? ' is-selected' : ''}">
+                                    <span class="category-filter-dot"></span>
+                                    <span th:text="${root.name}"></span>
+                                    <span class="filter-option-check">✓</span>
+                                </button>
+                                <button type="button"
+                                        class="filter-combobox-option category-filter-option category-filter-child"
+                                        th:each="child : ${root.children}"
+                                        data-category-option
+                                        th:attr="data-value=${child.id},data-search-text=${child.name},data-label=${child.name}"
+                                        th:classappend="${categoryId == child.id ? ' is-selected' : ''}">
+                                    <span class="category-filter-branch"></span>
+                                    <span th:text="${child.name}"></span>
+                                    <span class="filter-option-check">✓</span>
+                                </button>
+                            </div>
+                            <div class="filter-combobox-empty d-none" data-category-empty>Không tìm thấy danh mục.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-6 col-lg-2">
-                <label class="form-label fw-semibold">Danh mục</label>
-                <select class="form-select form-select-lg" name="categoryId">
-                    <option value="">Tất cả</option>
-                    <th:block th:each="root : ${categories}">
-                        <option th:value="${root.id}" th:text="${root.name}" th:selected="${categoryId == root.id}"></option>
-                        <option th:each="child : ${root.children}"
-                                th:value="${child.id}"
-                                th:text="${'— ' + child.name}"
-                                th:selected="${categoryId == child.id}"></option>
-                    </th:block>
-                </select>
+
+            <div class="filter-field filter-field-attribute" th:if="${!#lists.isEmpty(attributes)}">
+                <label class="filter-label">Thuộc tính</label>
+                <div class="filter-combobox" data-filter-combobox data-attribute-filter>
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                        <span class="filter-combobox-value" data-attribute-label>Tất cả thuộc tính</span>
+                        <span class="filter-combobox-count d-none" data-attribute-count></span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu attribute-tree-menu" data-filter-combobox-menu>
+                        <div class="attribute-tree-toolbar">
+                            <div>
+                                <div class="fw-bold">Chọn thuộc tính</div>
+                                <div class="small text-secondary">Có thể chọn nhiều giá trị.</div>
+                            </div>
+                            <button type="button" class="attribute-tree-clear" data-attribute-clear>Xóa chọn</button>
+                        </div>
+                        <div class="filter-combobox-search-wrap">
+                            <input type="search" class="filter-combobox-search" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-attribute-search>
+                        </div>
+                        <div class="attribute-tree" data-attribute-tree>
+                            <div class="attribute-tree-group"
+                                 th:each="root : ${attributes}"
+                                 th:if="${!#lists.isEmpty(root.children)}"
+                                 data-attribute-group
+                                 th:attr="data-search-text=${root.name}">
+                                <div class="attribute-tree-root-row">
+                                    <label class="attribute-tree-root-check">
+                                        <input type="checkbox" class="form-check-input m-0" data-attribute-root-check>
+                                        <span th:text="${root.name}"></span>
+                                    </label>
+                                    <button type="button" class="attribute-tree-toggle" aria-expanded="true" data-attribute-tree-toggle>
+                                        <span class="tree-toggle-chevron" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="attribute-tree-children" data-attribute-tree-children>
+                                    <label class="attribute-tree-value"
+                                           th:each="child : ${root.children}"
+                                           th:attr="data-search-text=${child.name}">
+                                        <input class="form-check-input m-0"
+                                               type="checkbox"
+                                               name="attributeIds"
+                                               th:value="${child.id}"
+                                               th:checked="${#lists.contains(attributeIds, child.id)}"
+                                               data-attribute-child>
+                                        <span th:text="${child.name}"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="filter-combobox-empty d-none" data-attribute-empty>Không tìm thấy thuộc tính.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-6 col-lg-2">
-                <label class="form-label fw-semibold">Giới tính</label>
-                <select class="form-select form-select-lg" name="gender">
-                    <option value="">Tất cả</option>
-                    <option th:each="item : ${genders}"
-                            th:value="${item}"
-                            th:text="${item.label}"
-                            th:selected="${gender == item}"></option>
-                </select>
+
+            <div class="filter-field filter-field-sort">
+                <label class="filter-label">Sắp xếp</label>
+                <div class="filter-combobox" data-filter-combobox data-sort-filter>
+                    <input type="hidden" name="sort" th:value="${sort != null ? sort : 'newest'}" data-sort-value>
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                        <span class="filter-combobox-value" data-sort-label
+                              th:text="${sort == 'oldest' ? 'Cũ nhất' : (sort == 'views' ? 'Xem nhiều' : (sort == 'name' ? 'Tên A-Z' : 'Mới nhất'))}">Mới nhất</span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu sort-filter-menu" data-filter-combobox-menu>
+                        <div class="filter-combobox-options">
+                            <button type="button" class="filter-combobox-option" data-sort-option data-value="newest" data-label="Mới nhất" th:classappend="${sort == null or sort == 'newest' ? ' is-selected' : ''}">
+                                <span>Mới nhất</span><span class="filter-option-check">✓</span>
+                            </button>
+                            <button type="button" class="filter-combobox-option" data-sort-option data-value="oldest" data-label="Cũ nhất" th:classappend="${sort == 'oldest' ? ' is-selected' : ''}">
+                                <span>Cũ nhất</span><span class="filter-option-check">✓</span>
+                            </button>
+                            <button type="button" class="filter-combobox-option" data-sort-option data-value="views" data-label="Xem nhiều" th:classappend="${sort == 'views' ? ' is-selected' : ''}">
+                                <span>Xem nhiều</span><span class="filter-option-check">✓</span>
+                            </button>
+                            <button type="button" class="filter-combobox-option" data-sort-option data-value="name" data-label="Tên A-Z" th:classappend="${sort == 'name' ? ' is-selected' : ''}">
+                                <span>Tên A-Z</span><span class="filter-option-check">✓</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-6 col-lg-2">
-                <label class="form-label fw-semibold">Độ tuổi</label>
-                <select class="form-select form-select-lg" name="ageGroup">
-                    <option value="">Tất cả</option>
-                    <option th:each="item : ${ageGroups}"
-                            th:value="${item}"
-                            th:text="${item.label}"
-                            th:selected="${ageGroup == item}"></option>
-                </select>
+        </div>
+
+        <div class="filter-footer">
+            <div class="filter-selection-summary" data-filter-summary>
+                <span class="filter-summary-label">Đang lọc:</span>
+                <div class="filter-summary-chips" data-filter-summary-chips></div>
+                <span class="filter-summary-empty" data-filter-summary-empty>Chưa có điều kiện bổ sung</span>
             </div>
-            <div class="col-6 col-lg-2">
-                <label class="form-label fw-semibold">Sắp xếp</label>
-                <select class="form-select form-select-lg" name="sort">
-                    <option value="newest" th:selected="${sort == 'newest'}">Mới cập nhật</option>
-                    <option value="oldest" th:selected="${sort == 'oldest'}">Cũ nhất</option>
-                    <option value="views" th:selected="${sort == 'views'}">Xem nhiều</option>
-                    <option value="name" th:selected="${sort == 'name'}">Tên A-Z</option>
-                </select>
-            </div>
-            <div class="col-12 d-flex gap-2 justify-content-end">
+            <div class="filter-actions">
                 <a th:href="@{/products}" class="btn btn-outline-secondary rounded-pill px-4">Đặt lại</a>
                 <button class="btn btn-dark rounded-pill px-4" type="submit">Lọc sản phẩm</button>
             </div>
@@ -85,7 +201,7 @@
 
     <section data-product-load-more
              th:attr="data-load-url=@{/products/more},data-next-page=${products.number + 1},data-last=${products.last}">
-        <div id="productGrid" class="row g-3" th:if="${products.hasContent()}">
+        <div id="productGrid" class="product-grid" th:if="${products.hasContent()}">
             <div th:replace="~{fragments/product-batch :: batch}"></div>
         </div>
 
@@ -96,34 +212,225 @@
         </div>
 
         <div class="text-center mt-4 pt-4 border-top"
-             th:if="${products.hasContent() && !products.last}"
+             th:if="${products.hasContent()}"
              data-load-more-wrap>
             <button type="button"
                     class="btn btn-outline-dark rounded-pill px-4"
-                    data-load-more-products>
+                    data-load-more-products
+                    th:disabled="${products.last}"
+                    th:classappend="${products.last ? ' is-exhausted' : ''}">
                 <span data-load-more-spinner class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
-                <span data-load-more-label>Xem thêm sản phẩm</span>
+                <span data-load-more-label th:text="${products.last ? 'Hết sản phẩm' : 'Xem thêm sản phẩm'}">Xem thêm sản phẩm</span>
             </button>
             <div class="small text-danger mt-2 d-none" data-load-more-error>Không thể tải thêm sản phẩm. Hãy thử lại.</div>
         </div>
     </section>
 
-    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 rounded-4 shadow" data-product-detail-content>
-                <div class="modal-body py-5 text-center text-secondary">Đang tải chi tiết...</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="productFormModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 rounded-4 shadow" data-product-modal-content>
-                <div class="modal-body py-5 text-center text-secondary">Đang tải biểu mẫu...</div>
-            </div>
-        </div>
-    </div>
 </main>
+
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable category-manager-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div><span class="eyebrow">QUẢN LÝ DANH MỤC</span><h2 class="modal-title h4 fw-bold mt-2 mb-1">Danh mục sản phẩm</h2><p class="text-secondary mb-0 small">Quản lý danh mục lớn và danh mục con ngay tại đây.</p></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body pt-4 category-manager-scroll">
+                <div class="category-manager-stack">
+                    <div class="category-manager-panel category-editor-panel">
+                        <span class="eyebrow" data-category-editor-eyebrow>THÊM MỚI</span>
+                        <h3 class="h5 fw-bold mt-2" data-category-modal-title>Thêm danh mục</h3>
+                        <p class="small text-secondary mb-4" data-category-editor-help>Tạo danh mục lớn hoặc chọn danh mục cha để tạo danh mục con.</p>
+                        <form th:action="@{/categories/save}" method="post" data-category-form>
+                            <input type="hidden" name="id" data-category-id-input>
+                            <div class="mb-3"><label class="form-label fw-semibold">Tên danh mục</label><input class="form-control" type="text" name="name" required maxlength="255" data-category-name-input placeholder="Ví dụ: Thời trang"></div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Danh mục cha</label>
+                                <div class="filter-combobox manager-select-combo" data-managed-select-combo>
+                                    <select class="visually-hidden" name="parentId" data-category-parent-input data-managed-select-native tabindex="-1" aria-hidden="true">
+                                        <option value="">Không có - danh mục lớn</option>
+                                        <option th:each="root : ${categories}" th:value="${root.id}" th:text="${root.name}"></option>
+                                    </select>
+                                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-managed-select-trigger>
+                                        <span class="filter-combobox-value" data-managed-select-label>Không có - danh mục lớn</span>
+                                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                                    </button>
+                                    <div class="filter-combobox-menu manager-select-menu" data-managed-select-menu>
+                                        <div class="filter-combobox-options" data-managed-select-options></div>
+                                    </div>
+                                </div>
+                                <div class="form-text">Danh mục hỗ trợ tối đa 2 cấp: danh mục lớn → danh mục con.</div>
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-between gap-2"><button type="button" class="btn btn-outline-danger rounded-pill px-3 d-none" data-category-delete-trigger>Xóa</button><div class="d-flex gap-2 ms-auto"><button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-category-reset>Làm mới</button><button class="btn btn-dark rounded-pill px-4" type="submit" data-category-save-label>Thêm danh mục</button></div></div>
+                        </form>
+                        <form th:action="@{/categories/0/delete}" method="post" class="d-none" data-category-delete-form></form>
+                    </div>
+                    <div class="category-manager-panel">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div><h3 class="h6 fw-bold mb-1">Danh sách danh mục</h3><p class="small text-secondary mb-0">Bấm vào danh mục để chỉnh sửa.</p></div><button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" data-category-create>+ Thêm danh mục</button></div>
+                        <div data-category-list>
+                            <div class="category-manager-group" th:each="root : ${categories}">
+                                <div class="category-manager-root-row"><button type="button" class="category-manager-item category-manager-root" data-category-edit th:attr="data-category-id=${root.id},data-category-name=${root.name},data-category-parent-id=''" th:text="${root.name}"></button><button type="button" class="btn btn-sm btn-link text-decoration-none" data-category-create-child th:attr="data-category-parent-id=${root.id},data-category-parent-name=${root.name}">+ Danh mục con</button></div>
+                                <div class="category-manager-values" th:if="${!#lists.isEmpty(root.children)}"><button type="button" class="category-manager-item category-manager-child" th:each="child : ${root.children}" data-category-edit th:attr="data-category-id=${child.id},data-category-name=${child.name},data-category-parent-id=${root.id}" th:text="${child.name}"></button></div>
+                                <div class="small text-secondary ps-3 pb-2" th:if="${#lists.isEmpty(root.children)}">Chưa có danh mục con.</div>
+                            </div>
+                            <div class="text-center text-secondary py-4" th:if="${#lists.isEmpty(categories)}">Chưa có danh mục.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="attributeModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable attribute-manager-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <span class="eyebrow">QUẢN LÝ THUỘC TÍNH</span>
+                    <h2 class="modal-title h4 fw-bold mt-2 mb-1">Thuộc tính sản phẩm</h2>
+                    <p class="text-secondary mb-0 small">Quản lý thuộc tính lớn và các giá trị con ngay tại đây.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body pt-4 attribute-manager-scroll">
+                <div class="attribute-manager-stack">
+                    <div class="attribute-manager-panel attribute-editor-panel">
+                        <span class="eyebrow" data-attribute-editor-eyebrow>THÊM MỚI</span>
+                        <h3 class="h5 fw-bold mt-2" data-attribute-modal-title>Thêm thuộc tính</h3>
+                        <p class="small text-secondary mb-4" data-attribute-editor-help>
+                            Tạo thuộc tính lớn như Màu sắc, Kích thước, Chất liệu...
+                        </p>
+
+                        <form th:action="@{/attributes/save}" method="post" data-attribute-form>
+                            <input type="hidden" name="id" data-attribute-id-input>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tên thuộc tính / giá trị</label>
+                                <input class="form-control"
+                                       type="text"
+                                       name="name"
+                                       required
+                                       maxlength="255"
+                                       data-attribute-name-input
+                                       placeholder="Ví dụ: Màu sắc hoặc Đen">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Thuộc tính cha</label>
+                                <div class="filter-combobox manager-select-combo" data-managed-select-combo>
+                                    <select class="visually-hidden" name="parentId" data-attribute-parent-input data-managed-select-native tabindex="-1" aria-hidden="true">
+                                        <option value="">Không có - thuộc tính lớn</option>
+                                        <option th:each="root : ${attributes}"
+                                                th:value="${root.id}"
+                                                th:text="${root.name}"></option>
+                                    </select>
+                                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-managed-select-trigger>
+                                        <span class="filter-combobox-value" data-managed-select-label>Không có - thuộc tính lớn</span>
+                                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                                    </button>
+                                    <div class="filter-combobox-menu manager-select-menu" data-managed-select-menu>
+                                        <div class="filter-combobox-options" data-managed-select-options></div>
+                                    </div>
+                                </div>
+                                <div class="form-text">Để trống khi tạo thuộc tính lớn. Chọn một thuộc tính cha khi tạo giá trị.</div>
+                            </div>
+
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <button type="button"
+                                        class="btn btn-outline-danger rounded-pill px-3 d-none"
+                                        data-attribute-delete-trigger>
+                                    Xóa
+                                </button>
+                                <div class="d-flex gap-2 ms-auto">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary rounded-pill px-3"
+                                            data-attribute-reset>
+                                        Làm mới
+                                    </button>
+                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-attribute-save-label>
+                                        Thêm
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <form th:action="@{/attributes/0/delete}" method="post" class="d-none" data-attribute-delete-form></form>
+                    </div>
+
+                    <div class="attribute-manager-panel">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div>
+                                <div class="fw-bold">Danh sách thuộc tính</div>
+                                <div class="small text-secondary">Bấm vào một thuộc tính hoặc giá trị để chỉnh sửa.</div>
+                            </div>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-dark rounded-pill px-3"
+                                    data-attribute-create-root>
+                                + Thêm thuộc tính
+                            </button>
+                        </div>
+
+                        <div data-attribute-manager-list>
+                            <div class="text-center text-secondary py-5" th:if="${#lists.isEmpty(attributes)}">
+                                Chưa có thuộc tính. Hãy tạo thuộc tính đầu tiên.
+                            </div>
+
+                            <div class="attribute-manager-group" th:each="root : ${attributes}">
+                                <div class="attribute-manager-root-row">
+                                    <button type="button"
+                                            class="attribute-manager-item attribute-manager-root"
+                                            data-attribute-edit
+                                            th:attr="data-attribute-id=${root.id},data-attribute-name=${root.name},data-attribute-parent-id=''">
+                                        <span class="fw-semibold" th:text="${root.name}"></span>
+                                        <span class="badge rounded-pill text-bg-light border">Thuộc tính</span>
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-light rounded-pill px-3"
+                                            title="Thêm giá trị"
+                                            data-attribute-create-child
+                                            th:attr="data-attribute-parent-id=${root.id},data-attribute-parent-name=${root.name}">
+                                        + Giá trị
+                                    </button>
+                                </div>
+
+                                <div class="attribute-manager-values" th:if="${!#lists.isEmpty(root.children)}">
+                                    <button type="button"
+                                            class="attribute-manager-item attribute-manager-child"
+                                            th:each="child : ${root.children}"
+                                            data-attribute-edit
+                                            th:attr="data-attribute-id=${child.id},data-attribute-name=${child.name},data-attribute-parent-id=${root.id}">
+                                        <span th:text="${child.name}"></span>
+                                    </button>
+                                </div>
+                                <div class="small text-secondary ps-3 pb-2" th:if="${#lists.isEmpty(root.children)}">
+                                    Chưa có giá trị.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 rounded-4 shadow" data-product-detail-content>
+            <div class="modal-body py-5 text-center text-secondary">Đang tải chi tiết...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="productFormModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable product-form-dialog">
+        <div class="modal-content border-0 rounded-4 shadow" data-product-modal-content>
+            <div class="modal-body py-5 text-center text-secondary">Đang tải biểu mẫu...</div>
+        </div>
+    </div>
+</div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

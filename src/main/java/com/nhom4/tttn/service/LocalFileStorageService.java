@@ -15,6 +15,11 @@ public class LocalFileStorageService {
 
     public LocalFileStorageService(@Value("${app.upload-dir}") String uploadDir) {
         this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(uploadRoot);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Không thể khởi tạo thư mục upload.", exception);
+        }
     }
 
     public String storeProductFile(Long productId, MultipartFile file) {
@@ -22,19 +27,18 @@ public class LocalFileStorageService {
 
         String originalName = file.getOriginalFilename();
         if (originalName == null || originalName.isBlank()) {
-            throw new IllegalArgumentException("File khong co ten.");
+            throw new IllegalArgumentException("File không có tên.");
         }
 
-        // getFileName() loai bo ../ hoac duong dan tu trinh duyet, nhung van giu nguyen ten file that.
         String filename = Path.of(originalName).getFileName().toString();
         if (filename.isBlank() || filename.equals(".") || filename.equals("..")) {
-            throw new IllegalArgumentException("Ten file khong hop le.");
+            throw new IllegalArgumentException("Tên file không hợp lệ.");
         }
 
         Path productDir = uploadRoot.resolve("products").resolve(productId.toString()).normalize();
         Path target = productDir.resolve(filename).normalize();
         if (!target.startsWith(productDir)) {
-            throw new IllegalArgumentException("Ten file khong hop le.");
+            throw new IllegalArgumentException("Tên file không hợp lệ.");
         }
 
         try {
@@ -42,7 +46,7 @@ public class LocalFileStorageService {
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
             return filename;
         } catch (IOException exception) {
-            throw new IllegalStateException("Khong the luu file " + filename, exception);
+            throw new IllegalStateException("Không thể lưu file " + filename, exception);
         }
     }
 
@@ -50,7 +54,7 @@ public class LocalFileStorageService {
         try {
             Files.deleteIfExists(uploadRoot.resolve("products").resolve(productId.toString()).resolve(filename).normalize());
         } catch (IOException exception) {
-            throw new IllegalStateException("Khong the xoa file " + filename, exception);
+            throw new IllegalStateException("Không thể xóa file " + filename, exception);
         }
     }
 
@@ -63,7 +67,7 @@ public class LocalFileStorageService {
                 catch (IOException e) { throw new IllegalStateException(e); }
             });
         } catch (IOException exception) {
-            throw new IllegalStateException("Khong the xoa folder upload cua san pham.", exception);
+            throw new IllegalStateException("Không thể xóa thư mục upload của sản phẩm.", exception);
         }
     }
 }

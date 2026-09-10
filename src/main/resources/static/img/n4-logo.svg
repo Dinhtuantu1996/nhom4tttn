@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">N4 logo</title>
+  <desc id="desc">Rounded square logo with N4 lettering</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8f5f2"/>
+      <stop offset="100%" stop-color="#f3f4f6"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="116" height="116" rx="30" fill="url(#bg)"/>
+  <rect x="6" y="6" width="116" height="116" rx="30" fill="none" stroke="#d1d5db" stroke-width="2"/>
+  <text x="64" y="78" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="48" font-weight="900" letter-spacing="-2" fill="#0f766e">N4</text>
+</svg>

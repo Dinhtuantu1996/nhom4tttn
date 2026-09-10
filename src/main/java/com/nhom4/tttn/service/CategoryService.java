@@ -34,7 +34,7 @@ public class CategoryService {
         if (parentId != null) {
             parent = get(parentId);
             if (!parent.isRoot()) {
-                throw new IllegalArgumentException("Project chi ho tro danh muc 2 cap.");
+                throw new IllegalArgumentException("Danh mục chỉ hỗ trợ tối đa 2 cấp.");
             }
             if (id != null && id.equals(parentId)) {
                 throw new IllegalArgumentException("Danh muc khong the la cha cua chinh no.");
@@ -62,13 +62,25 @@ public class CategoryService {
     @Transactional
     public void delete(Long id) {
         Category category = get(id);
-        if (categoryRepository.existsByParent_Id(id)) {
-            throw new IllegalArgumentException("Hay xoa cac danh muc con truoc.");
+
+        if (category.isRoot()) {
+            if (categoryRepository.existsByParent_Id(id)) {
+                throw new IllegalArgumentException("Không thể xóa danh mục lớn vì vẫn còn danh mục con.");
+            }
+            if (productRepository.existsByCategories_Id(id)) {
+                throw new IllegalArgumentException("Không thể xóa danh mục lớn vì vẫn còn sản phẩm thuộc danh mục này.");
+            }
+        } else {
+            if (categoryRepository.existsByParent_Id(id)) {
+                throw new IllegalArgumentException("Không thể xóa danh mục vì vẫn còn danh mục con.");
+            }
+            if (productRepository.existsByCategories_Id(id)) {
+                throw new IllegalArgumentException("Không thể xóa danh mục con vì vẫn còn sản phẩm thuộc danh mục này.");
+            }
         }
-        if (productRepository.existsByCategories_Id(id)) {
-            throw new IllegalArgumentException("Danh muc dang duoc san pham su dung.");
-        }
+
         categoryRepository.delete(category);
+        categoryRepository.flush();
     }
 
     @Transactional(readOnly = true)

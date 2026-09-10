@@ -1,0 +1,184 @@
+.base-confirm-dialog {
+    width: min(420px, calc(100% - 2rem));
+    max-width: 420px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--n4-radius-xl, 22px);
+    background: transparent;
+    color: var(--n4-ink, #111827);
+    box-shadow: var(--n4-shadow-lg, 0 28px 72px rgba(17, 24, 39, .13));
+}
+
+.base-confirm-dialog::backdrop {
+    background: rgba(17, 24, 39, .48);
+    backdrop-filter: blur(4px);
+}
+
+.base-confirm-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--n4-border, #e2e8e6);
+    border-radius: var(--n4-radius-xl, 22px);
+    background: var(--n4-surface, #fff);
+    padding: 24px;
+}
+
+.base-confirm-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+    border-radius: var(--n4-radius-md, 14px);
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.base-confirm-dialog[data-popup-type="warning"] .base-confirm-icon {
+    background: #fef3c7;
+    color: var(--n4-warning, #d97706);
+}
+
+.base-confirm-dialog[data-popup-type="info"] .base-confirm-icon {
+    background: #dbeafe;
+    color: var(--n4-info, #2563eb);
+}
+
+.base-confirm-eyebrow {
+    color: var(--n4-muted, #667085);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.base-confirm-title {
+    margin: 7px 0 8px;
+    color: var(--n4-ink, #111827);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.base-confirm-message {
+    margin: 0;
+    color: var(--n4-muted, #667085);
+    font-size: .9rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.base-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.base-toast-container {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 2200;
+    width: min(370px, calc(100vw - 2rem));
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    pointer-events: none;
+}
+
+.base-toast {
+    --base-toast-accent: var(--n4-teal, #0f766e);
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 28px;
+    align-items: start;
+    gap: 11px;
+    width: 100%;
+    border: 1px solid var(--n4-border, #e2e8e6);
+    border-left: 3px solid var(--base-toast-accent);
+    border-radius: var(--n4-radius-lg, 18px);
+    background: rgba(255, 255, 255, .985);
+    padding: 12px 12px 12px 11px;
+    box-shadow: var(--n4-shadow-md, 0 18px 48px rgba(17, 24, 39, .09));
+    opacity: 0;
+    transform: translateY(-8px) scale(.985);
+    transition: opacity .18s ease, transform .18s ease;
+    pointer-events: auto;
+}
+
+.base-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.base-toast.is-leaving {
+    opacity: 0;
+    transform: translateY(-6px) scale(.985);
+}
+
+.base-toast[data-popup-type="success"] { --base-toast-accent: var(--n4-teal, #0f766e); }
+.base-toast[data-popup-type="error"] { --base-toast-accent: var(--n4-danger, #dc2626); }
+.base-toast[data-popup-type="warning"] { --base-toast-accent: var(--n4-warning, #d97706); }
+.base-toast[data-popup-type="info"] { --base-toast-accent: var(--n4-info, #2563eb); }
+
+.base-toast-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--base-toast-accent) 11%, white);
+    color: var(--base-toast-accent);
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.base-toast-title {
+    margin-top: 1px;
+    color: var(--n4-ink, #111827);
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.base-toast-message {
+    margin-top: 3px;
+    color: var(--n4-muted, #667085);
+    font-size: .84rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.base-toast-close {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--n4-subtle, #98a2b3);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.base-toast-close:hover {
+    background: var(--n4-surface-soft, #f9fbfa);
+    color: var(--n4-ink, #111827);
+}
+
+@media (max-width: 575.98px) {
+    .base-confirm-card {
+        padding: 20px;
+    }
+
+    .base-confirm-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .base-toast-container {
+        top: 12px;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
+}

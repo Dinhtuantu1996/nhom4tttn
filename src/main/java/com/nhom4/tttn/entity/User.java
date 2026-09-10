@@ -23,6 +23,10 @@ public class User {
     @Setter
     private String email;
 
+    @Column(name = "google_sub", unique = true, length = 128)
+    @Setter
+    private String googleSub;
+
     @Column(nullable = false, length = 100)
     @Setter
     private String password;

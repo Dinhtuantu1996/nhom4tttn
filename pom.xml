@@ -15,7 +15,7 @@
     <artifactId>nhom4tttn</artifactId>
     <version>1.0.0</version>
     <name>nhom4tttn</name>
-    <description>Project hoc tap website ban hang - Spring Boot + Thymeleaf</description>
+    <description>N4 Store</description>
 
     <properties>
         <java.version>21</java.version>
@@ -42,6 +42,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.9.0</version>
         </dependency>
 
         <dependency>

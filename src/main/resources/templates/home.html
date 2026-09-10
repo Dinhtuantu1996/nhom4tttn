@@ -3,33 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>nhom4tttn - Trang chủ</title>
+    <title>N4 - Trang chủ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main>
-    <section class="hero-section py-5 py-lg-6">
-        <div class="container py-lg-5">
+    <section class="hero-section hero-section-rich py-5 py-lg-6 overflow-hidden">
+        <div class="container py-lg-4 position-relative">
+            <div class="hero-glow hero-glow-one"></div>
+            <div class="hero-glow hero-glow-two"></div>
             <div class="row align-items-center g-5">
                 <div class="col-lg-6">
-                    <span class="eyebrow">SPRING BOOT + THYMELEAF</span>
-                    <h1 class="display-4 fw-bold mt-3">Website bán hàng gọn, dễ học và dễ mở rộng.</h1>
-                    <p class="lead text-secondary mt-4">Phiên bản local của hệ thống bán hàng, giữ nghiệp vụ chính nhưng tối giản kiến trúc để phù hợp project học tập.</p>
-                    <div class="d-flex flex-wrap gap-3 mt-4">
-                        <a th:href="@{/products}" class="btn btn-dark btn-lg rounded-pill px-4">Xem sản phẩm</a>
-                        <a th:href="@{/contact}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Liên hệ</a>
+                    <div class="reveal-up">
+                        <span class="eyebrow">N4 STORE</span>
+                        <h1 class="display-4 fw-bold mt-3 hero-title">Mua sắm dễ dàng, chọn đúng sản phẩm bạn cần.</h1>
+                        <p class="lead text-secondary mt-4 hero-copy">
+                            Khám phá không gian mua sắm hiện đại với danh mục rõ ràng, bộ lọc trực quan và những sản phẩm mới được cập nhật liên tục.
+                        </p>
+                        <div class="d-flex flex-wrap gap-3 mt-4">
+                            <a th:href="@{/products}" class="btn btn-dark btn-lg rounded-pill px-4">Khám phá sản phẩm</a>
+                            <a th:href="@{/contact}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Liên hệ ngay</a>
+                        </div>
+                    </div>
+
+                    <div class="hero-mini-stats reveal-up reveal-delay-2">
+                        <div class="hero-mini-stat">
+                            <strong>Sản phẩm chọn lọc</strong>
+                            <span>Cập nhật thường xuyên</span>
+                        </div>
+                        <div class="hero-mini-stat">
+                            <strong>Bộ lọc thông minh</strong>
+                            <span>Tìm nhanh theo nhu cầu</span>
+                        </div>
+                        <div class="hero-mini-stat">
+                            <strong>Hỗ trợ tận tâm</strong>
+                            <span>Đồng hành trước và sau mua</span>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-6">
-                    <div class="hero-card shadow-lg">
-                        <div class="hero-grid">
-                            <div><span>01</span><strong>Thymeleaf</strong><small>Render trực tiếp từ BE</small></div>
-                            <div><span>02</span><strong>Session</strong><small>Không Redis, không JWT phức tạp</small></div>
-                            <div><span>03</span><strong>Local upload</strong><small>File lưu ngay trong project</small></div>
-                            <div><span>04</span><strong>Bootstrap</strong><small>Responsive, ít CSS thủ công</small></div>
+                    <div class="hero-visual reveal-up reveal-delay-3">
+                        <div class="hero-showcase-grid">
+                            <a class="hero-showcase-card hero-showcase-card-lg text-decoration-none text-dark"
+                               th:if="${!#lists.isEmpty(newestProducts)}"
+                               th:with="featured=${newestProducts[0]}"
+                               th:href="@{/products/{id}(id=${featured.id})}">
+                                <div class="hero-showcase-media">
+                                    <img th:if="${featured.primaryImageUrl != null}" th:src="${featured.primaryImageUrl}" th:alt="${featured.name}">
+                                    <div th:if="${featured.primaryImageUrl == null}" class="product-placeholder">N4</div>
+                                </div>
+                                <div class="hero-showcase-body">
+                                    <span class="eyebrow">NỔI BẬT</span>
+                                    <h2 class="h5 fw-bold mb-1 mt-2" th:text="${featured.name}"></h2>
+                                    <p class="text-secondary small mb-0">Thiết kế hiện đại, dễ lựa chọn và phù hợp nhiều nhu cầu.</p>
+                                </div>
+                            </a>
+
+                            <div class="hero-showcase-card hero-showcase-card-empty hero-showcase-card-lg" th:if="${#lists.isEmpty(newestProducts)}">
+                                <div class="hero-showcase-media hero-showcase-media-empty">
+                                    <div class="product-placeholder">N4</div>
+                                </div>
+                                <div class="hero-showcase-body">
+                                    <span class="eyebrow">N4 STORE</span>
+                                    <h2 class="h5 fw-bold mb-1 mt-2">Phong cách mua sắm hiện đại</h2>
+                                    <p class="text-secondary small mb-0">Không gian gọn gàng, trực quan và thân thiện trên mọi thiết bị.</p>
+                                </div>
+                            </div>
+
+                            <th:block th:if="${!#lists.isEmpty(newestProducts)}">
+                                <th:block th:each="product, stat : ${newestProducts}" th:if="${stat.index > 0 and stat.index < 3}">
+                                    <a class="hero-showcase-card text-decoration-none text-dark" th:href="@{/products/{id}(id=${product.id})}">
+                                        <div class="hero-showcase-media hero-showcase-media-sm">
+                                            <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
+                                            <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">N4</div>
+                                        </div>
+                                        <div class="hero-showcase-body">
+                                            <h3 class="h6 fw-bold mb-1 product-card-name" th:text="${product.name}"></h3>
+                                            <div class="product-mini-meta">
+                                                <span class="product-card-views">
+                                                    <span class="product-view-icon" aria-hidden="true"></span>
+                                                    <span th:text="${product.viewCount}"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </th:block>
+                            </th:block>
+
+                            <div class="hero-floating-badge hero-floating-badge-one">
+                                <strong>Mới mỗi ngày</strong>
+                                <span>Sản phẩm được cập nhật liên tục</span>
+                            </div>
+                            <div class="hero-floating-badge hero-floating-badge-two">
+                                <strong>Trực quan & nhanh</strong>
+                                <span>Dễ lọc, dễ chọn, dễ xem</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -37,24 +110,142 @@
         </div>
     </section>
 
+    <section class="container py-4">
+        <div class="trust-strip reveal-up">
+            <div class="trust-item">
+                <span class="trust-icon">✨</span>
+                <div>
+                    <strong>Sản phẩm nổi bật</strong>
+                    <small>Cập nhật liên tục</small>
+                </div>
+            </div>
+            <div class="trust-item">
+                <span class="trust-icon">🧭</span>
+                <div>
+                    <strong>Tìm kiếm trực quan</strong>
+                    <small>Lọc theo danh mục và thuộc tính</small>
+                </div>
+            </div>
+            <div class="trust-item">
+                <span class="trust-icon">💬</span>
+                <div>
+                    <strong>Tư vấn nhanh chóng</strong>
+                    <small>Luôn sẵn sàng hỗ trợ</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container py-5" th:if="${navCategories != null and !#lists.isEmpty(navCategories)}">
+        <div class="d-flex justify-content-between align-items-end gap-3 mb-4 reveal-up">
+            <div>
+                <span class="eyebrow">DANH MỤC</span>
+                <h2 class="h1 fw-bold mt-2 mb-0">Khám phá theo nhu cầu</h2>
+            </div>
+            <a th:href="@{/products}" class="btn btn-link text-dark text-decoration-none fw-semibold">Xem toàn bộ →</a>
+        </div>
+        <div class="category-highlight-grid">
+            <a class="category-highlight-card reveal-up text-decoration-none text-dark"
+               th:each="category, stat : ${navCategories}"
+               th:if="${stat.index < 4}"
+               th:href="@{/products(categoryId=${category.id})}"
+               th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}">
+                <span class="category-highlight-icon" th:text="${stat.index == 0 ? '🛍️' : (stat.index == 1 ? '🌟' : (stat.index == 2 ? '🎯' : '🧵'))}"></span>
+                <div>
+                    <h3 class="h5 fw-bold mb-1" th:text="${category.name}"></h3>
+                    <p class="text-secondary mb-2" th:text="${#lists.isEmpty(category.children) ? 'Danh mục được sắp xếp gọn gàng, dễ khám phá.' : 'Bao gồm nhiều lựa chọn phù hợp với nhu cầu mua sắm.'}"></p>
+                    <span class="category-highlight-link">Xem sản phẩm →</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="container py-5">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-5">
+                <div class="content-panel h-100 reveal-up">
+                    <span class="eyebrow">TRẢI NGHIỆM</span>
+                    <h2 class="h1 fw-bold mt-2">Mọi thứ được tối ưu để bạn chọn nhanh hơn.</h2>
+                    <p class="text-secondary mt-3 mb-4">
+                        Từ trang danh mục đến chi tiết sản phẩm, N4 ưu tiên bố cục rõ ràng, hiển thị trực quan và thao tác mượt mà trên cả desktop lẫn mobile.
+                    </p>
+                    <div class="d-grid gap-3">
+                        <div class="feature-line">
+                            <span class="feature-line-icon">01</span>
+                            <div>
+                                <strong>Tìm kiếm trực tiếp</strong>
+                                <p class="mb-0 text-secondary">Tìm nhanh sản phẩm theo tên chỉ với vài ký tự.</p>
+                            </div>
+                        </div>
+                        <div class="feature-line">
+                            <span class="feature-line-icon">02</span>
+                            <div>
+                                <strong>Lọc theo danh mục & thuộc tính</strong>
+                                <p class="mb-0 text-secondary">Thu hẹp lựa chọn nhanh chóng theo đúng nhu cầu của bạn.</p>
+                            </div>
+                        </div>
+                        <div class="feature-line">
+                            <span class="feature-line-icon">03</span>
+                            <div>
+                                <strong>Xem chi tiết rõ ràng</strong>
+                                <p class="mb-0 text-secondary">Thông tin sản phẩm, hình ảnh và thuộc tính được trình bày trực quan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="feature-grid">
+                    <div class="feature-card reveal-up reveal-delay-1">
+                        <span class="feature-card-icon">⚡</span>
+                        <h3 class="h5 fw-bold mt-3">Nhanh và mượt</h3>
+                        <p class="text-secondary mb-0">Bố cục gọn gàng giúp bạn tập trung vào sản phẩm thay vì mất thời gian tìm kiếm.</p>
+                    </div>
+                    <div class="feature-card reveal-up reveal-delay-2">
+                        <span class="feature-card-icon">🎨</span>
+                        <h3 class="h5 fw-bold mt-3">Trực quan và hiện đại</h3>
+                        <p class="text-secondary mb-0">Tông màu nhẹ, card bo tròn và hiệu ứng tinh tế mang lại trải nghiệm sống động hơn.</p>
+                    </div>
+                    <div class="feature-card reveal-up reveal-delay-3">
+                        <span class="feature-card-icon">🧩</span>
+                        <h3 class="h5 fw-bold mt-3">Dễ lựa chọn</h3>
+                        <p class="text-secondary mb-0">Hệ thống danh mục và thuộc tính rõ ràng giúp bạn chọn đúng sản phẩm nhanh hơn.</p>
+                    </div>
+                    <div class="feature-card reveal-up reveal-delay-4">
+                        <span class="feature-card-icon">🤝</span>
+                        <h3 class="h5 fw-bold mt-3">Hỗ trợ tận tâm</h3>
+                        <p class="text-secondary mb-0">Chúng tôi luôn sẵn sàng tư vấn nếu bạn cần thêm thông tin trước khi quyết định.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="container py-5" th:if="${!#lists.isEmpty(newestProducts)}">
-        <div class="d-flex justify-content-between align-items-end mb-4">
+        <div class="d-flex justify-content-between align-items-end gap-3 mb-4 reveal-up">
             <div>
                 <span class="eyebrow">MỚI CẬP NHẬT</span>
-                <h2 class="h1 fw-bold mt-2 mb-0">Sản phẩm mới</h2>
+                <h2 class="h1 fw-bold mt-2 mb-0">Sản phẩm mới cập nhật</h2>
             </div>
             <a th:href="@{/products}" class="btn btn-link text-dark text-decoration-none fw-semibold">Xem tất cả →</a>
         </div>
-        <div class="row g-4">
-            <div class="col-6 col-lg-3" th:each="product : ${newestProducts}">
+        <div class="product-highlight-grid">
+            <div th:each="product, stat : ${newestProducts}" class="reveal-up" th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}">
                 <a class="product-card text-decoration-none text-dark d-block h-100" th:href="@{/products/{id}(id=${product.id})}">
                     <div class="product-media">
                         <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
                         <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">N4</div>
                     </div>
-                    <div class="p-3">
-                        <h3 class="h6 fw-bold text-truncate mb-2" th:text="${product.name}"></h3>
-                        <div class="small text-secondary" th:text="${product.viewCount + ' lượt xem'}"></div>
+                    <div class="p-3 p-lg-4 pb-3">
+                        <h3 class="h6 fw-bold product-card-name mb-0" th:text="${product.name}"></h3>
+                    </div>
+                    <div class="product-card-footer">
+                        <span th:if="${product.quantity == 0}" class="product-card-contact">Liên hệ</span>
+                        <span th:if="${product.quantity > 0}" class="product-card-price" th:text="${product.priceText}"></span>
+                        <span class="product-card-views">
+                            <span class="product-view-icon" aria-hidden="true"></span>
+                            <span th:text="${product.viewCount}"></span>
+                        </span>
                     </div>
                 </a>
             </div>
@@ -62,10 +253,10 @@
     </section>
 
     <section class="container py-5" th:if="${#lists.isEmpty(newestProducts)}">
-        <div class="empty-state text-center p-5">
+        <div class="empty-state text-center p-5 reveal-up">
             <h2 class="h4">Chưa có sản phẩm</h2>
-            <p class="text-secondary">Đăng nhập bằng tài khoản admin để thêm danh mục và sản phẩm đầu tiên.</p>
-            <a th:href="@{/login}" class="btn btn-dark rounded-pill px-4">Đăng nhập admin</a>
+            <p class="text-secondary">Sản phẩm mới sẽ sớm được cập nhật.</p>
+            <a th:href="@{/products}" class="btn btn-dark rounded-pill px-4">Khám phá sản phẩm</a>
         </div>
     </section>
 </main>

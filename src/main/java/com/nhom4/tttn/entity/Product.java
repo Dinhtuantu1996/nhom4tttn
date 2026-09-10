@@ -1,14 +1,15 @@
 package com.nhom4.tttn.entity;
 
-import com.nhom4.tttn.enums.ProductAgeGroup;
-import com.nhom4.tttn.enums.ProductGender;
 import com.nhom4.tttn.dto.ProductImage;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Set;
 @Getter
 public class Product {
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,19 +33,17 @@ public class Product {
     @Setter
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    @Setter
-    private ProductGender gender;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    @Setter
-    private ProductAgeGroup ageGroup;
-
     @Column(nullable = false)
     @Setter
     private long viewCount = 0;
+
+    @Column(nullable = false, precision = 19, scale = 0)
+    @Setter
+    private BigDecimal price = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    @Setter
+    private int quantity = 0;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -54,6 +54,16 @@ public class Product {
     @OrderBy("name asc")
     @Setter
     private Set<Category> categories = new LinkedHashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "product_attributes",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "attribute_id")
+    )
+    @OrderBy("name asc")
+    @Setter
+    private Set<Attribute> attributes = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder asc, id asc")
@@ -67,15 +77,27 @@ public class Product {
 
     @PrePersist
     void prePersist() {
+        if (price == null) price = BigDecimal.ZERO;
+        if (quantity < 0) quantity = 0;
         createdDate = LocalDateTime.now();
         updatedDate = createdDate;
     }
 
     @PreUpdate
-    void preUpdate() { updatedDate = LocalDateTime.now(); }
+    void preUpdate() {
+        updatedDate = LocalDateTime.now();
+    }
 
-    public String getUpdatedDateText() { return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT); }
+    public String getUpdatedDateText() {
+        return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT);
+    }
+
     public String getPrimaryImageUrl() {
         return images.isEmpty() ? null : images.getFirst().getUrl();
+    }
+
+    public String getPriceText() {
+        BigDecimal safePrice = price == null ? BigDecimal.ZERO : price;
+        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safePrice) + " VNĐ";
     }
 }

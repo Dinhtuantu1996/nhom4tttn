@@ -1,10 +1,10 @@
 package com.nhom4.tttn.common;
 
-import lombok.RequiredArgsConstructor;
-import com.nhom4.tttn.enums.Role;
 import com.nhom4.tttn.entity.User;
+import com.nhom4.tttn.enums.Role;
 import com.nhom4.tttn.repository.UserRepository;
 import com.nhom4.tttn.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,8 +20,11 @@ public class GlobalModelAdvice {
 
     @ModelAttribute("navCategories")
     public Object navCategories() {
-        try { return categoryService.roots(); }
-        catch (RuntimeException ignored) { return List.of(); }
+        try {
+            return categoryService.roots();
+        } catch (RuntimeException ignored) {
+            return List.of();
+        }
     }
 
     @ModelAttribute("currentUser")

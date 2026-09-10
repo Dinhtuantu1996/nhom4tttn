@@ -2,17 +2,18 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Đang xây dựng - nhom4tttn</title>
+    <title>Đang xây dựng - N4</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body class="auth-body">
 <main class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
-    <div class="auth-card p-5 text-center shadow-lg" style="max-width:560px">
-        <div class="brand-mark mx-auto mb-4">N4</div>
+    <div class="auth-card coming-soon-card p-5 text-center shadow-lg">
+        <img class="brand-logo brand-logo-lg mx-auto mb-4" th:src="@{/img/n4-logo.svg}" src="/img/n4-logo.svg" alt="N4 logo">
         <span class="eyebrow">COMING SOON</span>
         <h1 class="h2 fw-bold mt-3">Chức năng đang được xây dựng</h1>
-        <p class="text-secondary mt-3">Giữ giống baseline hiện tại: đăng ký và quên mật khẩu mới là trang placeholder.</p>
+        <p class="text-secondary mt-3">Tính năng này đang được hoàn thiện. Vui lòng quay lại sau.</p>
         <div class="d-flex gap-2 justify-content-center mt-4">
             <a th:href="@{/login}" class="btn btn-dark rounded-pill px-4">Đăng nhập</a>
             <a th:href="@{/}" class="btn btn-outline-dark rounded-pill px-4">Trang chủ</a>

@@ -5,73 +5,81 @@
     <nav class="navbar navbar-expand-lg py-3">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" th:href="@{/}">
-                <span class="brand-mark">N4</span>
-                <span>nhom4tttn</span>
+                <img class="brand-logo" th:src="@{/img/n4-logo.svg}" src="/img/n4-logo.svg" alt="N4 logo">
+                <span class="brand-wordmark">N4</span>
             </a>
-
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                     <li class="nav-item"><a class="nav-link" th:href="@{/}">Trang chủ</a></li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Danh mục</a>
-                        <ul class="dropdown-menu dropdown-menu-end category-menu shadow-sm border-0 rounded-4 p-2">
-                            <li>
-                                <a class="dropdown-item rounded-3" th:href="@{/products}">Tất cả sản phẩm</a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
+                    <li class="nav-item dropdown category-nav-item" data-category-nav>
+                        <button class="nav-link dropdown-toggle category-trigger"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-expanded="false">
+                            <span>Danh mục</span>
+                        </button>
 
-                            <th:block th:each="root : ${navCategories}">
-                                <li class="category-menu-row">
-                                    <a class="dropdown-item rounded-3 fw-semibold flex-grow-1"
-                                       th:href="@{/products(categoryId=${root.id})}"
-                                       th:text="${root.name}"></a>
-                                    <button th:if="${isAdmin}"
-                                            type="button"
-                                            class="btn btn-sm btn-light rounded-circle category-edit-btn"
-                                            title="Sửa danh mục"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#categoryModal"
-                                            th:attr="data-category-id=${root.id},data-category-name=${root.name},data-parent-id=''">
-                                        ✎
-                                    </button>
-                                </li>
+                        <div class="dropdown-menu category-menu border-0" data-category-menu>
+                            <div class="category-menu-header">
+                                <div class="category-menu-heading">Danh mục sản phẩm</div>
+                            </div>
 
-                                <li class="category-menu-row" th:each="child : ${root.children}">
-                                    <a class="dropdown-item rounded-3 ps-4 small flex-grow-1"
-                                       th:href="@{/products(categoryId=${child.id})}"
-                                       th:text="${child.name}"></a>
-                                    <button th:if="${isAdmin}"
-                                            type="button"
-                                            class="btn btn-sm btn-light rounded-circle category-edit-btn"
-                                            title="Sửa danh mục"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#categoryModal"
-                                            th:attr="data-category-id=${child.id},data-category-name=${child.name},data-parent-id=${root.id}">
-                                        ✎
-                                    </button>
-                                </li>
-                            </th:block>
+                            <div class="category-menu-scroll">
+                                <a class="category-menu-all" th:href="@{/products}">
+                                    <span class="category-menu-all-icon">
+                                        <img th:src="@{/img/n4-logo.svg}" src="/img/n4-logo.svg" alt="">
+                                    </span>
+                                    <span class="category-menu-all-text">Tất cả sản phẩm</span>
+                                    <span class="category-menu-chevron" aria-hidden="true">›</span>
+                                </a>
 
-                            <th:block th:if="${isAdmin}">
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <button type="button"
-                                            class="dropdown-item rounded-3 text-primary fw-semibold"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#categoryModal"
-                                            data-category-create>
-                                        + Thêm danh mục
-                                    </button>
-                                </li>
-                            </th:block>
-                        </ul>
+                                <div class="category-tree"
+                                     th:if="${navCategories != null and !#lists.isEmpty(navCategories)}">
+                                    <div class="category-tree-item"
+                                         th:each="root : ${navCategories}"
+                                         data-category-root>
+                                        <div class="category-root-row">
+                                            <a class="category-root-link"
+                                               th:href="@{/products(categoryId=${root.id})}"
+                                               th:text="${root.name}"></a>
+
+                                            <button class="category-root-toggle"
+                                                    type="button"
+                                                    data-category-toggle
+                                                    th:if="${root.children != null and !#lists.isEmpty(root.children)}"
+                                                    th:attr="aria-label=${'Mở danh mục con của ' + root.name}"
+                                                    aria-expanded="false">
+                                                <span class="category-root-toggle-icon" aria-hidden="true">›</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="category-child-collapse"
+                                             data-category-children
+                                             th:if="${root.children != null and !#lists.isEmpty(root.children)}">
+                                            <div class="category-child-tree">
+                                                <a class="category-child-link"
+                                                   th:each="child, childStat : ${root.children}"
+                                                   th:href="@{/products(categoryId=${child.id})}">
+                                                    <span class="category-child-branch" th:classappend="${childStat.last ? ' is-last' : ''}" aria-hidden="true"></span>
+                                                    <span class="category-child-name" th:text="${child.name}"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="category-menu-empty"
+                                     th:if="${navCategories == null or #lists.isEmpty(navCategories)}">
+                                    Chưa có danh mục sản phẩm.
+                                </div>
+                            </div>
+                        </div>
                     </li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
-
                     <li class="nav-item ms-lg-2" th:if="${currentUser == null}">
                         <a class="btn btn-dark rounded-pill px-4" th:href="@{/login}">Đăng nhập</a>
                     </li>
@@ -80,65 +88,13 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 p-2">
                             <li><span class="dropdown-item-text small text-secondary" th:text="${currentUser.email}"></span></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post">
-                                    <button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button>
-                                </form>
-                            </li>
+                            <li><form th:action="@{/logout}" method="post"><button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button></form></li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-
-    <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <span class="eyebrow">QUẢN LÝ DANH MỤC</span>
-                        <h2 class="modal-title h5 fw-bold mt-2" data-category-modal-title>Thêm danh mục</h2>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                </div>
-                <div class="modal-body pt-4">
-                    <form th:action="@{/categories/save}" method="post" data-category-form>
-                        <input type="hidden" name="id" data-category-id-input>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Tên danh mục</label>
-                            <input class="form-control" type="text" name="name" required maxlength="255" data-category-name-input>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">Danh mục cha</label>
-                            <select class="form-select" name="parentId" data-category-parent-input>
-                                <option value="">Không có - danh mục lớn</option>
-                                <option th:each="root : ${navCategories}"
-                                        th:value="${root.id}"
-                                        th:text="${root.name}"></option>
-                            </select>
-                            <div class="form-text">Project hỗ trợ 2 cấp: danh mục lớn → danh mục con.</div>
-                        </div>
-
-                        <div class="d-flex justify-content-between gap-2">
-                            <button type="button"
-                                    class="btn btn-outline-danger rounded-pill px-3 d-none"
-                                    data-category-delete-trigger>
-                                Xóa
-                            </button>
-                            <button class="btn btn-dark rounded-pill px-4 ms-auto" type="submit" data-category-save-label>
-                                Thêm danh mục
-                            </button>
-                        </div>
-                    </form>
-
-                    <form th:action="@{/categories/0/delete}" method="post" class="d-none" data-category-delete-form></form>
-                </div>
-            </div>
-        </div>
-    </div>
 </header>
 </body>
 </html>

@@ -6,10 +6,10 @@
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <span class="brand-mark">N4</span>
-                    <strong>nhom4tttn</strong>
+                    <img class="brand-logo" th:src="@{/img/n4-logo.svg}" src="/img/n4-logo.svg" alt="N4 logo">
+                    <strong class="brand-wordmark">N4</strong>
                 </div>
-                <p class="text-secondary mb-0">Project học tập website bán hàng bằng Spring Boot, Thymeleaf và Bootstrap.</p>
+                <p class="text-secondary mb-0">N4 mang đến trải nghiệm mua sắm đơn giản, rõ ràng và tiện lợi.</p>
             </div>
             <div class="col-6 col-md-3">
                 <h6>Mua sắm</h6>
@@ -17,15 +17,17 @@
                 <a class="footer-link d-block" th:href="@{/contact}">Liên hệ</a>
             </div>
             <div class="col-6 col-md-3">
-                <h6 th:text="${isAdmin ? 'Quản lý tích hợp' : 'Tài khoản'}"></h6>
+                <h6 th:text="${isAdmin ? 'Quản trị' : 'Tài khoản'}"></h6>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products}">Quản lý trên catalog</a>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products/new}">Thêm sản phẩm</a>
                 <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/login}">Đăng nhập</a>
                 <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}" th:text="${currentUser.name}"></span>
             </div>
         </div>
-        <div class="small text-secondary mt-4">© 2026 nhom4tttn</div>
+        <div class="small text-secondary mt-4">© 2026 N4</div>
     </div>
+    <div th:replace="~{fragments/base-popup :: popup}"></div>
+    <script th:src="@{/js/base-popup.js}"></script>
     <script th:src="@{/js/app.js}"></script>
 </footer>
 </body>

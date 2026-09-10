@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${product.name + ' - nhom4tttn'}"></title>
+    <title th:text="${product.name + ' - N4'}"></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
@@ -39,9 +40,21 @@
                     <span th:text="${product.viewCount + ' lượt xem'}"></span>
                     <span th:text="${'Cập nhật ' + product.updatedDateText}"></span>
                 </div>
-                <div class="d-flex gap-2 flex-wrap mt-4">
-                    <span class="badge text-bg-dark p-2" th:if="${product.gender != null}" th:text="${product.gender.label}"></span>
-                    <span class="badge text-bg-secondary p-2" th:if="${product.ageGroup != null}" th:text="${product.ageGroup.label}"></span>
+                <div class="product-detail-commercial mt-4">
+                    <div th:if="${product.quantity > 0}">
+                        <div class="product-detail-price" th:text="${product.priceText}"></div>
+                        <div class="product-detail-stock" th:text="${'Còn ' + product.quantity + ' sản phẩm'}"></div>
+                    </div>
+                    <div th:if="${product.quantity == 0}">
+                        <div class="product-detail-contact-price">Liên hệ</div>
+                        <div class="product-detail-stock">Liên hệ N4 để biết thêm thông tin.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-4" th:if="${!#sets.isEmpty(product.attributes)}">
+                    <span class="badge rounded-pill text-bg-light border text-dark p-2"
+                          th:each="attribute : ${product.attributes}"
+                          th:text="${attribute.parent.name + ': ' + attribute.name}"></span>
                 </div>
                 <hr class="my-4">
                 <div class="product-description" th:text="${product.description}"></div>
