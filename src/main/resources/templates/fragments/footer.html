@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="border-top bg-white mt-5">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="brand-mark">N4</span>
+                    <strong>nhom4tttn</strong>
+                </div>
+                <p class="text-secondary mb-0">Project học tập website bán hàng bằng Spring Boot, Thymeleaf và Bootstrap.</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h6>Mua sắm</h6>
+                <a class="footer-link d-block" th:href="@{/products}">Tất cả sản phẩm</a>
+                <a class="footer-link d-block" th:href="@{/contact}">Liên hệ</a>
+            </div>
+            <div class="col-6 col-md-3">
+                <h6 th:text="${isAdmin ? 'Quản lý tích hợp' : 'Tài khoản'}"></h6>
+                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products}">Quản lý trên catalog</a>
+                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products/new}">Thêm sản phẩm</a>
+                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/login}">Đăng nhập</a>
+                <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}" th:text="${currentUser.name}"></span>
+            </div>
+        </div>
+        <div class="small text-secondary mt-4">© 2026 nhom4tttn</div>
+    </div>
+    <script th:src="@{/js/app.js}"></script>
+</footer>
+</body>
+</html>

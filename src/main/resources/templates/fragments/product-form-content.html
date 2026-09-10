@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="modal-header border-0 pb-0">
+        <div>
+            <span class="eyebrow">QUẢN LÝ SẢN PHẨM</span>
+            <h2 class="modal-title h4 fw-bold mt-2 mb-0" th:text="${form.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}"></h2>
+        </div>
+        <button th:if="${modalMode == true}" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+    </div>
+
+    <div class="modal-body pt-4">
+        <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+        <form th:action="@{/products/save}"
+              th:object="${form}"
+              method="post"
+              enctype="multipart/form-data"
+              class="row g-4">
+            <input type="hidden" th:field="*{id}">
+
+            <div class="col-lg-8">
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Tên sản phẩm *</label>
+                    <input class="form-control form-control-lg"
+                           th:field="*{name}"
+                           maxlength="255"
+                           placeholder="Nhập tên sản phẩm">
+                    <div class="text-danger small mt-1"
+                         th:if="${#fields.hasErrors('name')}"
+                         th:errors="*{name}"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Mô tả *</label>
+                    <textarea class="form-control"
+                              rows="8"
+                              th:field="*{description}"
+                              placeholder="Mô tả chi tiết sản phẩm"></textarea>
+                    <div class="text-danger small mt-1"
+                         th:if="${#fields.hasErrors('description')}"
+                         th:errors="*{description}"></div>
+                </div>
+
+                <div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <label class="form-label fw-semibold mb-0">Ảnh sản phẩm</label>
+                        <span class="small text-secondary">Giữ nguyên tên và định dạng file</span>
+                    </div>
+                    <input class="form-control" type="file" name="imageFiles" multiple accept="image/*">
+                    <div class="form-text">Lưu tại <code>uploads/products/{productId}/tên-file-gốc</code>.</div>
+
+                    <div class="row g-3 mt-2" th:if="${product != null && !#lists.isEmpty(product.images)}">
+                        <div class="col-6 col-md-4" th:each="image : ${product.images}">
+                            <div class="image-admin-card">
+                                <img th:src="${image.url}" th:alt="${image.filename}">
+                                <div class="p-2">
+                                    <div class="small text-truncate" th:text="${image.filename}"></div>
+                                    <label class="form-check mt-2 text-danger small">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               th:field="*{deleteImageIds}"
+                                               th:value="${image.id}">
+                                        Xóa ảnh này
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="product-form-side p-3 rounded-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Danh mục *</label>
+                        <div class="category-checklist">
+                            <div class="mb-3" th:each="root : ${categories}">
+                                <label class="form-check fw-semibold">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           th:field="*{categoryIds}"
+                                           th:value="${root.id}">
+                                    <span th:text="${root.name}"></span>
+                                </label>
+                                <label class="form-check ms-4 mt-2" th:each="child : ${root.children}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           th:field="*{categoryIds}"
+                                           th:value="${child.id}">
+                                    <span th:text="${child.name}"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('categoryIds')}"
+                             th:errors="*{categoryIds}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Giới tính</label>
+                        <select class="form-select" th:field="*{gender}">
+                            <option value="">Không phân loại</option>
+                            <option th:each="item : ${genders}" th:value="${item}" th:text="${item.label}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Độ tuổi</label>
+                        <select class="form-select" th:field="*{ageGroup}">
+                            <option value="">Không phân loại</option>
+                            <option th:each="item : ${ageGroups}" th:value="${item}" th:text="${item.label}"></option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-dark btn-lg rounded-pill" type="submit">Lưu sản phẩm</button>
+                        <a th:if="${form.id != null}"
+                           th:href="@{/products/{id}(id=${form.id})}"
+                           class="btn btn-outline-secondary rounded-pill">Xem sản phẩm</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

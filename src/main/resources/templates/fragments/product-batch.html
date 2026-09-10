@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="batch"
+     class="product-batch"
+     th:attr="data-last=${products.last},data-next-page=${products.number + 1}">
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2 product-load-item" th:each="product : ${products.content}">
+        <article class="product-card h-100 position-relative">
+            <div class="product-admin-actions" th:if="${isAdmin}">
+                <button type="button"
+                        class="btn btn-sm btn-light rounded-circle shadow-sm"
+                        title="Sửa sản phẩm"
+                        aria-label="Sửa sản phẩm"
+                        th:attr="data-product-form-url=@{/products/{id}/form(id=${product.id})}">✎</button>
+                <form th:action="@{/products/{id}/delete(id=${product.id})}"
+                      method="post"
+                      onsubmit="return confirm('Xóa sản phẩm và toàn bộ ảnh?')">
+                    <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm"
+                            type="submit"
+                            title="Xóa sản phẩm"
+                            aria-label="Xóa sản phẩm">×</button>
+                </form>
+            </div>
+
+            <a class="text-decoration-none text-dark d-block"
+               th:href="@{/products/{id}(id=${product.id})}"
+               th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
+                <div class="product-media">
+                    <img th:if="${product.primaryImageUrl != null}"
+                         th:src="${product.primaryImageUrl}"
+                         th:alt="${product.name}"
+                         loading="lazy">
+                    <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">N4</div>
+                </div>
+                <div class="p-3 pb-2">
+                    <h2 class="h6 fw-bold product-card-name mb-0" th:text="${product.name}"></h2>
+                </div>
+            </a>
+
+            <div class="d-flex align-items-center justify-content-between gap-2 border-top px-3 py-2">
+                <a th:href="@{/contact}"
+                   class="btn btn-sm btn-teal rounded-pill px-3">
+                    Liên hệ
+                </a>
+                <span class="small text-secondary text-nowrap" data-product-card-views th:text="${product.viewCount}"></span>
+            </div>
+        </article>
+    </div>
+</div>
+</body>
+</html>

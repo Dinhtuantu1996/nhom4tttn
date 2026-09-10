@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Liên hệ - nhom4tttn</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main>
+    <section class="contact-hero py-5">
+        <div class="container py-lg-5">
+            <span class="eyebrow text-white-50">LIÊN HỆ</span>
+            <h1 class="display-4 fw-bold text-white mt-3">Chúng tôi có thể giúp gì cho bạn?</h1>
+            <p class="lead text-white-50 col-lg-7">Trang liên hệ đơn giản, phù hợp project local và dễ thay thông tin thật sau này.</p>
+        </div>
+    </section>
+    <section class="container py-5">
+        <div class="row g-4">
+            <div class="col-md-4"><div class="info-card p-4 h-100"><span class="eyebrow">EMAIL</span><h2 class="h5 mt-3">nhom4tttn@example.com</h2><p class="text-secondary">Hỗ trợ khách hàng và trao đổi bài tập.</p></div></div>
+            <div class="col-md-4"><div class="info-card p-4 h-100"><span class="eyebrow">ĐIỆN THOẠI</span><h2 class="h5 mt-3">0123 456 789</h2><p class="text-secondary">Thông tin minh họa, có thể sửa trong template.</p></div></div>
+            <div class="col-md-4"><div class="info-card p-4 h-100"><span class="eyebrow">ĐỊA CHỈ</span><h2 class="h5 mt-3">Việt Nam</h2><p class="text-secondary">Project chạy local phục vụ học tập.</p></div></div>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
