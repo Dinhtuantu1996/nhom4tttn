@@ -240,8 +240,8 @@
                         <h3 class="h6 fw-bold product-card-name mb-0" th:text="${product.name}"></h3>
                     </div>
                     <div class="product-card-footer">
-                        <span th:if="${product.quantity == 0}" class="product-card-contact">Liên hệ</span>
-                        <span th:if="${product.quantity > 0}" class="product-card-price" th:text="${product.priceText}"></span>
+                        <span th:if="${!product.displayPriceAvailable}" class="product-card-contact">Liên hệ</span>
+                        <span th:if="${product.displayPriceAvailable}" class="product-card-price" th:text="${product.displayPriceText}"></span>
                         <span class="product-card-views">
                             <span class="product-view-icon" aria-hidden="true"></span>
                             <span th:text="${product.viewCount}"></span>

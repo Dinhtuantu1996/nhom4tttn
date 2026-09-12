@@ -80,6 +80,71 @@
                         </div>
                     </li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
+                    <li class="nav-item dropdown cart-nav-item ms-lg-1">
+                        <button class="cart-trigger"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-expanded="false"
+                                aria-label="Mở giỏ hàng"
+                                data-cart-dropdown-trigger>
+                            <span class="cart-trigger-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="20" r="1.35"></circle>
+                                    <circle cx="18" cy="20" r="1.35"></circle>
+                                    <path d="M3 4h2.2l2.1 9.3a1 1 0 0 0 1 .77h8.73a1 1 0 0 0 .98-.8L19.7 7.5H6.1"></path>
+                                </svg>
+                            </span>
+                            <span class="cart-count-badge" data-cart-count>0</span>
+                        </button>
+
+                        <div class="dropdown-menu dropdown-menu-end cart-mini-menu border-0 p-0" data-cart-dropdown>
+                            <div class="cart-mini-shell">
+                                <div class="cart-mini-header">
+                                    <div>
+                                        <div class="cart-mini-eyebrow">Giỏ hàng của bạn</div>
+                                        <h3 class="cart-mini-title">Xem nhanh sản phẩm đã chọn</h3>
+                                        <p class="cart-mini-subtitle mb-0">Bạn có thể chỉnh số lượng ngay tại đây trước khi đặt hàng.</p>
+                                    </div>
+                                </div>
+
+                                <div class="cart-sync-messages d-none mb-0 px-3 pt-2" data-cart-dropdown-messages></div>
+
+                                <div class="cart-mini-body">
+                                    <div class="cart-loading py-4 text-center text-secondary" data-cart-dropdown-loading>
+                                        Đang tải giỏ hàng...
+                                    </div>
+                                    <div class="d-grid gap-2" data-cart-dropdown-items></div>
+                                    <div class="cart-mini-empty d-none" data-cart-dropdown-empty>
+                                        <div class="cart-mini-empty-icon">N4</div>
+                                        <h4>Giỏ hàng đang trống</h4>
+                                        <p>Hãy chọn vài sản phẩm bạn yêu thích để bắt đầu tạo đơn hàng.</p>
+                                        <a class="btn btn-teal rounded-pill px-4" th:href="@{/products}">Khám phá sản phẩm</a>
+                                    </div>
+                                </div>
+
+                                <div class="cart-mini-footer">
+                                    <div class="cart-mini-summary">
+                                        <div>
+                                            <span class="cart-mini-summary-label">Đang chọn</span>
+                                            <strong data-cart-dropdown-count>0</strong>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="cart-mini-summary-label">Tạm tính</span>
+                                            <strong class="cart-total" data-cart-dropdown-total>0 VNĐ</strong>
+                                        </div>
+                                    </div>
+                                    <div class="cart-mini-actions">
+                                        <button class="btn btn-outline-dark rounded-pill" type="button" data-cart-dropdown-close>Tiếp tục mua sắm</button>
+                                        <a class="btn btn-teal rounded-pill disabled" href="/checkout" data-cart-dropdown-checkout aria-disabled="true">Tiến hành đặt hàng</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item" th:if="${currentUser == null}">
+                        <a class="nav-link" th:href="@{/orders/lookup}">Tra cứu đơn</a>
+                    </li>
                     <li class="nav-item ms-lg-2" th:if="${currentUser == null}">
                         <a class="btn btn-dark rounded-pill px-4" th:href="@{/login}">Đăng nhập</a>
                     </li>
@@ -87,6 +152,9 @@
                         <a class="btn btn-outline-dark rounded-pill dropdown-toggle px-4" href="#" role="button" data-bs-toggle="dropdown" th:text="${currentUser.name}"></a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 p-2">
                             <li><span class="dropdown-item-text small text-secondary" th:text="${currentUser.email}"></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li th:if="${!isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/orders/my}">Đơn hàng của tôi</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><form th:action="@{/logout}" method="post"><button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button></form></li>
                         </ul>

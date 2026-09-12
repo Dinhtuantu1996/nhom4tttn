@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="selector" th:if="${variantDisplay != null and variantDisplay.enabled}"
+     class="product-detail-variants mt-4"
+     data-product-variant-display
+     th:attr="data-variant-type=${variantDisplay.variantType}">
+    <div class="product-detail-variant-head">
+        <div>
+            <span class="eyebrow">BIẾN THỂ</span>
+            <div class="small text-secondary mt-1">Chọn đúng lựa chọn để xem giá và số lượng.</div>
+        </div>
+    </div>
+
+    <div class="product-detail-variant-level"
+         th:each="level : ${variantDisplay.levels}"
+         th:attr="data-variant-level=${level.level}">
+        <div class="product-detail-variant-label" th:text="${level.parentName}"></div>
+        <div class="product-detail-variant-values">
+            <button type="button"
+                    class="product-detail-variant-value"
+                    th:each="value : ${level.values}"
+                    th:text="${value.name}"
+                    th:attr="data-variant-value-id=${value.id},data-level=${level.level}"></button>
+        </div>
+    </div>
+
+    <div class="d-none" data-variant-combination-source>
+        <span th:each="combination : ${variantDisplay.combinations}"
+              data-variant-combination
+              th:attr="data-id=${combination.id},data-values=${combination.valueIdsCsv},data-price=${combination.price},data-price-text=${combination.priceText},data-quantity=${combination.quantity}"></span>
+    </div>
+</div>
+</body>
+</html>

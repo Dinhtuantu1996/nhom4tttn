@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${'ADMIN - ' + review.order.code + ' - N4'}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-5">
+    <div class="mb-4"><a class="text-decoration-none text-secondary" th:href="@{/admin/orders}">← Danh sách đơn hàng</a></div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <span class="eyebrow">ADMIN · CHI TIẾT ĐƠN</span>
+            <h1 class="h2 fw-bold mt-2 mb-1" th:text="${review.order.code}"></h1>
+            <div class="text-secondary" th:text="${'Đặt lúc ' + review.order.createdDateText}"></div>
+        </div>
+        <span class="order-status-badge order-status-badge-lg" th:classappend="${' status-' + #strings.toLowerCase(review.order.status.name())}" th:text="${review.order.status.label}"></span>
+    </div>
+
+    <div class="alert alert-warning" th:if="${review.hasWarnings() and review.order.status.name() == 'PENDING'}">
+        <strong>Cần ADMIN kiểm tra:</strong> Có dòng hàng không còn khớp với catalog hoặc tồn kho hiện tại. Bạn vẫn có thể xác nhận đơn theo quyết định cuối cùng.
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <section class="commerce-card p-4">
+                <h2 class="h5 fw-bold mb-3">Sản phẩm đã chốt trên hóa đơn</h2>
+                <div class="admin-order-lines">
+                    <article class="admin-order-line" th:each="reviewItem : ${review.items}" th:classappend="${reviewItem.hasWarning() ? ' has-warning' : ''}">
+                        <div class="d-flex justify-content-between gap-3 align-items-start">
+                            <div class="min-w-0">
+                                <div class="fw-bold" th:text="${reviewItem.item.productName}"></div>
+                                <div class="small text-secondary mt-1" th:if="${reviewItem.item.variantName != null}" th:text="${reviewItem.item.variantName}"></div>
+                                <div class="small text-secondary mt-1" th:text="${reviewItem.item.unitPriceText + ' × ' + reviewItem.item.quantity}"></div>
+                            </div>
+                            <strong class="text-nowrap" th:text="${reviewItem.item.lineTotalText}"></strong>
+                        </div>
+
+                        <div class="admin-order-stock mt-3">
+                            <span>Kho hiện tại:</span>
+                            <strong th:text="${reviewItem.availableQuantity != null ? reviewItem.availableQuantity : 'Không xác định'}"></strong>
+                            <span th:if="${review.order.status.name() == 'COMPLETED'}">· Đã trừ khi chốt đơn:</span>
+                            <strong th:if="${review.order.status.name() == 'COMPLETED'}" th:text="${reviewItem.item.stockDeductedQuantity}"></strong>
+                        </div>
+
+                        <ul class="admin-order-warnings mt-2 mb-0" th:if="${reviewItem.hasWarning()}">
+                            <li th:each="warning : ${reviewItem.warnings}" th:text="${warning}"></li>
+                        </ul>
+                    </article>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end gap-3 border-top pt-4 mt-4">
+                    <span class="h6 mb-0">Tổng hóa đơn</span>
+                    <strong class="h4 mb-0" th:text="${review.order.totalAmountText}"></strong>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+            <aside class="commerce-card p-4 mb-4">
+                <span class="eyebrow">KHÁCH HÀNG</span>
+                <dl class="order-info-list mt-3 mb-0">
+                    <div><dt>Họ tên</dt><dd th:text="${review.order.customerName}"></dd></div>
+                    <div><dt>Email</dt><dd th:text="${review.order.customerEmail}"></dd></div>
+                    <div><dt>Số điện thoại</dt><dd th:text="${review.order.phone}"></dd></div>
+                    <div><dt>Địa chỉ</dt><dd th:text="${review.order.address}"></dd></div>
+                    <div th:if="${review.order.note != null}"><dt>Ghi chú</dt><dd th:text="${review.order.note}"></dd></div>
+                </dl>
+            </aside>
+
+            <aside class="commerce-card p-4" th:if="${review.order.status.name() == 'PENDING'}">
+                <span class="eyebrow">XỬ LÝ ĐƠN</span>
+                <div class="d-grid gap-2 mt-3">
+                    <form th:action="@{/admin/orders/{id}/complete(id=${review.order.id})}" method="post"
+                          data-order-action-confirm="Xác nhận chốt đơn hoàn thành? Hệ thống sẽ trừ tồn kho hiện có. Nếu thiếu hàng hoặc dữ liệu gốc đã mất, đơn vẫn được hoàn thành theo quyết định của ADMIN.">
+                        <button class="btn btn-dark w-100 rounded-pill" type="submit">Xác nhận chốt đơn</button>
+                    </form>
+                    <form th:action="@{/admin/orders/{id}/cancel(id=${review.order.id})}" method="post"
+                          data-order-action-confirm="Xác nhận hủy đơn đang chờ duyệt này?">
+                        <button class="btn btn-outline-danger w-100 rounded-pill" type="submit">Hủy đơn</button>
+                    </form>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

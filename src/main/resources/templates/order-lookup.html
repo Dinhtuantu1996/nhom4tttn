@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tra cứu đơn hàng - N4</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-5">
+    <section class="commerce-card order-lookup-card mx-auto p-4 p-md-5">
+        <span class="eyebrow">TRA CỨU ĐƠN HÀNG</span>
+        <h1 class="h2 fw-bold mt-2">Xem lại hóa đơn của bạn</h1>
+        <p class="text-secondary">Nhập đúng mã đơn và email đã dùng khi đặt hàng. Cách này giúp bảo vệ thông tin nhận hàng của bạn.</p>
+
+        <div class="alert alert-danger" th:if="${lookupError}" th:text="${lookupError}"></div>
+        <form method="post" th:attr="action=@{/orders/lookup}" class="d-grid gap-3 mt-4">
+            <div>
+                <label class="form-label fw-semibold" for="lookupCode">Mã đơn hàng</label>
+                <input class="form-control form-control-lg text-uppercase" id="lookupCode" name="code" required maxlength="40"
+                       th:value="${lookupCode}" placeholder="N4-20260912-ABC123">
+            </div>
+            <div>
+                <label class="form-label fw-semibold" for="lookupEmail">Email đặt hàng</label>
+                <input class="form-control form-control-lg" id="lookupEmail" name="email" type="email" required maxlength="180"
+                       th:value="${lookupEmail}" placeholder="ban@email.com">
+            </div>
+            <button class="btn btn-dark btn-lg rounded-pill mt-2" type="submit">Tra cứu</button>
+        </form>
+        <div class="small text-secondary mt-4" th:if="${currentUser != null}">
+            Bạn đã đăng nhập. <a th:href="@{/orders/my}">Xem tất cả đơn hàng cùng email tài khoản</a>.
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

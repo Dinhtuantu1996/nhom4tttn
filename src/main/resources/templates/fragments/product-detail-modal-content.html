@@ -46,7 +46,8 @@
                      th:if="${#lists.isEmpty(product.images)}">N4</div>
             </div>
 
-            <div class="col-lg-5">
+            <div class="col-lg-5" data-product-detail-scope
+                 th:attr="data-product-id=${product.id},data-product-variant-type=${product.variantType},data-product-quantity=${product.quantity}">
                 <div class="d-flex flex-wrap gap-2 mb-3" th:if="${!#sets.isEmpty(product.categories)}">
                     <a class="badge rounded-pill text-bg-light border text-decoration-none text-dark"
                        th:each="category : ${product.categories}"
@@ -61,16 +62,20 @@
                     <span th:text="${'Cập nhật ' + product.updatedDateText}"></span>
                 </div>
 
-                <div class="product-detail-commercial mt-4">
-                    <div th:if="${product.quantity > 0}">
-                        <div class="product-detail-price" th:text="${product.priceText}"></div>
-                        <div class="product-detail-stock" th:text="${'Còn ' + product.quantity + ' sản phẩm'}"></div>
-                    </div>
-                    <div th:if="${product.quantity == 0}">
-                        <div class="product-detail-contact-price">Liên hệ</div>
-                        <div class="product-detail-stock">Liên hệ N4 để biết thêm thông tin.</div>
-                    </div>
+                <div class="product-detail-commercial mt-4"
+                     data-product-commercial
+                     th:classappend="${product.variantType > 0 ? ' variant-price-pending' : ''}"
+                     th:attr="data-default-price-text=${product.displayPriceAvailable ? product.displayPriceText : 'Liên hệ'},data-default-available=${product.displayPriceAvailable},data-variant-type=${product.variantType}">
+                    <div data-product-price
+                         th:class="${product.displayPriceAvailable ? 'product-detail-price' : 'product-detail-contact-price'}"
+                         th:text="${product.displayPriceAvailable ? product.displayPriceText : 'Liên hệ'}"></div>
+                    <div class="product-detail-stock" data-product-stock
+                         th:text="${product.variantType == 0
+                             ? (product.quantity > 0 ? 'Còn ' + product.quantity + ' sản phẩm' : 'Liên hệ N4 để biết thêm thông tin.')
+                             : (product.displayPriceAvailable ? 'Chọn biến thể để xem giá và số lượng.' : 'Hiện chưa có biến thể còn hàng.')}"></div>
                 </div>
+
+                <div th:replace="~{fragments/product-variant-display :: selector}"></div>
 
                 <div class="d-flex gap-2 flex-wrap mt-3" th:if="${!#sets.isEmpty(product.attributes)}">
                     <span class="badge rounded-pill text-bg-light border text-dark p-2"
@@ -82,7 +87,13 @@
                 <div class="product-description" th:text="${product.description}"></div>
 
                 <div class="d-grid gap-2 mt-4">
-                    <a th:href="@{/contact}" class="btn btn-dark btn-lg rounded-pill">Liên hệ hỏi mua</a>
+                    <button type="button"
+                            class="btn btn-teal btn-lg rounded-pill"
+                            data-add-to-cart
+                            th:disabled="${product.variantType == 0 ? product.quantity <= 0 : true}">
+                        Thêm vào giỏ hàng
+                    </button>
+                    <a th:href="@{/contact}" class="btn btn-outline-dark rounded-pill">Liên hệ hỏi mua</a>
                 </div>
             </div>
         </div>

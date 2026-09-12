@@ -19,13 +19,19 @@
             <p class="text-secondary mb-0" th:text="${products.totalElements + ' sản phẩm phù hợp'}"></p>
         </div>
         <div class="d-flex flex-wrap gap-2" th:if="${isAdmin}">
-            <button type="button" class="btn btn-outline-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#categoryModal" data-category-manager-open>Quản lý danh mục</button>
+            <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
+            <button type="button" class="btn btn-outline-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#categoryModal">Quản lý danh mục</button>
             <button type="button"
                     class="btn btn-outline-dark rounded-pill px-4"
                     data-bs-toggle="modal"
-                    data-bs-target="#attributeModal"
-                    data-attribute-manager-open>
+                    data-bs-target="#attributeModal">
                 Quản lý thuộc tính
+            </button>
+            <button type="button"
+                    class="btn btn-outline-dark rounded-pill px-4"
+                    data-bs-toggle="modal"
+                    data-bs-target="#variantModal">
+                Quản lý biến thể
             </button>
             <button type="button"
                     class="btn btn-primary rounded-pill px-4"
@@ -157,6 +163,60 @@
                 </div>
             </div>
 
+            <div class="filter-field filter-field-variant" th:if="${!#lists.isEmpty(variants)}">
+                <label class="filter-label">Biến thể</label>
+                <div class="filter-combobox" data-filter-combobox data-variant-filter>
+                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                        <span class="filter-combobox-value" data-variant-label>Tất cả biến thể</span>
+                        <span class="filter-combobox-count d-none" data-variant-count></span>
+                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-combobox-menu attribute-tree-menu" data-filter-combobox-menu>
+                        <div class="attribute-tree-toolbar">
+                            <div>
+                                <div class="fw-bold">Chọn biến thể</div>
+                                <div class="small text-secondary">Hiển thị toàn bộ biến thể đang cấu hình.</div>
+                            </div>
+                            <button type="button" class="attribute-tree-clear" data-variant-clear>Xóa chọn</button>
+                        </div>
+                        <div class="filter-combobox-search-wrap">
+                            <input type="search" class="filter-combobox-search" placeholder="Tìm biến thể hoặc giá trị..." autocomplete="off" data-variant-search>
+                        </div>
+                        <div class="attribute-tree" data-variant-tree>
+                            <div class="attribute-tree-group"
+                                 th:each="root : ${variants}"
+                                 th:if="${!#lists.isEmpty(root.children)}"
+                                 data-variant-group
+                                 th:attr="data-search-text=${root.name}">
+                                <div class="attribute-tree-root-row">
+                                    <label class="attribute-tree-root-check">
+                                        <input type="checkbox" class="form-check-input m-0" data-variant-root-check>
+                                        <span th:text="${root.name}"></span>
+                                    </label>
+                                    <button type="button" class="attribute-tree-toggle" aria-expanded="true" data-variant-tree-toggle>
+                                        <span class="tree-toggle-chevron" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="attribute-tree-children">
+                                    <label class="attribute-tree-value"
+                                           th:each="child : ${root.children}"
+                                           th:attr="data-search-text=${child.name}">
+                                        <input class="form-check-input m-0"
+                                               type="checkbox"
+                                               name="variantIds"
+                                               th:value="${child.id}"
+                                               th:checked="${#lists.contains(variantIds, child.id)}"
+                                               data-variant-child>
+                                        <span th:text="${child.name}"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="filter-combobox-empty d-none" data-variant-empty>Không tìm thấy biến thể.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="filter-field filter-field-sort">
                 <label class="filter-label">Sắp xếp</label>
                 <div class="filter-combobox" data-filter-combobox data-sort-filter>
@@ -228,188 +288,385 @@
 
 </main>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable category-manager-dialog">
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}"
+     data-hierarchy-manager
+     data-save-url="/categories/save"
+     data-delete-base="/categories"
+     data-root-label="danh mục"
+     data-child-label="danh mục con"
+     data-root-create-label="Thêm danh mục"
+     data-root-edit-label="Lưu danh mục"
+     data-child-create-label="Thêm danh mục con"
+     data-child-edit-label="Lưu danh mục con"
+     data-success-fallback="Cập nhật danh mục thành công."
+     data-error-fallback="Không thể cập nhật danh mục. Hãy thử lại.">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <div><span class="eyebrow">QUẢN LÝ DANH MỤC</span><h2 class="modal-title h4 fw-bold mt-2 mb-1">Danh mục sản phẩm</h2><p class="text-secondary mb-0 small">Quản lý danh mục lớn và danh mục con ngay tại đây.</p></div>
+                <div>
+                    <span class="eyebrow">QUẢN LÝ DANH MỤC</span>
+                    <h2 class="modal-title h4 fw-bold mt-2 mb-1">Danh mục sản phẩm</h2>
+                    <p class="text-secondary mb-0 small">Mục cha chỉnh ở phía trên; mục con được quản lý ngay trong từng nhóm bên dưới.</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
-            <div class="modal-body pt-4 category-manager-scroll">
-                <div class="category-manager-stack">
-                    <div class="category-manager-panel category-editor-panel">
-                        <span class="eyebrow" data-category-editor-eyebrow>THÊM MỚI</span>
-                        <h3 class="h5 fw-bold mt-2" data-category-modal-title>Thêm danh mục</h3>
-                        <p class="small text-secondary mb-4" data-category-editor-help>Tạo danh mục lớn hoặc chọn danh mục cha để tạo danh mục con.</p>
-                        <form th:action="@{/categories/save}" method="post" data-category-form>
-                            <input type="hidden" name="id" data-category-id-input>
-                            <div class="mb-3"><label class="form-label fw-semibold">Tên danh mục</label><input class="form-control" type="text" name="name" required maxlength="255" data-category-name-input placeholder="Ví dụ: Thời trang"></div>
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">Danh mục cha</label>
-                                <div class="filter-combobox manager-select-combo" data-managed-select-combo>
-                                    <select class="visually-hidden" name="parentId" data-category-parent-input data-managed-select-native tabindex="-1" aria-hidden="true">
-                                        <option value="">Không có - danh mục lớn</option>
-                                        <option th:each="root : ${categories}" th:value="${root.id}" th:text="${root.name}"></option>
-                                    </select>
-                                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-managed-select-trigger>
-                                        <span class="filter-combobox-value" data-managed-select-label>Không có - danh mục lớn</span>
-                                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
-                                    </button>
-                                    <div class="filter-combobox-menu manager-select-menu" data-managed-select-menu>
-                                        <div class="filter-combobox-options" data-managed-select-options></div>
+            <div class="modal-body pt-4 hierarchy-manager-scroll">
+                <div class="hierarchy-manager-stack">
+                    <section class="hierarchy-manager-panel hierarchy-root-editor" data-hierarchy-root-editor>
+                        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+                            <div>
+                                <span class="eyebrow" data-hierarchy-root-eyebrow>THÊM MỤC CHA</span>
+                                <h3 class="h6 fw-bold mt-2 mb-1" data-hierarchy-root-title>Thêm danh mục</h3>
+                                <p class="small text-secondary mb-0">Chỉ tạo hoặc đổi tên danh mục cha tại đây.</p>
+                            </div>
+                        </div>
+                        <form th:action="@{/categories/save}" method="post" data-hierarchy-root-form>
+                            <input type="hidden" name="id" data-hierarchy-root-id>
+                            <input type="hidden" name="parentId" value="">
+                            <div class="hierarchy-root-form-row">
+                                <div class="flex-grow-1">
+                                    <label class="form-label fw-semibold" for="categoryRootName">Tên danh mục</label>
+                                    <input id="categoryRootName" class="form-control" type="text" name="name" required maxlength="255"
+                                           data-hierarchy-root-name placeholder="Ví dụ: Thời trang">
+                                </div>
+                                <div class="hierarchy-root-form-actions">
+                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel>Hủy sửa</button>
+                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-hierarchy-root-save>Thêm danh mục</button>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+
+                    <section class="hierarchy-manager-panel">
+                        <div class="hierarchy-manager-list-header">
+                            <div>
+                                <h3 class="h6 fw-bold mb-1">Danh sách danh mục</h3>
+                                <p class="small text-secondary mb-0">Thêm, sửa và xóa mục con ngay trong từng danh mục cha.</p>
+                            </div>
+                            <div class="hierarchy-manager-search-wrap">
+                                <input type="search" class="form-control form-control-sm" placeholder="Tìm danh mục..." autocomplete="off" data-hierarchy-search>
+                            </div>
+                        </div>
+
+                        <div data-hierarchy-list>
+                            <div class="text-center text-secondary py-5" th:if="${#lists.isEmpty(categories)}">
+                                Chưa có danh mục. Hãy tạo danh mục đầu tiên.
+                            </div>
+
+                            <article class="hierarchy-manager-group" th:each="root : ${categories}"
+                                     data-hierarchy-root
+                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}">
+                                <header class="hierarchy-manager-root-row">
+                                    <div class="hierarchy-manager-root-info">
+                                        <div class="hierarchy-manager-root-name" th:text="${root.name}"></div>
+                                        <div class="hierarchy-manager-root-meta">
+                                            <span th:text="${#lists.size(root.children)} + ' mục con'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="hierarchy-manager-root-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                data-hierarchy-root-edit
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Sửa</button>
+                                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3"
+                                                data-hierarchy-child-add
+                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}">+ Mục con</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                data-hierarchy-delete
+                                                data-item-kind="root"
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Xóa</button>
+                                    </div>
+                                </header>
+
+                                <form th:action="@{/categories/save}" method="post" class="hierarchy-child-editor d-none"
+                                      data-hierarchy-child-form
+                                      th:attr="data-parent-id=${root.id}">
+                                    <input type="hidden" name="id" data-hierarchy-child-id>
+                                    <input type="hidden" name="parentId" th:value="${root.id}">
+                                    <div class="hierarchy-child-editor-row">
+                                        <div class="flex-grow-1">
+                                            <label class="form-label small fw-semibold mb-1" data-hierarchy-child-editor-label>Thêm danh mục con</label>
+                                            <input class="form-control form-control-sm" type="text" name="name" required maxlength="255"
+                                                   data-hierarchy-child-name placeholder="Nhập tên mục con">
+                                        </div>
+                                        <div class="hierarchy-child-editor-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-child-cancel>Hủy</button>
+                                            <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save>Thêm danh mục con</button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="hierarchy-manager-children" th:if="${!#lists.isEmpty(root.children)}">
+                                    <div class="hierarchy-manager-child-row" th:each="child : ${root.children}"
+                                         data-hierarchy-child
+                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}">
+                                        <span class="hierarchy-manager-child-name" th:text="${child.name}"></span>
+                                        <div class="hierarchy-manager-child-actions">
+                                            <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none"
+                                                    data-hierarchy-child-edit
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}">Sửa</button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none"
+                                                    data-hierarchy-delete
+                                                    data-item-kind="child"
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}">Xóa</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-text">Danh mục hỗ trợ tối đa 2 cấp: danh mục lớn → danh mục con.</div>
-                            </div>
-                            <div class="d-flex flex-wrap justify-content-between gap-2"><button type="button" class="btn btn-outline-danger rounded-pill px-3 d-none" data-category-delete-trigger>Xóa</button><div class="d-flex gap-2 ms-auto"><button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-category-reset>Làm mới</button><button class="btn btn-dark rounded-pill px-4" type="submit" data-category-save-label>Thêm danh mục</button></div></div>
-                        </form>
-                        <form th:action="@{/categories/0/delete}" method="post" class="d-none" data-category-delete-form></form>
-                    </div>
-                    <div class="category-manager-panel">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div><h3 class="h6 fw-bold mb-1">Danh sách danh mục</h3><p class="small text-secondary mb-0">Bấm vào danh mục để chỉnh sửa.</p></div><button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" data-category-create>+ Thêm danh mục</button></div>
-                        <div data-category-list>
-                            <div class="category-manager-group" th:each="root : ${categories}">
-                                <div class="category-manager-root-row"><button type="button" class="category-manager-item category-manager-root" data-category-edit th:attr="data-category-id=${root.id},data-category-name=${root.name},data-category-parent-id=''" th:text="${root.name}"></button><button type="button" class="btn btn-sm btn-link text-decoration-none" data-category-create-child th:attr="data-category-parent-id=${root.id},data-category-parent-name=${root.name}">+ Danh mục con</button></div>
-                                <div class="category-manager-values" th:if="${!#lists.isEmpty(root.children)}"><button type="button" class="category-manager-item category-manager-child" th:each="child : ${root.children}" data-category-edit th:attr="data-category-id=${child.id},data-category-name=${child.name},data-category-parent-id=${root.id}" th:text="${child.name}"></button></div>
-                                <div class="small text-secondary ps-3 pb-2" th:if="${#lists.isEmpty(root.children)}">Chưa có danh mục con.</div>
-                            </div>
-                            <div class="text-center text-secondary py-4" th:if="${#lists.isEmpty(categories)}">Chưa có danh mục.</div>
+                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">Chưa có danh mục con.</div>
+                            </article>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="attributeModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable attribute-manager-dialog">
+<div class="modal fade" id="attributeModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}"
+     data-hierarchy-manager
+     data-save-url="/attributes/save"
+     data-delete-base="/attributes"
+     data-root-label="thuộc tính"
+     data-child-label="giá trị"
+     data-root-create-label="Thêm thuộc tính"
+     data-root-edit-label="Lưu thuộc tính"
+     data-child-create-label="Thêm giá trị"
+     data-child-edit-label="Lưu giá trị"
+     data-success-fallback="Cập nhật thuộc tính thành công."
+     data-error-fallback="Không thể cập nhật thuộc tính. Hãy thử lại.">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
                 <div>
                     <span class="eyebrow">QUẢN LÝ THUỘC TÍNH</span>
                     <h2 class="modal-title h4 fw-bold mt-2 mb-1">Thuộc tính sản phẩm</h2>
-                    <p class="text-secondary mb-0 small">Quản lý thuộc tính lớn và các giá trị con ngay tại đây.</p>
+                    <p class="text-secondary mb-0 small">Thuộc tính cha chỉnh ở phía trên; các giá trị được quản lý ngay trong từng nhóm.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
-
-            <div class="modal-body pt-4 attribute-manager-scroll">
-                <div class="attribute-manager-stack">
-                    <div class="attribute-manager-panel attribute-editor-panel">
-                        <span class="eyebrow" data-attribute-editor-eyebrow>THÊM MỚI</span>
-                        <h3 class="h5 fw-bold mt-2" data-attribute-modal-title>Thêm thuộc tính</h3>
-                        <p class="small text-secondary mb-4" data-attribute-editor-help>
-                            Tạo thuộc tính lớn như Màu sắc, Kích thước, Chất liệu...
-                        </p>
-
-                        <form th:action="@{/attributes/save}" method="post" data-attribute-form>
-                            <input type="hidden" name="id" data-attribute-id-input>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Tên thuộc tính / giá trị</label>
-                                <input class="form-control"
-                                       type="text"
-                                       name="name"
-                                       required
-                                       maxlength="255"
-                                       data-attribute-name-input
-                                       placeholder="Ví dụ: Màu sắc hoặc Đen">
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">Thuộc tính cha</label>
-                                <div class="filter-combobox manager-select-combo" data-managed-select-combo>
-                                    <select class="visually-hidden" name="parentId" data-attribute-parent-input data-managed-select-native tabindex="-1" aria-hidden="true">
-                                        <option value="">Không có - thuộc tính lớn</option>
-                                        <option th:each="root : ${attributes}"
-                                                th:value="${root.id}"
-                                                th:text="${root.name}"></option>
-                                    </select>
-                                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-managed-select-trigger>
-                                        <span class="filter-combobox-value" data-managed-select-label>Không có - thuộc tính lớn</span>
-                                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
-                                    </button>
-                                    <div class="filter-combobox-menu manager-select-menu" data-managed-select-menu>
-                                        <div class="filter-combobox-options" data-managed-select-options></div>
-                                    </div>
+            <div class="modal-body pt-4 hierarchy-manager-scroll">
+                <div class="hierarchy-manager-stack">
+                    <section class="hierarchy-manager-panel hierarchy-root-editor" data-hierarchy-root-editor>
+                        <div class="mb-3">
+                            <span class="eyebrow" data-hierarchy-root-eyebrow>THÊM MỤC CHA</span>
+                            <h3 class="h6 fw-bold mt-2 mb-1" data-hierarchy-root-title>Thêm thuộc tính</h3>
+                            <p class="small text-secondary mb-0">Tạo hoặc đổi tên thuộc tính cha như Màu sắc, Kích thước, Chất liệu...</p>
+                        </div>
+                        <form th:action="@{/attributes/save}" method="post" data-hierarchy-root-form>
+                            <input type="hidden" name="id" data-hierarchy-root-id>
+                            <input type="hidden" name="parentId" value="">
+                            <div class="hierarchy-root-form-row">
+                                <div class="flex-grow-1">
+                                    <label class="form-label fw-semibold" for="attributeRootName">Tên thuộc tính</label>
+                                    <input id="attributeRootName" class="form-control" type="text" name="name" required maxlength="255"
+                                           data-hierarchy-root-name placeholder="Ví dụ: Màu sắc">
                                 </div>
-                                <div class="form-text">Để trống khi tạo thuộc tính lớn. Chọn một thuộc tính cha khi tạo giá trị.</div>
-                            </div>
-
-                            <div class="d-flex flex-wrap justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-outline-danger rounded-pill px-3 d-none"
-                                        data-attribute-delete-trigger>
-                                    Xóa
-                                </button>
-                                <div class="d-flex gap-2 ms-auto">
-                                    <button type="button"
-                                            class="btn btn-outline-secondary rounded-pill px-3"
-                                            data-attribute-reset>
-                                        Làm mới
-                                    </button>
-                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-attribute-save-label>
-                                        Thêm
-                                    </button>
+                                <div class="hierarchy-root-form-actions">
+                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel>Hủy sửa</button>
+                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-hierarchy-root-save>Thêm thuộc tính</button>
                                 </div>
                             </div>
                         </form>
+                    </section>
 
-                        <form th:action="@{/attributes/0/delete}" method="post" class="d-none" data-attribute-delete-form></form>
-                    </div>
-
-                    <div class="attribute-manager-panel">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <section class="hierarchy-manager-panel">
+                        <div class="hierarchy-manager-list-header">
                             <div>
-                                <div class="fw-bold">Danh sách thuộc tính</div>
-                                <div class="small text-secondary">Bấm vào một thuộc tính hoặc giá trị để chỉnh sửa.</div>
+                                <h3 class="h6 fw-bold mb-1">Danh sách thuộc tính</h3>
+                                <p class="small text-secondary mb-0">Mỗi khung là một thuộc tính cha; thêm và sửa giá trị ngay tại khung đó.</p>
                             </div>
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-dark rounded-pill px-3"
-                                    data-attribute-create-root>
-                                + Thêm thuộc tính
-                            </button>
+                            <div class="hierarchy-manager-search-wrap">
+                                <input type="search" class="form-control form-control-sm" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-hierarchy-search>
+                            </div>
                         </div>
 
-                        <div data-attribute-manager-list>
+                        <div data-hierarchy-list>
                             <div class="text-center text-secondary py-5" th:if="${#lists.isEmpty(attributes)}">
                                 Chưa có thuộc tính. Hãy tạo thuộc tính đầu tiên.
                             </div>
 
-                            <div class="attribute-manager-group" th:each="root : ${attributes}">
-                                <div class="attribute-manager-root-row">
-                                    <button type="button"
-                                            class="attribute-manager-item attribute-manager-root"
-                                            data-attribute-edit
-                                            th:attr="data-attribute-id=${root.id},data-attribute-name=${root.name},data-attribute-parent-id=''">
-                                        <span class="fw-semibold" th:text="${root.name}"></span>
-                                        <span class="badge rounded-pill text-bg-light border">Thuộc tính</span>
-                                    </button>
-                                    <button type="button"
-                                            class="btn btn-sm btn-light rounded-pill px-3"
-                                            title="Thêm giá trị"
-                                            data-attribute-create-child
-                                            th:attr="data-attribute-parent-id=${root.id},data-attribute-parent-name=${root.name}">
-                                        + Giá trị
-                                    </button>
-                                </div>
+                            <article class="hierarchy-manager-group" th:each="root : ${attributes}"
+                                     data-hierarchy-root
+                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}">
+                                <header class="hierarchy-manager-root-row">
+                                    <div class="hierarchy-manager-root-info">
+                                        <div class="hierarchy-manager-root-name" th:text="${root.name}"></div>
+                                        <div class="hierarchy-manager-root-meta"><span th:text="${#lists.size(root.children)} + ' giá trị'"></span></div>
+                                    </div>
+                                    <div class="hierarchy-manager-root-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                data-hierarchy-root-edit
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Sửa</button>
+                                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3"
+                                                data-hierarchy-child-add
+                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}">+ Giá trị</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                data-hierarchy-delete data-item-kind="root"
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Xóa</button>
+                                    </div>
+                                </header>
 
-                                <div class="attribute-manager-values" th:if="${!#lists.isEmpty(root.children)}">
-                                    <button type="button"
-                                            class="attribute-manager-item attribute-manager-child"
-                                            th:each="child : ${root.children}"
-                                            data-attribute-edit
-                                            th:attr="data-attribute-id=${child.id},data-attribute-name=${child.name},data-attribute-parent-id=${root.id}">
-                                        <span th:text="${child.name}"></span>
-                                    </button>
+                                <form th:action="@{/attributes/save}" method="post" class="hierarchy-child-editor d-none"
+                                      data-hierarchy-child-form th:attr="data-parent-id=${root.id}">
+                                    <input type="hidden" name="id" data-hierarchy-child-id>
+                                    <input type="hidden" name="parentId" th:value="${root.id}">
+                                    <div class="hierarchy-child-editor-row">
+                                        <div class="flex-grow-1">
+                                            <label class="form-label small fw-semibold mb-1" data-hierarchy-child-editor-label>Thêm giá trị</label>
+                                            <input class="form-control form-control-sm" type="text" name="name" required maxlength="255"
+                                                   data-hierarchy-child-name placeholder="Ví dụ: Đen">
+                                        </div>
+                                        <div class="hierarchy-child-editor-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-child-cancel>Hủy</button>
+                                            <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save>Thêm giá trị</button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="hierarchy-manager-children" th:if="${!#lists.isEmpty(root.children)}">
+                                    <div class="hierarchy-manager-child-row" th:each="child : ${root.children}"
+                                         data-hierarchy-child
+                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}">
+                                        <span class="hierarchy-manager-child-name" th:text="${child.name}"></span>
+                                        <div class="hierarchy-manager-child-actions">
+                                            <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none"
+                                                    data-hierarchy-child-edit
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}">Sửa</button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none"
+                                                    data-hierarchy-delete data-item-kind="child"
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}">Xóa</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="small text-secondary ps-3 pb-2" th:if="${#lists.isEmpty(root.children)}">
-                                    Chưa có giá trị.
+                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">Chưa có giá trị.</div>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="variantModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}"
+     data-hierarchy-manager
+     data-save-url="/variants/save"
+     data-delete-base="/variants"
+     data-root-label="biến thể"
+     data-child-label="giá trị"
+     data-root-create-label="Thêm biến thể"
+     data-root-edit-label="Lưu biến thể"
+     data-child-create-label="Thêm giá trị"
+     data-child-edit-label="Lưu giá trị"
+     data-success-fallback="Cập nhật biến thể thành công."
+     data-error-fallback="Không thể cập nhật biến thể. Hãy thử lại.">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable hierarchy-manager-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <span class="eyebrow">QUẢN LÝ BIẾN THỂ</span>
+                    <h2 class="modal-title h4 fw-bold mt-2 mb-1">Biến thể sản phẩm</h2>
+                    <p class="text-secondary mb-0 small">Biến thể cha chỉnh ở phía trên; các giá trị được quản lý ngay trong từng nhóm.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body pt-4 hierarchy-manager-scroll">
+                <div class="hierarchy-manager-stack">
+                    <section class="hierarchy-manager-panel hierarchy-root-editor" data-hierarchy-root-editor>
+                        <div class="mb-3">
+                            <span class="eyebrow" data-hierarchy-root-eyebrow>THÊM MỤC CHA</span>
+                            <h3 class="h6 fw-bold mt-2 mb-1" data-hierarchy-root-title>Thêm biến thể</h3>
+                            <p class="small text-secondary mb-0">Tạo hoặc đổi tên nhóm biến thể như Màu sắc, Kích cỡ...</p>
+                        </div>
+                        <form th:action="@{/variants/save}" method="post" data-hierarchy-root-form>
+                            <input type="hidden" name="id" data-hierarchy-root-id>
+                            <input type="hidden" name="parentId" value="">
+                            <div class="hierarchy-root-form-row">
+                                <div class="flex-grow-1">
+                                    <label class="form-label fw-semibold" for="variantRootName">Tên biến thể</label>
+                                    <input id="variantRootName" class="form-control" type="text" name="name" required maxlength="255"
+                                           data-hierarchy-root-name placeholder="Ví dụ: Kích cỡ">
+                                </div>
+                                <div class="hierarchy-root-form-actions">
+                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel>Hủy sửa</button>
+                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-hierarchy-root-save>Thêm biến thể</button>
                                 </div>
                             </div>
+                        </form>
+                    </section>
+
+                    <section class="hierarchy-manager-panel">
+                        <div class="hierarchy-manager-list-header">
+                            <div>
+                                <h3 class="h6 fw-bold mb-1">Danh sách biến thể</h3>
+                                <p class="small text-secondary mb-0">Mỗi khung là một biến thể cha; thêm và sửa giá trị ngay tại khung đó.</p>
+                            </div>
+                            <div class="hierarchy-manager-search-wrap">
+                                <input type="search" class="form-control form-control-sm" placeholder="Tìm biến thể hoặc giá trị..." autocomplete="off" data-hierarchy-search>
+                            </div>
                         </div>
-                    </div>
+
+                        <div data-hierarchy-list>
+                            <div class="text-center text-secondary py-5" th:if="${#lists.isEmpty(variants)}">
+                                Chưa có biến thể. Hãy tạo biến thể đầu tiên.
+                            </div>
+
+                            <article class="hierarchy-manager-group" th:each="root : ${variants}"
+                                     data-hierarchy-root
+                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}">
+                                <header class="hierarchy-manager-root-row">
+                                    <div class="hierarchy-manager-root-info">
+                                        <div class="hierarchy-manager-root-name" th:text="${root.name}"></div>
+                                        <div class="hierarchy-manager-root-meta"><span th:text="${#lists.size(root.children)} + ' giá trị'"></span></div>
+                                    </div>
+                                    <div class="hierarchy-manager-root-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                data-hierarchy-root-edit
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Sửa</button>
+                                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3"
+                                                data-hierarchy-child-add
+                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}">+ Giá trị</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                data-hierarchy-delete data-item-kind="root"
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Xóa</button>
+                                    </div>
+                                </header>
+
+                                <form th:action="@{/variants/save}" method="post" class="hierarchy-child-editor d-none"
+                                      data-hierarchy-child-form th:attr="data-parent-id=${root.id}">
+                                    <input type="hidden" name="id" data-hierarchy-child-id>
+                                    <input type="hidden" name="parentId" th:value="${root.id}">
+                                    <div class="hierarchy-child-editor-row">
+                                        <div class="flex-grow-1">
+                                            <label class="form-label small fw-semibold mb-1" data-hierarchy-child-editor-label>Thêm giá trị</label>
+                                            <input class="form-control form-control-sm" type="text" name="name" required maxlength="255"
+                                                   data-hierarchy-child-name placeholder="Ví dụ: M">
+                                        </div>
+                                        <div class="hierarchy-child-editor-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-child-cancel>Hủy</button>
+                                            <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save>Thêm giá trị</button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="hierarchy-manager-children" th:if="${!#lists.isEmpty(root.children)}">
+                                    <div class="hierarchy-manager-child-row" th:each="child : ${root.children}"
+                                         data-hierarchy-child
+                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}">
+                                        <span class="hierarchy-manager-child-name" th:text="${child.name}"></span>
+                                        <div class="hierarchy-manager-child-actions">
+                                            <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none"
+                                                    data-hierarchy-child-edit
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}">Sửa</button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none"
+                                                    data-hierarchy-delete data-item-kind="child"
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}">Xóa</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">Chưa có giá trị.</div>
+                            </article>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -420,6 +677,14 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 rounded-4 shadow" data-product-detail-content>
             <div class="modal-body py-5 text-center text-secondary">Đang tải chi tiết...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="productVariantModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable product-variant-dialog">
+        <div class="modal-content border-0 rounded-4 shadow" data-product-variant-modal-content>
+            <div class="modal-body py-5 text-center text-secondary">Đang tải biến thể...</div>
         </div>
     </div>
 </div>

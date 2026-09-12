@@ -50,12 +50,12 @@ public class AttributeService {
             throw new IllegalArgumentException("Ten thuoc tinh/gia tri da ton tai cung cap.");
         }
 
-        if (id != null && attribute.isRoot() && parent != null && attributeRepository.existsByParent_Id(id)) {
-            throw new IllegalArgumentException("Khong the doi thuoc tinh dang co gia tri thanh gia tri con.");
-        }
-
-        if (id != null && !attribute.isRoot() && parent == null && productRepository.existsByAttributes_Id(id)) {
-            throw new IllegalArgumentException("Khong the doi gia tri dang duoc san pham su dung thanh thuoc tinh lon.");
+        if (id != null && !sameParent(attribute.getParent(), parent)) {
+            throw new IllegalArgumentException(
+                    attribute.isRoot()
+                            ? "Không thể đổi thuộc tính lớn thành giá trị con."
+                            : "Không thể đổi nhóm cha của giá trị thuộc tính."
+            );
         }
 
         attribute.setName(name);

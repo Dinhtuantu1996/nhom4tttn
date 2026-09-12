@@ -45,6 +45,14 @@ public class Product {
     @Setter
     private int quantity = 0;
 
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Setter
+    private int variantType = 0;
+
+    @Transient
+    @Setter
+    private BigDecimal displayPrice;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "product_categories",
@@ -79,6 +87,7 @@ public class Product {
     void prePersist() {
         if (price == null) price = BigDecimal.ZERO;
         if (quantity < 0) quantity = 0;
+        if (variantType < 0 || variantType > 2) variantType = 0;
         createdDate = LocalDateTime.now();
         updatedDate = createdDate;
     }
@@ -97,7 +106,20 @@ public class Product {
     }
 
     public String getPriceText() {
-        BigDecimal safePrice = price == null ? BigDecimal.ZERO : price;
+        return formatPrice(price);
+    }
+
+    public boolean isDisplayPriceAvailable() {
+        return variantType == 0 ? quantity > 0 : displayPrice != null;
+    }
+
+    public String getDisplayPriceText() {
+        BigDecimal value = variantType == 0 ? price : displayPrice;
+        return formatPrice(value);
+    }
+
+    private String formatPrice(BigDecimal value) {
+        BigDecimal safePrice = value == null ? BigDecimal.ZERO : value;
         return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safePrice) + " VNĐ";
     }
 }

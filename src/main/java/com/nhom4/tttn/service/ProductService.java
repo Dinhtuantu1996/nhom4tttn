@@ -5,11 +5,15 @@ import com.nhom4.tttn.dto.ProductImage;
 import com.nhom4.tttn.entity.Attribute;
 import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.entity.Product;
+import com.nhom4.tttn.entity.ProductVariant;
+import com.nhom4.tttn.entity.Variant;
 import com.nhom4.tttn.repository.AttributeRepository;
 import com.nhom4.tttn.repository.CategoryRepository;
 import com.nhom4.tttn.repository.ProductImageRepository;
 import com.nhom4.tttn.repository.ProductRepository;
+import com.nhom4.tttn.repository.VariantRepository;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +39,8 @@ public class ProductService {
     private final ProductImageRepository imageRepository;
     private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
+    private final VariantRepository variantRepository;
+    private final ProductVariantService productVariantService;
     private final LocalFileStorageService fileStorage;
     private final ProductSqlDeleteService productSqlDeleteService;
 
@@ -43,6 +49,7 @@ public class ProductService {
             String keyword,
             Long categoryId,
             List<Long> attributeIds,
+            List<Long> variantIds,
             String sort,
             int page,
             int size
@@ -79,7 +86,29 @@ public class ProductService {
             });
         }
 
-        return productRepository.findAll(spec, pageable);
+        List<List<Long>> variantGroups = groupSelectedVariantIds(variantIds);
+        if (!variantGroups.isEmpty()) {
+            spec = spec.and((root, query, cb) -> {
+                var subquery = query.subquery(Long.class);
+                var productVariant = subquery.from(ProductVariant.class);
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(cb.equal(productVariant.get("product").get("id"), root.get("id")));
+                predicates.add(cb.greaterThan(productVariant.get("quantity"), 0));
+
+                for (List<Long> groupIds : variantGroups) {
+                    var values = productVariant.join("values", JoinType.INNER);
+                    predicates.add(values.get("variant").get("id").in(groupIds));
+                }
+
+                subquery.select(cb.literal(1L));
+                subquery.where(predicates.toArray(Predicate[]::new));
+                return cb.exists(subquery);
+            });
+        }
+
+        Page<Product> result = productRepository.findAll(spec, pageable);
+        applyDisplayPrices(result.getContent());
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -93,6 +122,7 @@ public class ProductService {
                 attribute.getParent().getId();
             }
         });
+        applyDisplayPrices(List.of(product));
         return product;
     }
 
@@ -107,7 +137,9 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<Product> latestUpdated() {
-        return productRepository.findTop8ByOrderByUpdatedDateDesc();
+        List<Product> products = productRepository.findTop8ByOrderByUpdatedDateDesc();
+        applyDisplayPrices(products);
+        return products;
     }
 
     @Transactional
@@ -131,8 +163,6 @@ public class ProductService {
 
         product.setName(normalize(form.getName()));
         product.setDescription(form.getDescription().trim());
-        product.setPrice(form.getPrice());
-        product.setQuantity(form.getQuantity());
         product.setCategories(new LinkedHashSet<>(categories));
         product.setAttributes(new LinkedHashSet<>(attributes));
         product = productRepository.saveAndFlush(product);
@@ -156,8 +186,6 @@ public class ProductService {
         form.setId(product.getId());
         form.setName(product.getName());
         form.setDescription(product.getDescription());
-        form.setPrice(product.getPrice());
-        form.setQuantity(product.getQuantity());
         form.setCategoryIds(product.getCategories().stream().map(Category::getId).toList());
         form.setAttributeIds(product.getAttributes().stream().map(Attribute::getId).toList());
         return form;
@@ -178,6 +206,36 @@ public class ProductService {
                     .add(attribute.getId());
         }
         return new ArrayList<>(grouped.values());
+    }
+
+
+    private List<List<Long>> groupSelectedVariantIds(List<Long> rawIds) {
+        List<Long> ids = distinctIds(rawIds);
+        if (ids.isEmpty()) return List.of();
+
+        List<Variant> selected = variantRepository.findAllById(ids);
+        if (selected.size() != ids.size() || selected.stream().anyMatch(Variant::isRoot)) {
+            return List.of(List.of(-1L));
+        }
+
+        Map<Long, List<Long>> grouped = new LinkedHashMap<>();
+        for (Variant variant : selected) {
+            grouped.computeIfAbsent(variant.getParent().getId(), ignored -> new ArrayList<>())
+                    .add(variant.getId());
+        }
+        return new ArrayList<>(grouped.values());
+    }
+
+    private void applyDisplayPrices(List<Product> products) {
+        if (products == null || products.isEmpty()) return;
+        List<Long> variantProductIds = products.stream()
+                .filter(product -> product.getVariantType() > 0)
+                .map(Product::getId)
+                .toList();
+        Map<Long, java.math.BigDecimal> prices = productVariantService.minimumAvailablePrices(variantProductIds);
+        products.forEach(product -> product.setDisplayPrice(
+                product.getVariantType() == 0 ? null : prices.get(product.getId())
+        ));
     }
 
     private List<Long> distinctIds(List<Long> ids) {

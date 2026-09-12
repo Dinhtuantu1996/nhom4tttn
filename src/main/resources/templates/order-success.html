@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đặt hàng thành công - N4</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-5">
+    <section class="order-success-card commerce-card mx-auto p-4 p-md-5 text-center">
+        <div class="order-success-mark mx-auto mb-4">✓</div>
+        <span class="eyebrow">ĐẶT HÀNG THÀNH CÔNG</span>
+        <h1 class="display-6 fw-bold mt-2">Đơn của bạn đang chờ ADMIN duyệt</h1>
+        <p class="text-secondary mt-3 mb-1">Mã đơn hàng</p>
+        <div class="order-code" th:text="${orderCode}"></div>
+        <p class="text-secondary mt-4">Hãy lưu mã này. Nếu chưa đăng nhập, bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để tra cứu.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+            <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders/lookup}">Tra cứu đơn</a>
+            <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/products}">Tiếp tục mua sắm</a>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

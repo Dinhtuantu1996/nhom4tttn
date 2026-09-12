@@ -45,84 +45,6 @@
         }
     }
 
-    function refreshManagedSelect(select) {
-        if (!select) return;
-        const combo = select.closest('[data-managed-select-combo]');
-        const label = combo?.querySelector('[data-managed-select-label]');
-        const optionsHost = combo?.querySelector('[data-managed-select-options]');
-        if (!combo || !label || !optionsHost) return;
-
-        const selected = select.selectedOptions[0] || select.options[0] || null;
-        label.textContent = selected?.textContent?.trim() || 'Chọn';
-        optionsHost.innerHTML = '';
-
-        Array.from(select.options).forEach((option) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'filter-combobox-option';
-            button.dataset.managedSelectOption = 'true';
-            button.dataset.value = option.value;
-            button.disabled = option.disabled;
-            button.classList.toggle('is-selected', option.selected);
-
-            const text = document.createElement('span');
-            text.textContent = option.textContent?.trim() || '';
-            const check = document.createElement('span');
-            check.className = 'filter-option-check';
-            check.textContent = '✓';
-            button.append(text, check);
-            optionsHost.appendChild(button);
-        });
-    }
-
-    function closeManagedSelect(combo) {
-        if (!combo) return;
-        combo.classList.remove('is-open');
-        combo.querySelector('[data-managed-select-trigger]')?.setAttribute('aria-expanded', 'false');
-    }
-
-    function initManagedSelectComboboxes(scope = document) {
-        scope.querySelectorAll('[data-managed-select-combo]').forEach((combo) => {
-            if (combo.dataset.managedSelectReady === 'true') {
-                refreshManagedSelect(combo.querySelector('[data-managed-select-native]'));
-                return;
-            }
-
-            const select = combo.querySelector('[data-managed-select-native]');
-            const trigger = combo.querySelector('[data-managed-select-trigger]');
-            const menu = combo.querySelector('[data-managed-select-menu]');
-            const optionsHost = combo.querySelector('[data-managed-select-options]');
-            if (!select || !trigger || !menu || !optionsHost) return;
-
-            combo.dataset.managedSelectReady = 'true';
-            refreshManagedSelect(select);
-
-            trigger.addEventListener('click', (event) => {
-                event.stopPropagation();
-                const willOpen = !combo.classList.contains('is-open');
-                document.querySelectorAll('[data-managed-select-combo].is-open').forEach((item) => {
-                    if (item !== combo) closeManagedSelect(item);
-                });
-                combo.classList.toggle('is-open', willOpen);
-                trigger.setAttribute('aria-expanded', String(willOpen));
-            });
-
-            menu.addEventListener('click', (event) => {
-                event.stopPropagation();
-                const option = event.target.closest('[data-managed-select-option]');
-                if (!option || option.disabled) return;
-                select.value = option.dataset.value ?? '';
-                select.dispatchEvent(new Event('change', {bubbles: true}));
-                refreshManagedSelect(select);
-                closeManagedSelect(combo);
-            });
-
-            document.addEventListener('click', (event) => {
-                if (!combo.contains(event.target)) closeManagedSelect(combo);
-            });
-        });
-    }
-
     function initDeleteConfirmation() {
         document.addEventListener('submit', async (event) => {
             const form = event.target.closest('form[data-confirm-delete]');
@@ -154,280 +76,50 @@
         });
     }
 
-    function initCategoryModal() {
-        const modal = document.getElementById('categoryModal');
+    function initHierarchyManager(modal) {
         if (!modal) return;
 
         moveModalToBody(modal);
 
-        const form = modal.querySelector('[data-category-form]');
-        const title = modal.querySelector('[data-category-modal-title]');
-        const editorEyebrow = modal.querySelector('[data-category-editor-eyebrow]');
-        const editorHelp = modal.querySelector('[data-category-editor-help]');
-        const idInput = modal.querySelector('[data-category-id-input]');
-        const nameInput = modal.querySelector('[data-category-name-input]');
-        const parentInput = modal.querySelector('[data-category-parent-input]');
-        const saveLabel = modal.querySelector('[data-category-save-label]');
-        const deleteTrigger = modal.querySelector('[data-category-delete-trigger]');
-        const deleteForm = modal.querySelector('[data-category-delete-form]');
-        const list = modal.querySelector('[data-category-list]');
+        const rootForm = modal.querySelector('[data-hierarchy-root-form]');
+        const rootEditor = modal.querySelector('[data-hierarchy-root-editor]');
+        const rootIdInput = modal.querySelector('[data-hierarchy-root-id]');
+        const rootNameInput = modal.querySelector('[data-hierarchy-root-name]');
+        const rootEyebrow = modal.querySelector('[data-hierarchy-root-eyebrow]');
+        const rootTitle = modal.querySelector('[data-hierarchy-root-title]');
+        const rootSave = modal.querySelector('[data-hierarchy-root-save]');
+        const rootCancel = modal.querySelector('[data-hierarchy-root-cancel]');
+        const list = modal.querySelector('[data-hierarchy-list]');
+        const searchInput = modal.querySelector('[data-hierarchy-search]');
 
-        if (!form || !title || !idInput || !nameInput || !parentInput || !saveLabel || !deleteTrigger || !deleteForm || !list) return;
+        if (!rootForm || !rootEditor || !rootIdInput || !rootNameInput || !rootSave || !rootCancel || !list) return;
 
-        const focusName = () => window.setTimeout(() => nameInput.focus(), 0);
-        const enableParentOptions = () => parentInput.querySelectorAll('option').forEach((option) => option.disabled = false);
+        const config = {
+            saveUrl: modal.dataset.saveUrl || rootForm.action,
+            deleteBase: modal.dataset.deleteBase || '',
+            rootLabel: modal.dataset.rootLabel || 'mục',
+            childLabel: modal.dataset.childLabel || 'mục con',
+            rootCreateLabel: modal.dataset.rootCreateLabel || 'Thêm mục',
+            rootEditLabel: modal.dataset.rootEditLabel || 'Lưu thay đổi',
+            childCreateLabel: modal.dataset.childCreateLabel || 'Thêm mục con',
+            childEditLabel: modal.dataset.childEditLabel || 'Lưu thay đổi',
+            successFallback: modal.dataset.successFallback || 'Cập nhật thành công.',
+            errorFallback: modal.dataset.errorFallback || 'Không thể cập nhật. Hãy thử lại.'
+        };
 
-        function prepareCreate(parentId = '', parentName = '') {
-            enableParentOptions();
-            idInput.value = '';
-            nameInput.value = '';
-            parentInput.value = parentId;
-            refreshManagedSelect(parentInput);
-            editorEyebrow.textContent = 'THÊM MỚI';
-            title.textContent = parentId ? `Thêm danh mục con cho ${parentName}` : 'Thêm danh mục';
-            editorHelp.textContent = parentId
-                ? 'Nhập tên danh mục con. Danh mục hỗ trợ tối đa 2 cấp.'
-                : 'Tạo danh mục lớn hoặc chọn danh mục cha để tạo danh mục con.';
-            saveLabel.textContent = parentId ? 'Thêm danh mục con' : 'Thêm danh mục';
-            deleteTrigger.classList.add('d-none');
-            deleteForm.action = '/categories/0/delete';
-            focusName();
-        }
+        const normalizeText = (value) => String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('vi')
+            .trim();
 
-        function prepareEdit(button) {
-            enableParentOptions();
-            const id = button.dataset.categoryId ?? '';
-            const name = button.dataset.categoryName ?? '';
-            const parentId = button.dataset.categoryParentId ?? '';
-            idInput.value = id;
-            nameInput.value = name;
-            parentInput.value = parentId;
-            editorEyebrow.textContent = 'CHỈNH SỬA';
-            title.textContent = parentId ? 'Sửa danh mục con' : 'Sửa danh mục';
-            editorHelp.textContent = parentId
-                ? 'Bạn có thể đổi tên hoặc chuyển sang một danh mục cha khác.'
-                : 'Bạn có thể đổi tên danh mục lớn. Danh mục đang có danh mục con không thể chuyển thành danh mục con.';
-            saveLabel.textContent = 'Lưu thay đổi';
-            deleteTrigger.classList.remove('d-none');
-            deleteForm.action = `/categories/${encodeURIComponent(id)}/delete`;
-            if (!parentId) {
-                const selfOption = Array.from(parentInput.options).find((option) => option.value === id);
-                if (selfOption) selfOption.disabled = true;
-            }
-            refreshManagedSelect(parentInput);
-            focusName();
-        }
+        const focusLater = (input) => window.setTimeout(() => input?.focus(), 0);
 
         function readServerResult(documentNode) {
             const error = documentNode.querySelector('[data-base-flash][data-popup-type="error"]');
             if (error) return {ok: false, message: error.textContent.trim()};
             const success = documentNode.querySelector('[data-base-flash][data-popup-type="success"]');
-            return {ok: true, message: success?.textContent.trim() || 'Cập nhật danh mục thành công.'};
-        }
-
-        function syncManager(documentNode) {
-            const freshModal = documentNode.getElementById('categoryModal');
-            const freshList = freshModal?.querySelector('[data-category-list]');
-            const freshParent = freshModal?.querySelector('[data-category-parent-input]');
-            if (!freshList || !freshParent) throw new Error('Không đọc được dữ liệu danh mục sau khi cập nhật.');
-            list.innerHTML = freshList.innerHTML;
-            parentInput.innerHTML = freshParent.innerHTML;
-            refreshManagedSelect(parentInput);
-        }
-
-        async function postForm(action, formData) {
-            const response = await fetch(action, {method: 'POST', body: formData, headers: {'X-Requested-With': 'XMLHttpRequest'}});
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return new DOMParser().parseFromString(await response.text(), 'text/html');
-        }
-
-        modal.addEventListener('show.bs.modal', (event) => {
-            if (event.relatedTarget?.matches('[data-category-manager-open]')) prepareCreate();
-        });
-
-        modal.addEventListener('click', (event) => {
-            if (event.target.closest('[data-category-create]') || event.target.closest('[data-category-reset]')) {
-                prepareCreate();
-                return;
-            }
-            const child = event.target.closest('[data-category-create-child]');
-            if (child) {
-                prepareCreate(child.dataset.categoryParentId ?? '', child.dataset.categoryParentName ?? '');
-                return;
-            }
-            const edit = event.target.closest('[data-category-edit]');
-            if (edit) prepareEdit(edit);
-        });
-
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const editingId = idInput.value;
-            const selectedParentId = parentInput.value;
-            const selectedParentName = parentInput.selectedOptions[0]?.textContent?.trim() || '';
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalLabel = saveLabel.textContent;
-            submitButton.disabled = true;
-            saveLabel.textContent = 'Đang lưu...';
-            try {
-                const documentNode = await postForm(form.action, new FormData(form));
-                const result = readServerResult(documentNode);
-                if (!result.ok) { showNotification(result.message, 'error'); return; }
-                syncManager(documentNode);
-                if (editingId) {
-                    const updated = list.querySelector(`[data-category-edit][data-category-id="${editingId}"]`);
-                    updated ? prepareEdit(updated) : prepareCreate();
-                } else if (selectedParentId) {
-                    prepareCreate(selectedParentId, selectedParentName);
-                } else {
-                    prepareCreate();
-                }
-                showNotification(result.message, 'success');
-            } catch (error) {
-                console.error(error);
-                showNotification('Không thể cập nhật danh mục. Hãy thử lại.', 'error');
-            } finally {
-                submitButton.disabled = false;
-                if (saveLabel.textContent === 'Đang lưu...') saveLabel.textContent = originalLabel;
-            }
-        });
-
-        deleteTrigger.addEventListener('click', async () => {
-            if (!idInput.value) return;
-            const confirmed = await askConfirmation({
-                type: 'error', title: 'Xóa danh mục?',
-                message: `Bạn có chắc muốn xóa “${nameInput.value.trim() || 'danh mục này'}”?`,
-                confirmText: 'Xóa danh mục'
-            });
-            if (!confirmed) return;
-            deleteTrigger.disabled = true;
-            const label = deleteTrigger.textContent;
-            deleteTrigger.textContent = 'Đang xóa...';
-            try {
-                const documentNode = await postForm(deleteForm.action, new FormData(deleteForm));
-                const result = readServerResult(documentNode);
-                if (!result.ok) { showNotification(result.message, 'error'); return; }
-                syncManager(documentNode);
-                prepareCreate();
-                showNotification(result.message, 'success');
-            } catch (error) {
-                console.error(error);
-                showNotification('Không thể xóa danh mục. Hãy thử lại.', 'error');
-            } finally {
-                deleteTrigger.disabled = false;
-                deleteTrigger.textContent = label;
-            }
-        });
-
-        modal.addEventListener('shown.bs.modal', focusName);
-    }
-
-    function initAttributeModal() {
-        const modal = document.getElementById('attributeModal');
-        if (!modal) return;
-
-        moveModalToBody(modal);
-
-        const form = modal.querySelector('[data-attribute-form]');
-        const title = modal.querySelector('[data-attribute-modal-title]');
-        const editorEyebrow = modal.querySelector('[data-attribute-editor-eyebrow]');
-        const editorHelp = modal.querySelector('[data-attribute-editor-help]');
-        const idInput = modal.querySelector('[data-attribute-id-input]');
-        const nameInput = modal.querySelector('[data-attribute-name-input]');
-        const parentInput = modal.querySelector('[data-attribute-parent-input]');
-        const saveLabel = modal.querySelector('[data-attribute-save-label]');
-        const deleteTrigger = modal.querySelector('[data-attribute-delete-trigger]');
-        const deleteForm = modal.querySelector('[data-attribute-delete-form]');
-        const list = modal.querySelector('[data-attribute-manager-list]');
-
-        if (!form || !title || !idInput || !nameInput || !parentInput || !saveLabel || !deleteTrigger || !deleteForm || !list) {
-            return;
-        }
-
-        function setFeedback(message, type = 'success') {
-            showNotification(message, type === 'danger' ? 'error' : type);
-        }
-
-        function clearFeedback() {
-        }
-
-        function enableParentOptions() {
-            parentInput.querySelectorAll('option').forEach((option) => {
-                option.disabled = false;
-            });
-        }
-
-        function focusName() {
-            window.setTimeout(() => nameInput.focus(), 0);
-        }
-
-        function prepareCreate(parentId = '', parentName = '') {
-            clearFeedback();
-            enableParentOptions();
-            idInput.value = '';
-            nameInput.value = '';
-            parentInput.value = parentId;
-            refreshManagedSelect(parentInput);
-            editorEyebrow.textContent = 'THÊM MỚI';
-            title.textContent = parentId ? `Thêm giá trị cho ${parentName}` : 'Thêm thuộc tính';
-            editorHelp.textContent = parentId
-                ? 'Nhập giá trị con. Ví dụ với Màu sắc có thể thêm Đen, Trắng, Đỏ...'
-                : 'Tạo thuộc tính lớn như Màu sắc, Kích thước, Chất liệu...';
-            saveLabel.textContent = parentId ? 'Thêm giá trị' : 'Thêm thuộc tính';
-            deleteTrigger.classList.add('d-none');
-            deleteForm.action = '/attributes/0/delete';
-            focusName();
-        }
-
-        function prepareEdit(button) {
-            clearFeedback();
-            enableParentOptions();
-
-            const id = button.dataset.attributeId ?? '';
-            const name = button.dataset.attributeName ?? '';
-            const parentId = button.dataset.attributeParentId ?? '';
-
-            idInput.value = id;
-            nameInput.value = name;
-            parentInput.value = parentId;
-            editorEyebrow.textContent = 'CHỈNH SỬA';
-            title.textContent = parentId ? 'Sửa giá trị thuộc tính' : 'Sửa thuộc tính';
-            editorHelp.textContent = parentId
-                ? 'Bạn có thể đổi tên hoặc chuyển giá trị sang một thuộc tính cha khác.'
-                : 'Bạn có thể đổi tên thuộc tính lớn. Thuộc tính đang có giá trị con không thể chuyển thành giá trị con.';
-            saveLabel.textContent = 'Lưu thay đổi';
-            deleteTrigger.classList.remove('d-none');
-            deleteForm.action = `/attributes/${encodeURIComponent(id)}/delete`;
-
-            if (!parentId) {
-                const selfOption = Array.from(parentInput.options).find((option) => option.value === id);
-                if (selfOption) selfOption.disabled = true;
-            }
-            refreshManagedSelect(parentInput);
-            focusName();
-        }
-
-        function readServerResult(documentNode) {
-            const error = documentNode.querySelector('[data-base-flash][data-popup-type="error"]');
-            if (error) return {ok: false, message: error.textContent.trim()};
-
-            const success = documentNode.querySelector('[data-base-flash][data-popup-type="success"]');
-            return {
-                ok: true,
-                message: success?.textContent.trim() || 'Cập nhật thuộc tính thành công.'
-            };
-        }
-
-        function syncManager(documentNode) {
-            const freshModal = documentNode.getElementById('attributeModal');
-            const freshList = freshModal?.querySelector('[data-attribute-manager-list]');
-            const freshParent = freshModal?.querySelector('[data-attribute-parent-input]');
-            if (!freshList || !freshParent) {
-                throw new Error('Không đọc được dữ liệu thuộc tính sau khi cập nhật.');
-            }
-
-            list.innerHTML = freshList.innerHTML;
-            parentInput.innerHTML = freshParent.innerHTML;
-            refreshManagedSelect(parentInput);
+            return {ok: true, message: success?.textContent.trim() || config.successFallback};
         }
 
         async function postForm(action, formData) {
@@ -437,128 +129,354 @@
                 headers: {'X-Requested-With': 'XMLHttpRequest'}
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const html = await response.text();
-            return new DOMParser().parseFromString(html, 'text/html');
+            return new DOMParser().parseFromString(await response.text(), 'text/html');
         }
 
-        modal.addEventListener('show.bs.modal', (event) => {
-            if (event.relatedTarget?.matches('[data-attribute-manager-open]')) {
-                prepareCreate();
-            }
-        });
+        function closeChildEditors(except = null) {
+            list.querySelectorAll('[data-hierarchy-child-form]').forEach((form) => {
+                if (form === except) return;
+                form.classList.add('d-none');
+                form.reset();
+                const idInput = form.querySelector('[data-hierarchy-child-id]');
+                if (idInput) idInput.value = '';
+            });
+        }
 
-        modal.addEventListener('click', (event) => {
-            const createRoot = event.target.closest('[data-attribute-create-root]');
-            if (createRoot) {
-                prepareCreate();
-                return;
-            }
+        function resetRootEditor({focus = false} = {}) {
+            rootForm.reset();
+            rootIdInput.value = '';
+            if (rootEyebrow) rootEyebrow.textContent = 'THÊM MỤC CHA';
+            if (rootTitle) rootTitle.textContent = config.rootCreateLabel;
+            rootSave.textContent = config.rootCreateLabel;
+            rootCancel.classList.add('d-none');
+            if (focus) focusLater(rootNameInput);
+        }
 
-            const createChild = event.target.closest('[data-attribute-create-child]');
-            if (createChild) {
-                prepareCreate(
-                    createChild.dataset.attributeParentId ?? '',
-                    createChild.dataset.attributeParentName ?? ''
-                );
-                return;
-            }
+        function editRoot(button) {
+            closeChildEditors();
+            rootIdInput.value = button.dataset.itemId || '';
+            rootNameInput.value = button.dataset.itemName || '';
+            if (rootEyebrow) rootEyebrow.textContent = 'CHỈNH SỬA MỤC CHA';
+            if (rootTitle) rootTitle.textContent = `Sửa ${config.rootLabel}`;
+            rootSave.textContent = config.rootEditLabel;
+            rootCancel.classList.remove('d-none');
+            rootEditor.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            focusLater(rootNameInput);
+        }
 
-            const editButton = event.target.closest('[data-attribute-edit]');
-            if (editButton) {
-                prepareEdit(editButton);
-                return;
-            }
+        function findRoot(parentId) {
+            return Array.from(list.querySelectorAll('[data-hierarchy-root]'))
+                .find((root) => String(root.dataset.rootId || '') === String(parentId || '')) || null;
+        }
 
-            if (event.target.closest('[data-attribute-reset]')) {
-                prepareCreate();
-            }
-        });
+        function openChildEditor({parentId, itemId = '', itemName = ''}) {
+            const root = findRoot(parentId);
+            const form = root?.querySelector('[data-hierarchy-child-form]');
+            if (!form) return;
 
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            clearFeedback();
+            closeChildEditors(form);
+            const idInput = form.querySelector('[data-hierarchy-child-id]');
+            const nameInput = form.querySelector('[data-hierarchy-child-name]');
+            const editorLabel = form.querySelector('[data-hierarchy-child-editor-label]');
+            const saveButton = form.querySelector('[data-hierarchy-child-save]');
 
-            const editingId = idInput.value;
-            const selectedParentId = parentInput.value;
-            const selectedParentName = parentInput.selectedOptions[0]?.textContent?.trim() || '';
+            if (idInput) idInput.value = itemId;
+            if (nameInput) nameInput.value = itemName;
+            if (editorLabel) editorLabel.textContent = itemId ? `Sửa ${config.childLabel}` : config.childCreateLabel;
+            if (saveButton) saveButton.textContent = itemId ? config.childEditLabel : config.childCreateLabel;
+
+            form.classList.remove('d-none');
+            form.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            focusLater(nameInput);
+        }
+
+        function filterList() {
+            const query = normalizeText(searchInput?.value);
+            const roots = Array.from(list.querySelectorAll('[data-hierarchy-root]'));
+
+            roots.forEach((root) => {
+                const rootMatches = !query || normalizeText(root.dataset.rootName).includes(query);
+                const children = Array.from(root.querySelectorAll('[data-hierarchy-child]'));
+                let childMatches = false;
+
+                children.forEach((child) => {
+                    const matches = !query || rootMatches || normalizeText(child.dataset.childName).includes(query);
+                    child.classList.toggle('d-none', !matches);
+                    if (query && !rootMatches && matches) childMatches = true;
+                });
+
+                root.classList.toggle('d-none', Boolean(query) && !rootMatches && !childMatches);
+                const emptyChildren = root.querySelector('.hierarchy-manager-empty-children');
+                if (emptyChildren) emptyChildren.classList.toggle('d-none', Boolean(query));
+            });
+        }
+
+        function syncManager(documentNode) {
+            const freshModal = documentNode.getElementById(modal.id);
+            const freshList = freshModal?.querySelector('[data-hierarchy-list]');
+            if (!freshList) throw new Error('Không đọc được dữ liệu quản lý sau khi cập nhật.');
+            list.innerHTML = freshList.innerHTML;
+            filterList();
+        }
+
+        function csrfFormData() {
+            const data = new FormData();
+            const csrf = rootForm.querySelector('input[name="_csrf"]');
+            if (csrf) data.append(csrf.name, csrf.value);
+            return data;
+        }
+
+        async function submitManagedForm(form, {reopenParentId = '', reopenAfterCreate = false} = {}) {
             const submitButton = form.querySelector('button[type="submit"]');
-            const originalLabel = saveLabel.textContent;
+            const originalLabel = submitButton?.textContent || '';
+            const isCreate = !String(form.querySelector('input[name="id"]')?.value || '').trim();
 
-            submitButton.disabled = true;
-            saveLabel.textContent = 'Đang lưu...';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Đang lưu...';
+            }
 
             try {
-                const documentNode = await postForm(form.action, new FormData(form));
+                const documentNode = await postForm(config.saveUrl, new FormData(form));
                 const result = readServerResult(documentNode);
                 if (!result.ok) {
-                    setFeedback(result.message, 'danger');
-                    return;
+                    showNotification(result.message, 'error');
+                    return false;
                 }
 
                 syncManager(documentNode);
+                showNotification(result.message, 'success');
 
-                if (editingId) {
-                    const updatedButton = list.querySelector(`[data-attribute-edit][data-attribute-id="${editingId}"]`);
-                    if (updatedButton) {
-                        prepareEdit(updatedButton);
-                    } else {
-                        prepareCreate();
-                    }
-                } else if (selectedParentId) {
-                    prepareCreate(selectedParentId, selectedParentName);
-                } else {
-                    prepareCreate();
+                if (reopenAfterCreate && isCreate && reopenParentId) {
+                    openChildEditor({parentId: reopenParentId});
                 }
-                setFeedback(result.message, 'success');
+                return true;
             } catch (error) {
                 console.error(error);
-                setFeedback('Không thể cập nhật thuộc tính. Hãy thử lại.', 'danger');
+                showNotification(config.errorFallback, 'error');
+                return false;
             } finally {
-                submitButton.disabled = false;
-                if (saveLabel.textContent === 'Đang lưu...') {
-                    saveLabel.textContent = originalLabel;
+                if (submitButton?.isConnected) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalLabel;
                 }
             }
+        }
+
+        rootForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const saved = await submitManagedForm(rootForm);
+            if (saved) resetRootEditor();
         });
 
-        deleteTrigger.addEventListener('click', async () => {
-            if (!idInput.value) return;
+        rootCancel.addEventListener('click', () => resetRootEditor({focus: true}));
+        searchInput?.addEventListener('input', filterList);
 
+        modal.addEventListener('submit', async (event) => {
+            const childForm = event.target.closest('[data-hierarchy-child-form]');
+            if (!childForm) return;
+
+            event.preventDefault();
+            const parentId = childForm.dataset.parentId || childForm.querySelector('input[name="parentId"]')?.value || '';
+            const saved = await submitManagedForm(childForm, {
+                reopenParentId: parentId,
+                reopenAfterCreate: true
+            });
+            if (saved && childForm.isConnected) childForm.classList.add('d-none');
+        });
+
+        modal.addEventListener('click', async (event) => {
+            const editRootButton = event.target.closest('[data-hierarchy-root-edit]');
+            if (editRootButton) {
+                editRoot(editRootButton);
+                return;
+            }
+
+            const addChildButton = event.target.closest('[data-hierarchy-child-add]');
+            if (addChildButton) {
+                openChildEditor({parentId: addChildButton.dataset.parentId});
+                return;
+            }
+
+            const editChildButton = event.target.closest('[data-hierarchy-child-edit]');
+            if (editChildButton) {
+                openChildEditor({
+                    parentId: editChildButton.dataset.parentId,
+                    itemId: editChildButton.dataset.itemId,
+                    itemName: editChildButton.dataset.itemName
+                });
+                return;
+            }
+
+            const cancelChildButton = event.target.closest('[data-hierarchy-child-cancel]');
+            if (cancelChildButton) {
+                const form = cancelChildButton.closest('[data-hierarchy-child-form]');
+                form?.classList.add('d-none');
+                form?.reset();
+                return;
+            }
+
+            const deleteButton = event.target.closest('[data-hierarchy-delete]');
+            if (!deleteButton) return;
+
+            const id = deleteButton.dataset.itemId;
+            const name = deleteButton.dataset.itemName || '';
+            const kind = deleteButton.dataset.itemKind || 'child';
+            if (!id) return;
+
+            const label = kind === 'root' ? config.rootLabel : config.childLabel;
             const confirmed = await askConfirmation({
                 type: 'error',
-                title: 'Xóa thuộc tính?',
-                message: `Bạn có chắc muốn xóa “${nameInput.value.trim() || 'thuộc tính/giá trị này'}”?`,
+                title: `Xóa ${label}?`,
+                message: `Bạn có chắc muốn xóa “${name || label}”?`,
                 confirmText: 'Xóa'
             });
             if (!confirmed) return;
 
-            clearFeedback();
-            deleteTrigger.disabled = true;
-            const deleteLabel = deleteTrigger.textContent;
-            deleteTrigger.textContent = 'Đang xóa...';
+            deleteButton.disabled = true;
+            const originalLabel = deleteButton.textContent;
+            deleteButton.textContent = 'Đang xóa...';
 
             try {
-                const documentNode = await postForm(deleteForm.action, new FormData(deleteForm));
+                const documentNode = await postForm(`${config.deleteBase}/${encodeURIComponent(id)}/delete`, csrfFormData());
                 const result = readServerResult(documentNode);
                 if (!result.ok) {
-                    setFeedback(result.message, 'danger');
+                    showNotification(result.message, 'error');
                     return;
                 }
 
                 syncManager(documentNode);
-                prepareCreate();
-                setFeedback(result.message, 'success');
+                if (kind === 'root' && String(rootIdInput.value) === String(id)) resetRootEditor();
+                showNotification(result.message, 'success');
             } catch (error) {
                 console.error(error);
-                setFeedback('Không thể xóa thuộc tính. Hãy thử lại.', 'danger');
+                showNotification(config.errorFallback, 'error');
             } finally {
-                deleteTrigger.disabled = false;
-                deleteTrigger.textContent = deleteLabel;
+                if (deleteButton.isConnected) {
+                    deleteButton.disabled = false;
+                    deleteButton.textContent = originalLabel;
+                }
             }
         });
 
-        modal.addEventListener('shown.bs.modal', focusName);
+        modal.addEventListener('show.bs.modal', () => {
+            resetRootEditor();
+            closeChildEditors();
+            if (searchInput) searchInput.value = '';
+            filterList();
+        });
+
+        modal.addEventListener('shown.bs.modal', () => focusLater(rootNameInput));
+    }
+
+    function initHierarchyManagers() {
+        document.querySelectorAll('[data-hierarchy-manager]').forEach(initHierarchyManager);
+    }
+
+
+    function initProductVariantDisplay(scope = document) {
+        const hosts = [];
+        if (scope.matches?.('[data-product-detail-scope]')) hosts.push(scope);
+        scope.querySelectorAll?.('[data-product-detail-scope]').forEach((host) => hosts.push(host));
+
+        hosts.forEach((host) => {
+            const selector = host.querySelector('[data-product-variant-display]');
+            const commercial = host.querySelector('[data-product-commercial]');
+            if (!selector || !commercial || selector.dataset.variantDisplayReady === 'true') return;
+            selector.dataset.variantDisplayReady = 'true';
+
+            const variantType = Number.parseInt(selector.dataset.variantType || '0', 10) || 0;
+            const priceNode = commercial.querySelector('[data-product-price]');
+            const stockNode = commercial.querySelector('[data-product-stock]');
+            const levels = Array.from(selector.querySelectorAll('[data-variant-level]'));
+            const buttons = Array.from(selector.querySelectorAll('[data-variant-value-id]'));
+            const combinations = Array.from(selector.querySelectorAll('[data-variant-combination]')).map((node) => ({
+                id: Number.parseInt(node.dataset.id || '0', 10) || null,
+                valueIds: String(node.dataset.values || '').split(',').map(Number).filter(Number.isFinite),
+                priceText: node.dataset.priceText || '0 VNĐ',
+                quantity: Number.parseInt(node.dataset.quantity || '0', 10) || 0
+            }));
+            let selected = [];
+
+            const setCommercial = (combination = null, pendingMessage = '') => {
+                if (!priceNode || !stockNode) return;
+                stockNode.classList.remove('is-out');
+
+                if (!combination) {
+                    const available = commercial.dataset.defaultAvailable === 'true';
+                    priceNode.textContent = commercial.dataset.defaultPriceText || 'Liên hệ';
+                    priceNode.className = available ? 'product-detail-price' : 'product-detail-contact-price';
+                    stockNode.textContent = pendingMessage || (available
+                        ? 'Chọn biến thể để xem giá và số lượng.'
+                        : 'Hiện chưa có biến thể còn hàng.');
+                    commercial.classList.add('variant-price-pending');
+                    commercial.classList.remove('is-resolved');
+                    host.dataset.selectedProductVariantId = '';
+                    host.dataset.selectedAvailableQuantity = '0';
+                    updateAddToCartButton(host);
+                    return;
+                }
+
+                priceNode.textContent = combination.priceText;
+                priceNode.className = 'product-detail-price';
+                if (combination.quantity > 0) {
+                    stockNode.textContent = `Còn ${combination.quantity} sản phẩm`;
+                } else {
+                    stockNode.textContent = 'Hết hàng';
+                    stockNode.classList.add('is-out');
+                }
+                commercial.classList.remove('variant-price-pending');
+                commercial.classList.add('is-resolved');
+                host.dataset.selectedProductVariantId = combination.id ? String(combination.id) : '';
+                host.dataset.selectedAvailableQuantity = String(combination.quantity || 0);
+                updateAddToCartButton(host);
+            };
+
+            const combinationFor = (values) => combinations.find((item) => (
+                item.valueIds.length === values.length
+                && item.valueIds.every((value, index) => value === values[index])
+            ));
+
+            const refreshButtons = () => {
+                buttons.forEach((button) => {
+                    const level = Number.parseInt(button.dataset.level || '0', 10);
+                    const valueId = Number(button.dataset.variantValueId);
+                    button.classList.toggle('is-selected', selected[level - 1] === valueId);
+
+                    let enabled = false;
+                    if (level === 1) {
+                        enabled = combinations.some((item) => item.valueIds[0] === valueId);
+                    } else if (level === 2 && selected[0]) {
+                        enabled = combinations.some((item) => item.valueIds[0] === selected[0] && item.valueIds[1] === valueId);
+                    }
+                    button.disabled = !enabled;
+                    button.classList.toggle('is-unavailable', !enabled);
+                });
+            };
+
+            buttons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    if (button.disabled) return;
+                    const level = Number.parseInt(button.dataset.level || '0', 10);
+                    const valueId = Number(button.dataset.variantValueId);
+                    selected[level - 1] = valueId;
+                    selected = selected.slice(0, level);
+
+                    if (variantType === 2 && level === 1) {
+                        const levelTwoLabel = levels.find((item) => Number(item.dataset.variantLevel) === 2)
+                            ?.querySelector('.product-detail-variant-label')?.textContent?.trim();
+                        setCommercial(null, `Chọn tiếp ${levelTwoLabel || 'biến thể cấp 2'}.`);
+                    } else {
+                        const combination = combinationFor(selected.slice(0, variantType));
+                        if (combination) setCommercial(combination);
+                    }
+                    refreshButtons();
+                });
+            });
+
+            setCommercial(null);
+            refreshButtons();
+        });
     }
 
     function initProductDetailModal() {
@@ -592,6 +510,8 @@
                 wrapper.innerHTML = html.trim();
                 const fragment = wrapper.firstElementChild;
                 content.innerHTML = fragment ? fragment.innerHTML : html;
+                initProductVariantDisplay(content);
+                initCartProductScopes(content);
 
                 const card = trigger.closest('.product-card');
                 const view = card?.querySelector('[data-product-card-view-count]');
@@ -910,6 +830,411 @@
 
 
 
+
+    function initProductVariantEditor(scope = document) {
+        const editors = [];
+        if (scope.matches?.('[data-product-variant-editor]')) editors.push(scope);
+        scope.querySelectorAll?.('[data-product-variant-editor]').forEach((editor) => editors.push(editor));
+
+        editors.forEach((editor) => {
+            if (editor.dataset.variantEditorReady === 'true') return;
+            editor.dataset.variantEditorReady = 'true';
+
+            const form = editor.querySelector('[data-product-variant-form]');
+            const typeInputs = Array.from(editor.querySelectorAll('[data-variant-type]'));
+            const basePanel = editor.querySelector('[data-variant-base-panel]');
+            const combinationPanel = editor.querySelector('[data-variant-combination-panel]');
+            const parentFields = Array.from(editor.querySelectorAll('[data-variant-parent-select]'));
+            const levelTwoParent = editor.querySelector('[data-variant-level-two-parent]');
+            const host = editor.querySelector('[data-variant-combinations]');
+            const empty = editor.querySelector('[data-variant-combinations-empty]');
+            const saveButton = editor.querySelector('[data-variant-save]');
+            const saveLabel = editor.querySelector('[data-variant-save-label]');
+            const spinner = editor.querySelector('[data-variant-save-spinner]');
+            if (!form || !basePanel || !combinationPanel || !host || !empty) return;
+
+            const normalize = (value) => (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+
+            const variantTree = new Map();
+            editor.querySelectorAll('[data-variant-root]').forEach((root) => {
+                variantTree.set(Number(root.dataset.id), {
+                    id: Number(root.dataset.id),
+                    name: root.dataset.name || '',
+                    children: Array.from(root.querySelectorAll('[data-variant-child]')).map((child) => ({
+                        id: Number(child.dataset.id),
+                        name: child.dataset.name || ''
+                    }))
+                });
+            });
+
+            let selectedRows = new Map();
+            editor.querySelectorAll('[data-existing-variant-row]').forEach((row) => {
+                const valueIds = String(row.dataset.values || '').split(',').map(Number).filter(Number.isFinite);
+                if (!valueIds.length) return;
+                selectedRows.set(valueIds.join(':'), {
+                    valueIds,
+                    price: row.dataset.price || '',
+                    quantity: row.dataset.quantity || ''
+                });
+            });
+
+            const type = () => Number.parseInt(typeInputs.find((input) => input.checked)?.value || '0', 10) || 0;
+            const parentInput = (field) => field?.querySelector('[data-variant-parent-input]');
+            const parentIds = () => parentFields.map((field) => Number(parentInput(field)?.value) || null);
+            const keyOf = (ids) => ids.join(':');
+
+            function closeParentCombo(field) {
+                const combo = field?.querySelector('.variant-parent-combobox');
+                if (!combo) return;
+                combo.classList.remove('is-open');
+                field.querySelector('[data-variant-parent-trigger]')?.setAttribute('aria-expanded', 'false');
+            }
+
+            function syncParentField(field, index) {
+                const input = parentInput(field);
+                const value = Number(input?.value) || null;
+                const selected = value ? variantTree.get(value) : null;
+                const label = field.querySelector('[data-variant-parent-label]');
+                if (label) label.textContent = selected?.name || 'Chọn biến thể';
+
+                const otherIndex = index === 0 ? 1 : 0;
+                const otherValue = parentIds()[otherIndex];
+                field.querySelectorAll('[data-variant-parent-option]').forEach((option) => {
+                    const optionValue = Number(option.dataset.value) || null;
+                    const duplicated = type() === 2 && optionValue != null && optionValue === otherValue;
+                    option.disabled = duplicated;
+                    option.classList.toggle('is-disabled', duplicated);
+                    option.classList.toggle('is-selected', optionValue === value || (!optionValue && !value));
+                });
+            }
+
+            function syncParentOptions() {
+                parentFields.forEach(syncParentField);
+            }
+
+            function setParentValue(field, value) {
+                const input = parentInput(field);
+                if (!input) return;
+                const nextValue = value ? String(value) : '';
+                if (input.value === nextValue) {
+                    closeParentCombo(field);
+                    return;
+                }
+                input.value = nextValue;
+                selectedRows = new Map();
+                syncParentOptions();
+                renderCombinations();
+                closeParentCombo(field);
+            }
+
+            parentFields.forEach((field, index) => {
+                const combo = field.querySelector('.variant-parent-combobox');
+                const trigger = field.querySelector('[data-variant-parent-trigger]');
+                const menu = field.querySelector('[data-variant-parent-menu]');
+                const search = field.querySelector('[data-variant-parent-search]');
+                const emptyState = field.querySelector('[data-variant-parent-empty]');
+                const options = Array.from(field.querySelectorAll('[data-variant-parent-option]'));
+                if (!combo || !trigger || !menu) return;
+
+                trigger.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const willOpen = !combo.classList.contains('is-open');
+                    parentFields.forEach((item) => {
+                        if (item !== field) closeParentCombo(item);
+                    });
+                    combo.classList.toggle('is-open', willOpen);
+                    trigger.setAttribute('aria-expanded', String(willOpen));
+                    if (willOpen && search) {
+                        search.value = '';
+                        options.forEach((option) => option.hidden = false);
+                        emptyState?.classList.add('d-none');
+                        window.setTimeout(() => search.focus(), 0);
+                    }
+                });
+
+                menu.addEventListener('click', (event) => event.stopPropagation());
+                options.forEach((option) => {
+                    option.addEventListener('click', () => {
+                        if (option.disabled || option.classList.contains('is-disabled')) return;
+                        setParentValue(field, Number(option.dataset.value) || null);
+                    });
+                });
+
+                search?.addEventListener('input', () => {
+                    const query = normalize(search.value);
+                    let visible = 0;
+                    options.forEach((option) => {
+                        const value = option.dataset.value || '';
+                        if (!value) {
+                            option.hidden = Boolean(query);
+                            return;
+                        }
+                        const matches = !query || normalize(option.dataset.searchText || option.textContent).includes(query);
+                        option.hidden = !matches;
+                        if (matches) visible += 1;
+                    });
+                    emptyState?.classList.toggle('d-none', visible > 0 || !query);
+                });
+
+                syncParentField(field, index);
+            });
+
+            editor.addEventListener('click', (event) => {
+                parentFields.forEach((field) => {
+                    if (!field.contains(event.target)) closeParentCombo(field);
+                });
+            });
+            editor.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                parentFields.forEach(closeParentCombo);
+            });
+
+            function updateRowField(ids, field, value) {
+                const key = keyOf(ids);
+                const current = selectedRows.get(key);
+                if (!current) return;
+                selectedRows.set(key, {...current, [field]: value});
+            }
+
+            function makeCard(ids, label, index) {
+                const key = keyOf(ids);
+                const selected = selectedRows.get(key);
+                const card = document.createElement('div');
+                card.className = `variant-combination-card${selected ? ' is-selected' : ''}`;
+
+                const header = document.createElement('div');
+                header.className = 'variant-combination-check';
+                const check = document.createElement('input');
+                check.type = 'checkbox';
+                check.className = 'form-check-input m-0';
+                check.checked = Boolean(selected);
+                check.setAttribute('aria-label', `Chọn ${label}`);
+                const text = document.createElement('span');
+                text.textContent = label;
+                header.append(check, text);
+                card.appendChild(header);
+
+                check.addEventListener('change', () => {
+                    if (check.checked) {
+                        selectedRows.set(key, {valueIds: ids, price: '', quantity: ''});
+                    } else {
+                        selectedRows.delete(key);
+                    }
+                    renderCombinations();
+                });
+
+                if (selected) {
+                    const fields = document.createElement('div');
+                    fields.className = 'variant-combination-fields';
+
+                    const priceWrap = document.createElement('div');
+                    const priceLabel = document.createElement('label');
+                    priceLabel.className = 'form-label fw-semibold';
+                    priceLabel.textContent = 'Giá thành (VNĐ)';
+                    const price = document.createElement('input');
+                    price.type = 'number';
+                    price.min = '0';
+                    price.step = '1';
+                    price.inputMode = 'numeric';
+                    price.className = 'form-control';
+                    price.value = selected.price || '';
+                    price.placeholder = '0';
+                    price.name = `rows[${index}].price`;
+                    ids.forEach((id) => {
+                        const hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.name = `rows[${index}].variantValueIds`;
+                        hidden.value = String(id);
+                        priceWrap.appendChild(hidden);
+                    });
+                    price.addEventListener('input', () => updateRowField(ids, 'price', price.value));
+                    priceWrap.append(priceLabel, price);
+
+                    const quantityWrap = document.createElement('div');
+                    const quantityLabel = document.createElement('label');
+                    quantityLabel.className = 'form-label fw-semibold';
+                    quantityLabel.textContent = 'Số lượng';
+                    const quantity = document.createElement('input');
+                    quantity.type = 'number';
+                    quantity.min = '0';
+                    quantity.step = '1';
+                    quantity.inputMode = 'numeric';
+                    quantity.className = 'form-control';
+                    quantity.value = selected.quantity || '';
+                    quantity.placeholder = '0';
+                    quantity.name = `rows[${index}].quantity`;
+                    quantity.addEventListener('input', () => updateRowField(ids, 'quantity', quantity.value));
+                    quantityWrap.append(quantityLabel, quantity);
+
+                    fields.append(priceWrap, quantityWrap);
+                    card.appendChild(fields);
+                }
+                return card;
+            }
+
+            function renderCombinations() {
+                host.innerHTML = '';
+                const currentType = type();
+                const parents = parentIds();
+                const first = variantTree.get(parents[0]);
+                const second = variantTree.get(parents[1]);
+                let selectedIndex = 0;
+
+                if (currentType === 1 && first) {
+                    const section = document.createElement('div');
+                    section.className = 'variant-combination-group';
+                    const title = document.createElement('div');
+                    title.className = 'variant-combination-group-title';
+                    title.textContent = first.name;
+                    const grid = document.createElement('div');
+                    grid.className = 'variant-combination-grid';
+                    first.children.forEach((child) => {
+                        const ids = [child.id];
+                        const selected = selectedRows.has(keyOf(ids));
+                        grid.appendChild(makeCard(ids, child.name, selected ? selectedIndex++ : selectedIndex));
+                    });
+                    section.append(title, grid);
+                    host.appendChild(section);
+                } else if (currentType === 2 && first && second) {
+                    first.children.forEach((firstChild) => {
+                        const group = document.createElement('div');
+                        group.className = 'variant-combination-group';
+                        const title = document.createElement('div');
+                        title.className = 'variant-combination-group-title';
+                        title.textContent = firstChild.name;
+                        const grid = document.createElement('div');
+                        grid.className = 'variant-combination-grid';
+                        second.children.forEach((secondChild) => {
+                            const ids = [firstChild.id, secondChild.id];
+                            const selected = selectedRows.has(keyOf(ids));
+                            grid.appendChild(makeCard(ids, secondChild.name, selected ? selectedIndex++ : selectedIndex));
+                        });
+                        group.append(title, grid);
+                        host.appendChild(group);
+                    });
+                }
+
+                const hasParents = currentType === 1 ? Boolean(first) : Boolean(first && second);
+                empty.classList.toggle('d-none', hasParents);
+                if (!hasParents) {
+                    empty.textContent = currentType === 1
+                        ? 'Chọn biến thể cấp 1 để hiển thị các giá trị.'
+                        : 'Chọn đủ hai biến thể để tạo các tổ hợp.';
+                }
+            }
+
+            function renderMode(resetDraft = false) {
+                const currentType = type();
+                if (resetDraft) {
+                    selectedRows = new Map();
+                    parentFields.forEach((field) => {
+                        const input = parentInput(field);
+                        if (input) input.value = '';
+                        closeParentCombo(field);
+                    });
+                }
+                basePanel.classList.toggle('d-none', currentType !== 0);
+                combinationPanel.classList.toggle('d-none', currentType === 0);
+                levelTwoParent?.classList.toggle('d-none', currentType !== 2);
+                syncParentOptions();
+                renderCombinations();
+            }
+
+            typeInputs.forEach((input) => {
+                input.addEventListener('change', () => renderMode(true));
+            });
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const currentType = type();
+                const parents = parentIds();
+                if (currentType > 0) {
+                    if (!parents[0] || (currentType === 2 && !parents[1])) {
+                        showNotification('Hãy chọn đủ nhóm biến thể trước khi lưu.', 'error');
+                        return;
+                    }
+                    if (currentType === 2 && parents[0] === parents[1]) {
+                        showNotification('Hai cấp biến thể phải là hai nhóm khác nhau.', 'error');
+                        return;
+                    }
+                    if (selectedRows.size === 0) {
+                        showNotification('Hãy tích ít nhất một giá trị biến thể để lưu.', 'error');
+                        return;
+                    }
+                }
+
+                if (saveButton) saveButton.disabled = true;
+                if (saveLabel) saveLabel.textContent = 'Đang lưu...';
+                spinner?.classList.remove('d-none');
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {'X-Requested-With': 'XMLHttpRequest'}
+                    });
+                    if (response.redirected) {
+                        window.location.assign(response.url);
+                        return;
+                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    window.location.assign('/products');
+                } catch (error) {
+                    console.error(error);
+                    showNotification('Không thể lưu biến thể sản phẩm. Hãy thử lại.', 'error');
+                    if (saveButton) saveButton.disabled = false;
+                    if (saveLabel) saveLabel.textContent = 'Lưu biến thể';
+                    spinner?.classList.add('d-none');
+                }
+            });
+
+            renderMode(false);
+        });
+    }
+
+    function initProductVariantModal() {
+        const modal = document.getElementById('productVariantModal');
+        const content = modal?.querySelector('[data-product-variant-modal-content]');
+        if (!modal || !content || typeof bootstrap === 'undefined') return;
+
+        moveModalToBody(modal);
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+
+        document.addEventListener('click', async (event) => {
+            const trigger = event.target.closest('[data-product-variant-url]');
+            if (!trigger) return;
+            event.preventDefault();
+
+            const url = trigger.dataset.productVariantUrl;
+            if (!url) return;
+
+            const detailElement = document.getElementById('productDetailModal');
+            const detailInstance = detailElement ? bootstrap.Modal.getInstance(detailElement) : null;
+            if (detailElement?.classList.contains('show') && detailInstance) {
+                const hidden = waitForModalHidden(detailElement);
+                detailInstance.hide();
+                await hidden;
+            }
+
+            content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Đang tải biến thể...</div>';
+            modalInstance.show();
+
+            try {
+                const response = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                setProductModalContent(content, await response.text());
+                initProductVariantEditor(content);
+            } catch (error) {
+                console.error(error);
+                content.innerHTML = '<div class="modal-body py-5 text-center"><p class="text-danger mb-3">Không thể tải cấu hình biến thể.</p><button type="button" class="btn btn-outline-dark rounded-pill" data-bs-dismiss="modal">Đóng</button></div>';
+            }
+        });
+    }
+
     function initCategoryNavigationMenu() {
         const nav = document.querySelector('[data-category-nav]');
         const trigger = nav?.querySelector('.category-trigger');
@@ -1214,6 +1539,94 @@
 
         attributeSearch?.addEventListener('input', () => filterAttributes(attributeSearch.value));
 
+        const variantFilter = form.querySelector('[data-variant-filter]');
+        const variantLabel = variantFilter?.querySelector('[data-variant-label]');
+        const variantCount = variantFilter?.querySelector('[data-variant-count]');
+        const variantClear = variantFilter?.querySelector('[data-variant-clear]');
+        const variantSearch = variantFilter?.querySelector('[data-variant-search]');
+        const variantGroups = variantFilter ? Array.from(variantFilter.querySelectorAll('[data-variant-group]')) : [];
+        const variantChildren = variantFilter ? Array.from(variantFilter.querySelectorAll('[data-variant-child]')) : [];
+        const variantEmpty = variantFilter?.querySelector('[data-variant-empty]');
+
+        function variantChildLabel(input) {
+            return input.closest('.attribute-tree-value')?.querySelector('span')?.textContent?.trim() || '';
+        }
+
+        function syncVariantRoot(group) {
+            const root = group.querySelector('[data-variant-root-check]');
+            const children = Array.from(group.querySelectorAll('[data-variant-child]'));
+            if (!root || !children.length) return;
+            const checked = children.filter((child) => child.checked).length;
+            root.checked = checked === children.length;
+            root.indeterminate = checked > 0 && checked < children.length;
+        }
+
+        function syncVariants() {
+            variantGroups.forEach(syncVariantRoot);
+            const checked = variantChildren.filter((input) => input.checked);
+            const count = checked.length;
+            if (variantLabel) {
+                variantLabel.textContent = count === 0
+                    ? 'Tất cả biến thể'
+                    : count === 1
+                        ? variantChildLabel(checked[0])
+                        : 'Biến thể đã chọn';
+            }
+            if (variantCount) {
+                variantCount.textContent = String(count);
+                variantCount.classList.toggle('d-none', count === 0);
+            }
+            updateSummary();
+        }
+
+        variantGroups.forEach((group) => {
+            const rootCheck = group.querySelector('[data-variant-root-check]');
+            const toggle = group.querySelector('[data-variant-tree-toggle]');
+            const children = Array.from(group.querySelectorAll('[data-variant-child]'));
+
+            rootCheck?.addEventListener('change', () => {
+                children.forEach((child) => child.checked = rootCheck.checked);
+                syncVariants();
+            });
+            toggle?.addEventListener('click', () => {
+                const collapsed = group.classList.toggle('is-collapsed');
+                toggle.setAttribute('aria-expanded', String(!collapsed));
+            });
+        });
+
+        variantChildren.forEach((input) => input.addEventListener('change', syncVariants));
+        variantClear?.addEventListener('click', () => {
+            variantChildren.forEach((input) => input.checked = false);
+            syncVariants();
+        });
+
+        function filterVariants(value) {
+            const query = normalize(value);
+            let visibleGroups = 0;
+            variantGroups.forEach((group) => {
+                const rootMatches = !query || normalize(group.dataset.searchText).includes(query);
+                const values = Array.from(group.querySelectorAll('.attribute-tree-value'));
+                let childMatches = 0;
+                values.forEach((label) => {
+                    const matches = !query || rootMatches || normalize(label.dataset.searchText).includes(query);
+                    label.hidden = !matches;
+                    if (matches) childMatches += 1;
+                });
+                const visible = rootMatches || childMatches > 0;
+                group.hidden = !visible;
+                if (visible) {
+                    visibleGroups += 1;
+                    if (query) {
+                        group.classList.remove('is-collapsed');
+                        group.querySelector('[data-variant-tree-toggle]')?.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+            variantEmpty?.classList.toggle('d-none', visibleGroups > 0);
+        }
+
+        variantSearch?.addEventListener('input', () => filterVariants(variantSearch.value));
+
         function updateSearchClear() {
             keywordClear?.classList.toggle('is-visible', Boolean(keywordInput?.value.trim()));
         }
@@ -1245,6 +1658,7 @@
             const keyword = keywordInput?.value.trim();
             const selectedCategory = selectedCategoryOption();
             const selectedAttributes = attributeChildren.filter((input) => input.checked);
+            const selectedVariants = variantChildren.filter((input) => input.checked);
 
             if (keyword) {
                 addSummaryChip(`“${keyword}”`);
@@ -1262,12 +1676,21 @@
                 addSummaryChip(`+${selectedAttributes.length - 3}`, 'is-more');
                 total += 1;
             }
+            selectedVariants.slice(0, 3).forEach((input) => {
+                addSummaryChip(variantChildLabel(input), 'is-variant');
+                total += 1;
+            });
+            if (selectedVariants.length > 3) {
+                addSummaryChip(`+${selectedVariants.length - 3} biến thể`, 'is-more');
+                total += 1;
+            }
             summaryEmpty.classList.toggle('d-none', total > 0);
         }
 
         syncCategory();
         syncSort();
         syncAttributes();
+        syncVariants();
         updateSearchClear();
         updateSummary();
     }
@@ -1361,18 +1784,830 @@
         button.addEventListener('click', () => void loadMore());
     }
 
+
+    const CART_STORAGE_KEY = 'n4.cart.v1';
+
+    function readCartItems() {
+        try {
+            const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.items) ? parsed.items : []);
+            return items
+                .map((item) => ({
+                    productId: Number.parseInt(item?.productId, 10) || null,
+                    productVariantId: item?.productVariantId == null ? null : (Number.parseInt(item.productVariantId, 10) || null),
+                    quantity: Number.parseInt(item?.quantity, 10) || 0
+                }))
+                .filter((item) => item.productId && item.quantity > 0);
+        } catch (error) {
+            console.warn('Không đọc được giỏ hàng localStorage.', error);
+            return [];
+        }
+    }
+
+    function writeCartItems(items) {
+        const normalized = (Array.isArray(items) ? items : [])
+            .map((item) => ({
+                productId: Number.parseInt(item?.productId, 10) || null,
+                productVariantId: item?.productVariantId == null ? null : (Number.parseInt(item.productVariantId, 10) || null),
+                quantity: Math.max(Number.parseInt(item?.quantity, 10) || 0, 0)
+            }))
+            .filter((item) => item.productId && item.quantity > 0);
+
+        try {
+            window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
+                version: 1,
+                updatedAt: new Date().toISOString(),
+                items: normalized
+            }));
+        } catch (error) {
+            console.warn('Không thể lưu giỏ hàng localStorage.', error);
+        }
+        updateCartBadges(normalized);
+        return normalized;
+    }
+
+    function clearCart() {
+        try {
+            window.localStorage.removeItem(CART_STORAGE_KEY);
+        } catch (error) {
+            console.warn('Không thể xóa giỏ hàng localStorage.', error);
+        }
+        updateCartBadges([]);
+    }
+
+    function updateCartBadges(items = readCartItems()) {
+        const count = items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
+            badge.textContent = String(count);
+            badge.classList.toggle('is-empty', count === 0);
+        });
+    }
+
+    function csrfHeaders() {
+        const token = document.querySelector('meta[name="_csrf"]')?.content;
+        const headerName = document.querySelector('meta[name="_csrf_header"]')?.content;
+        return token && headerName ? {[headerName]: token} : {};
+    }
+
+    async function validateCartRemote(items = readCartItems()) {
+        const response = await fetch('/api/cart/validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...csrfHeaders()
+            },
+            body: JSON.stringify({items})
+        });
+        if (!response.ok) {
+            throw new Error(`Không thể kiểm tra giỏ hàng (HTTP ${response.status}).`);
+        }
+        const payload = await response.json();
+        const normalizedItems = Array.isArray(payload?.items) ? payload.items : [];
+        writeCartItems(normalizedItems.map((item) => ({
+            productId: item.productId,
+            productVariantId: item.productVariantId,
+            quantity: item.quantity
+        })));
+        return {...payload, items: normalizedItems};
+    }
+
+    function formatMoney(value) {
+        const number = Number(value ?? 0);
+        return `${new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0}).format(Number.isFinite(number) ? number : 0)} VNĐ`;
+    }
+
+    function cartItemKey(item) {
+        return `${Number(item.productId)}:${item.productVariantId == null ? 'base' : Number(item.productVariantId)}`;
+    }
+
+    function updateAddToCartButton(host) {
+        if (!host) return;
+        const button = host.querySelector('[data-add-to-cart]');
+        if (!button) return;
+        const variantType = Number.parseInt(host.dataset.productVariantType || '0', 10) || 0;
+        const available = variantType === 0
+            ? Number.parseInt(host.dataset.productQuantity || '0', 10) || 0
+            : Number.parseInt(host.dataset.selectedAvailableQuantity || '0', 10) || 0;
+        const selectedVariantId = Number.parseInt(host.dataset.selectedProductVariantId || '0', 10) || null;
+        const ready = variantType === 0 ? available > 0 : Boolean(selectedVariantId && available > 0);
+        button.disabled = !ready;
+        if (variantType > 0 && !selectedVariantId) {
+            button.textContent = 'Chọn biến thể để thêm vào giỏ';
+        } else if (available <= 0) {
+            button.textContent = 'Hết hàng';
+        } else {
+            button.textContent = 'Thêm vào giỏ hàng';
+        }
+    }
+
+    function initCartProductScopes(scope = document) {
+        const hosts = [];
+        if (scope.matches?.('[data-product-detail-scope]')) hosts.push(scope);
+        scope.querySelectorAll?.('[data-product-detail-scope]').forEach((host) => hosts.push(host));
+        hosts.forEach((host) => updateAddToCartButton(host));
+    }
+
+    function addCurrentProductToCart(button) {
+        const host = button.closest('[data-product-detail-scope]');
+        if (!host) return;
+        const productId = Number.parseInt(host.dataset.productId || '0', 10) || null;
+        const variantType = Number.parseInt(host.dataset.productVariantType || '0', 10) || 0;
+        const productVariantId = variantType > 0
+            ? (Number.parseInt(host.dataset.selectedProductVariantId || '0', 10) || null)
+            : null;
+        const available = variantType === 0
+            ? Number.parseInt(host.dataset.productQuantity || '0', 10) || 0
+            : Number.parseInt(host.dataset.selectedAvailableQuantity || '0', 10) || 0;
+
+        if (!productId) return;
+        if (variantType > 0 && !productVariantId) {
+            showNotification('Hãy chọn đủ biến thể trước khi thêm vào giỏ.', 'warning');
+            return;
+        }
+        if (available <= 0) {
+            showNotification('Lựa chọn này hiện đã hết hàng.', 'warning');
+            return;
+        }
+
+        const items = readCartItems();
+        const targetKey = `${productId}:${productVariantId == null ? 'base' : productVariantId}`;
+        const existing = items.find((item) => cartItemKey(item) === targetKey);
+        if (existing) {
+            if (existing.quantity >= available) {
+                showNotification(`Bạn đã chọn tối đa ${available} sản phẩm theo tồn kho hiện tại.`, 'warning');
+                return;
+            }
+            existing.quantity += 1;
+        } else {
+            items.push({productId, productVariantId, quantity: 1});
+        }
+        writeCartItems(items);
+        showNotification('Đã thêm sản phẩm vào giỏ hàng.', 'success');
+    }
+
+    function initCartSystem() {
+        updateCartBadges();
+        initCartProductScopes();
+
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-add-to-cart]');
+            if (!button || button.disabled) return;
+            event.preventDefault();
+            addCurrentProductToCart(button);
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === CART_STORAGE_KEY) updateCartBadges();
+        });
+    }
+
+
+
+    function createMiniCartItemElement(item, onChange, onRemove) {
+        const article = document.createElement('article');
+        article.className = 'cart-mini-line';
+        article.dataset.cartKey = cartItemKey(item);
+        const hasStockIssue = Number(item.quantity || 0) > Number(item.availableQuantity || 0);
+        article.classList.toggle('has-stock-issue', hasStockIssue);
+
+        const media = document.createElement('div');
+        media.className = 'cart-mini-line-media';
+        if (item.imageUrl) {
+            const image = document.createElement('img');
+            image.src = item.imageUrl;
+            image.alt = item.productName || 'Sản phẩm';
+            image.loading = 'lazy';
+            media.appendChild(image);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'cart-line-placeholder';
+            placeholder.textContent = 'N4';
+            media.appendChild(placeholder);
+        }
+
+        const main = document.createElement('div');
+        main.className = 'cart-mini-line-main';
+
+        const top = document.createElement('div');
+        top.className = 'cart-mini-line-top';
+        const name = document.createElement('div');
+        name.className = 'cart-mini-line-name';
+        name.textContent = item.productName || 'Sản phẩm';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'cart-mini-remove';
+        remove.setAttribute('aria-label', 'Xóa sản phẩm khỏi giỏ');
+        remove.textContent = '×';
+        remove.addEventListener('click', () => onRemove(item));
+        top.append(name, remove);
+        main.appendChild(top);
+
+        if (item.variantName) {
+            const variant = document.createElement('div');
+            variant.className = 'cart-mini-line-variant';
+            variant.textContent = item.variantName;
+            main.appendChild(variant);
+        }
+
+        const availability = document.createElement('div');
+        availability.className = 'cart-mini-line-availability';
+        availability.textContent = `Kho hiện còn ${item.availableQuantity}`;
+        main.appendChild(availability);
+
+        const priceRow = document.createElement('div');
+        priceRow.className = 'cart-mini-line-price-row';
+        const price = document.createElement('div');
+        price.className = 'cart-mini-line-price';
+        price.textContent = formatMoney(item.unitPrice);
+        const total = document.createElement('div');
+        total.className = 'cart-mini-line-total';
+        total.textContent = formatMoney(Number(item.unitPrice || 0) * Number(item.quantity || 0));
+        priceRow.append(price, total);
+        main.appendChild(priceRow);
+
+        const controls = document.createElement('div');
+        controls.className = 'cart-mini-line-controls';
+        const quantityWrap = document.createElement('div');
+        quantityWrap.className = 'cart-quantity-control';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', 'Giảm số lượng');
+
+        const quantity = document.createElement('span');
+        quantity.className = 'cart-quantity-value';
+        quantity.setAttribute('aria-label', `Đang chọn ${item.quantity}, kho hiện còn ${item.availableQuantity}`);
+
+        const requestedQuantity = document.createElement('span');
+        requestedQuantity.className = `cart-quantity-requested${hasStockIssue ? ' is-over' : ''}`;
+        requestedQuantity.textContent = String(item.quantity);
+        const quantitySeparator = document.createElement('span');
+        quantitySeparator.className = 'cart-quantity-separator';
+        quantitySeparator.textContent = '/';
+        const availableQuantity = document.createElement('span');
+        availableQuantity.className = 'cart-quantity-available';
+        availableQuantity.textContent = String(item.availableQuantity);
+        quantity.append(requestedQuantity, quantitySeparator, availableQuantity);
+
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', 'Tăng số lượng');
+        plus.disabled = item.quantity >= item.availableQuantity;
+
+        minus.addEventListener('click', () => {
+            if (item.quantity <= 1) {
+                onRemove(item);
+                return;
+            }
+            onChange(item, item.quantity - 1);
+        });
+        plus.addEventListener('click', () => {
+            if (item.quantity >= item.availableQuantity) return;
+            onChange(item, item.quantity + 1);
+        });
+        quantityWrap.append(minus, quantity, plus);
+        controls.appendChild(quantityWrap);
+        main.appendChild(controls);
+
+        article.append(media, main);
+        return article;
+    }
+
+    function initCartDropdown() {
+        const dropdown = document.querySelector('[data-cart-dropdown]');
+        const trigger = document.querySelector('[data-cart-dropdown-trigger]');
+        if (!dropdown || !trigger) return;
+
+        const itemsHost = dropdown.querySelector('[data-cart-dropdown-items]');
+        const empty = dropdown.querySelector('[data-cart-dropdown-empty]');
+        const loading = dropdown.querySelector('[data-cart-dropdown-loading]');
+        const messages = dropdown.querySelector('[data-cart-dropdown-messages]');
+        const total = dropdown.querySelector('[data-cart-dropdown-total]');
+        const count = dropdown.querySelector('[data-cart-dropdown-count]');
+        const checkout = dropdown.querySelector('[data-cart-dropdown-checkout]');
+        const closeButton = dropdown.querySelector('[data-cart-dropdown-close]');
+        const dropdownHost = trigger.closest('.dropdown') || trigger.parentElement;
+        const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(trigger);
+        let currentItems = [];
+        let validating = false;
+
+        function persistCurrentItems() {
+            writeCartItems(currentItems.map((item) => ({
+                productId: item.productId,
+                productVariantId: item.productVariantId,
+                quantity: item.quantity
+            })));
+        }
+
+        function render(syncMessages = []) {
+            loading?.classList.add('d-none');
+            if (itemsHost) itemsHost.innerHTML = '';
+            empty?.classList.toggle('d-none', currentItems.length > 0);
+
+            if (messages) {
+                messages.innerHTML = '';
+                messages.classList.toggle('d-none', !syncMessages.length);
+                syncMessages.forEach((message) => {
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-warning py-2 px-3 mb-2';
+                    alert.textContent = message;
+                    messages.appendChild(alert);
+                });
+            }
+
+            currentItems.forEach((item) => {
+                itemsHost?.appendChild(createMiniCartItemElement(
+                    item,
+                    (target, nextQuantity) => {
+                        target.quantity = Math.max(nextQuantity, 1);
+                        persistCurrentItems();
+                        render(syncMessages);
+                    },
+                    (target) => {
+                        currentItems = currentItems.filter((entry) => cartItemKey(entry) !== cartItemKey(target));
+                        persistCurrentItems();
+                        render(syncMessages);
+                    }
+                ));
+            });
+
+            const totalQuantity = currentItems.reduce((sum, item) => sum + item.quantity, 0);
+            const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
+            if (count) count.textContent = String(totalQuantity);
+            if (total) total.textContent = formatMoney(totalAmount);
+            if (checkout) {
+                const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
+                const disabled = currentItems.length === 0 || hasStockIssue;
+                checkout.classList.toggle('disabled', disabled);
+                checkout.setAttribute('aria-disabled', String(disabled));
+                checkout.tabIndex = disabled ? -1 : 0;
+                checkout.title = hasStockIssue
+                    ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
+                    : '';
+            }
+        }
+
+        async function validate() {
+            if (validating) return;
+            validating = true;
+            loading?.classList.remove('d-none');
+            try {
+                const result = await validateCartRemote();
+                currentItems = result.items || [];
+                render(result.messages || []);
+            } catch (error) {
+                console.error(error);
+                loading?.classList.add('d-none');
+                showNotification('Không thể kiểm tra giỏ hàng lúc này. Hãy thử lại sau.', 'error');
+            } finally {
+                validating = false;
+            }
+        }
+
+        dropdownHost?.addEventListener('shown.bs.dropdown', () => {
+            void validate();
+        });
+
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === CART_STORAGE_KEY && dropdown.classList.contains('show')) {
+                void validate();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            const openButton = event.target.closest('[data-open-cart]');
+            if (!openButton) return;
+            event.preventDefault();
+            dropdownInstance.show();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && dropdown.classList.contains('show')) {
+                void validate();
+            }
+        });
+
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('cart') === 'open') {
+            window.setTimeout(() => dropdownInstance.show(), 0);
+            searchParams.delete('cart');
+            const cleanQuery = searchParams.toString();
+            const cleanUrl = `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${window.location.hash}`;
+            window.history.replaceState({}, '', cleanUrl);
+        }
+
+        checkout?.addEventListener('click', (event) => {
+            if (checkout.classList.contains('disabled')) event.preventDefault();
+        });
+
+        closeButton?.addEventListener('click', () => {
+            dropdownInstance.hide();
+        });
+    }
+
+    function createCartItemElement(item, onChange, onRemove) {
+        const article = document.createElement('article');
+        article.className = 'cart-line-item';
+        article.dataset.cartKey = cartItemKey(item);
+        const hasStockIssue = Number(item.quantity || 0) > Number(item.availableQuantity || 0);
+        article.classList.toggle('has-stock-issue', hasStockIssue);
+
+        const media = document.createElement('div');
+        media.className = 'cart-line-media';
+        if (item.imageUrl) {
+            const image = document.createElement('img');
+            image.src = item.imageUrl;
+            image.alt = item.productName || 'Sản phẩm';
+            image.loading = 'lazy';
+            media.appendChild(image);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'cart-line-placeholder';
+            placeholder.textContent = 'N4';
+            media.appendChild(placeholder);
+        }
+
+        const main = document.createElement('div');
+        main.className = 'cart-line-main';
+        const name = document.createElement('div');
+        name.className = 'cart-line-name';
+        name.textContent = item.productName || 'Sản phẩm';
+        main.appendChild(name);
+        if (item.variantName) {
+            const variant = document.createElement('div');
+            variant.className = 'cart-line-variant';
+            variant.textContent = item.variantName;
+            main.appendChild(variant);
+        }
+        const price = document.createElement('div');
+        price.className = 'cart-line-price';
+        price.textContent = formatMoney(item.unitPrice);
+        main.appendChild(price);
+
+        const availability = document.createElement('div');
+        availability.className = 'cart-line-availability';
+        availability.textContent = `Kho hiện còn ${item.availableQuantity}`;
+        main.appendChild(availability);
+
+        const controls = document.createElement('div');
+        controls.className = 'cart-line-controls';
+        const quantityWrap = document.createElement('div');
+        quantityWrap.className = 'cart-quantity-control';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', 'Giảm số lượng');
+        const quantity = document.createElement('span');
+        quantity.className = 'cart-quantity-value';
+        quantity.setAttribute('aria-label', `Đang chọn ${item.quantity}, kho hiện còn ${item.availableQuantity}`);
+
+        const requestedQuantity = document.createElement('span');
+        requestedQuantity.className = `cart-quantity-requested${hasStockIssue ? ' is-over' : ''}`;
+        requestedQuantity.textContent = String(item.quantity);
+
+        const quantitySeparator = document.createElement('span');
+        quantitySeparator.className = 'cart-quantity-separator';
+        quantitySeparator.textContent = '/';
+
+        const availableQuantity = document.createElement('span');
+        availableQuantity.className = 'cart-quantity-available';
+        availableQuantity.textContent = String(item.availableQuantity);
+
+        quantity.append(requestedQuantity, quantitySeparator, availableQuantity);
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', 'Tăng số lượng');
+        plus.disabled = item.quantity >= item.availableQuantity;
+        quantityWrap.append(minus, quantity, plus);
+
+        minus.addEventListener('click', () => {
+            if (item.quantity <= 1) {
+                onRemove(item);
+                return;
+            }
+            onChange(item, item.quantity - 1);
+        });
+        plus.addEventListener('click', () => {
+            if (item.quantity >= item.availableQuantity) return;
+            onChange(item, item.quantity + 1);
+        });
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'cart-remove-button';
+        remove.textContent = 'Xóa';
+        remove.addEventListener('click', () => onRemove(item));
+        controls.append(quantityWrap, remove);
+
+        const total = document.createElement('strong');
+        total.className = 'cart-line-total';
+        total.textContent = formatMoney(Number(item.unitPrice || 0) * Number(item.quantity || 0));
+
+        article.append(media, main, controls, total);
+        return article;
+    }
+
+    function initCartPage() {
+        const page = document.querySelector('[data-cart-page]');
+        if (!page) return;
+        const itemsHost = page.querySelector('[data-cart-items]');
+        const empty = page.querySelector('[data-cart-empty]');
+        const loading = page.querySelector('[data-cart-loading]');
+        const messages = page.querySelector('[data-cart-messages]');
+        const total = page.querySelector('[data-cart-total]');
+        const count = page.querySelector('[data-cart-item-count]');
+        const checkout = page.querySelector('[data-cart-checkout-link]');
+        let currentItems = [];
+        let validating = false;
+
+        function persistCurrentItems() {
+            writeCartItems(currentItems.map((item) => ({
+                productId: item.productId,
+                productVariantId: item.productVariantId,
+                quantity: item.quantity
+            })));
+        }
+
+        function render(syncMessages = []) {
+            loading?.classList.add('d-none');
+            itemsHost.innerHTML = '';
+            empty?.classList.toggle('d-none', currentItems.length > 0);
+
+            if (messages) {
+                messages.innerHTML = '';
+                messages.classList.toggle('d-none', !syncMessages.length);
+                syncMessages.forEach((message) => {
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-warning py-2 px-3 mb-2';
+                    alert.textContent = message;
+                    messages.appendChild(alert);
+                });
+            }
+
+            currentItems.forEach((item) => {
+                itemsHost.appendChild(createCartItemElement(
+                    item,
+                    (target, nextQuantity) => {
+                        target.quantity = Math.max(nextQuantity, 1);
+                        persistCurrentItems();
+                        render();
+                    },
+                    (target) => {
+                        currentItems = currentItems.filter((entry) => cartItemKey(entry) !== cartItemKey(target));
+                        persistCurrentItems();
+                        render();
+                    }
+                ));
+            });
+
+            const totalQuantity = currentItems.reduce((sum, item) => sum + item.quantity, 0);
+            const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
+            if (count) count.textContent = String(totalQuantity);
+            if (total) total.textContent = formatMoney(totalAmount);
+            if (checkout) {
+                const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
+                const disabled = currentItems.length === 0 || hasStockIssue;
+                checkout.classList.toggle('disabled', disabled);
+                checkout.setAttribute('aria-disabled', String(disabled));
+                checkout.tabIndex = disabled ? -1 : 0;
+                checkout.title = hasStockIssue
+                    ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
+                    : '';
+            }
+        }
+
+        async function validate() {
+            if (validating) return;
+            validating = true;
+            try {
+                const result = await validateCartRemote();
+                currentItems = result.items || [];
+                render(result.messages || []);
+            } catch (error) {
+                console.error(error);
+                loading?.classList.add('d-none');
+                showNotification('Không thể kiểm tra giỏ hàng lúc này. Hãy thử tải lại trang.', 'error');
+            } finally {
+                validating = false;
+            }
+        }
+
+        checkout?.addEventListener('click', (event) => {
+            if (checkout.classList.contains('disabled')) event.preventDefault();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') void validate();
+        });
+        void validate();
+    }
+
+    function createCheckoutLine(item) {
+        const row = document.createElement('div');
+        row.className = 'checkout-line';
+        const copy = document.createElement('div');
+        copy.className = 'min-w-0';
+        const name = document.createElement('div');
+        name.className = 'fw-semibold text-truncate';
+        name.textContent = item.productName || 'Sản phẩm';
+        copy.appendChild(name);
+        if (item.variantName) {
+            const variant = document.createElement('div');
+            variant.className = 'small text-secondary text-truncate';
+            variant.textContent = item.variantName;
+            copy.appendChild(variant);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'small text-secondary d-flex flex-wrap align-items-center gap-1';
+        const price = document.createElement('span');
+        price.textContent = formatMoney(item.unitPrice);
+        const multiply = document.createElement('span');
+        multiply.textContent = '×';
+        const requested = document.createElement('span');
+        const hasStockIssue = Number(item.quantity || 0) > Number(item.availableQuantity || 0);
+        requested.className = hasStockIssue ? 'checkout-stock-over' : '';
+        requested.textContent = String(item.quantity);
+        const slash = document.createElement('span');
+        slash.textContent = '/';
+        const available = document.createElement('span');
+        available.textContent = String(item.availableQuantity);
+        meta.append(price, multiply, requested, slash, available);
+        copy.appendChild(meta);
+
+        const total = document.createElement('strong');
+        total.className = 'text-nowrap';
+        total.textContent = formatMoney(Number(item.unitPrice || 0) * item.quantity);
+        row.append(copy, total);
+        return row;
+    }
+
+
+    function initCheckoutPage() {
+        const page = document.querySelector('[data-checkout-page]');
+        if (!page) return;
+        const form = page.querySelector('[data-checkout-form]');
+        const itemsHost = page.querySelector('[data-checkout-items]');
+        const loading = page.querySelector('[data-checkout-loading]');
+        const total = page.querySelector('[data-checkout-total]');
+        const warning = page.querySelector('[data-checkout-warning]');
+        const submit = page.querySelector('[data-checkout-submit]');
+        const submitLabel = page.querySelector('[data-checkout-submit-label]');
+        const submitSpinner = page.querySelector('[data-checkout-submit-spinner]');
+        let currentItems = [];
+        let submitting = false;
+
+        function render(result = null) {
+            loading?.classList.add('d-none');
+            itemsHost.innerHTML = '';
+            currentItems.forEach((item) => itemsHost.appendChild(createCheckoutLine(item)));
+            const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
+            const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
+            if (total) total.textContent = formatMoney(totalAmount);
+            submit.disabled = currentItems.length === 0 || hasStockIssue || submitting;
+
+            const messages = Array.isArray(result?.messages) ? [...result.messages] : [];
+            if (hasStockIssue) {
+                messages.push('Có sản phẩm đang chọn số lượng lớn hơn tồn kho hiện tại. Hãy quay lại giỏ hàng và giảm số lượng trước khi đặt hàng.');
+            }
+            if (warning) {
+                warning.textContent = messages.join(' ');
+                warning.classList.toggle('d-none', messages.length === 0);
+            }
+        }
+
+        async function refreshCart() {
+            const result = await validateCartRemote();
+            currentItems = result.items || [];
+            render(result);
+            return result;
+        }
+
+        form?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (submitting || !form.reportValidity() || currentItems.length === 0) return;
+
+            submitting = true;
+            submit.disabled = true;
+            submitLabel.textContent = 'Đang kiểm tra...';
+            submitSpinner?.classList.remove('d-none');
+
+            try {
+                const latest = await refreshCart();
+                if (latest.changed) {
+                    showNotification('Giỏ hàng vừa thay đổi. Hãy kiểm tra lại trước khi đặt hàng.', 'warning');
+                    return;
+                }
+                if (!latest.checkoutAllowed) {
+                    showNotification('Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Hãy quay lại giỏ hàng và giảm số lượng.', 'warning');
+                    return;
+                }
+                if (!currentItems.length) {
+                    showNotification('Giỏ hàng không còn sản phẩm hợp lệ.', 'warning');
+                    return;
+                }
+
+                const data = new FormData(form);
+                const payload = {
+                    customerName: String(data.get('customerName') || ''),
+                    customerEmail: String(data.get('customerEmail') || ''),
+                    phone: String(data.get('phone') || ''),
+                    address: String(data.get('address') || ''),
+                    note: String(data.get('note') || ''),
+                    items: readCartItems()
+                };
+
+                submitLabel.textContent = 'Đang gửi đơn...';
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...csrfHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json().catch(() => ({success: false, message: 'Không thể đọc phản hồi từ hệ thống.'}));
+
+                if (response.status === 409 && result.cart) {
+                    currentItems = result.cart.items || [];
+                    writeCartItems(currentItems.map((item) => ({
+                        productId: item.productId,
+                        productVariantId: item.productVariantId,
+                        quantity: item.quantity
+                    })));
+                    render(result.cart);
+                    showNotification(result.message || 'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại.', 'warning');
+                    return;
+                }
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Không thể tạo đơn hàng.');
+                }
+
+                clearCart();
+                showNotification(result.message || 'Đặt hàng thành công.', 'success');
+                window.setTimeout(() => {
+                    window.location.assign(result.redirectUrl || '/orders/lookup');
+                }, 250);
+            } catch (error) {
+                console.error(error);
+                showNotification(error.message || 'Không thể đặt hàng. Vui lòng thử lại.', 'error');
+            } finally {
+                submitting = false;
+                submitSpinner?.classList.add('d-none');
+                submitLabel.textContent = 'Gửi đơn hàng';
+                submit.disabled = currentItems.length === 0
+                    || currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
+            }
+        });
+
+        refreshCart().catch((error) => {
+            console.error(error);
+            loading?.classList.add('d-none');
+            showNotification('Không thể kiểm tra giỏ hàng. Hãy quay lại giỏ và thử lại.', 'error');
+        });
+    }
+
+    function initOrderActionConfirmation() {
+        document.addEventListener('submit', async (event) => {
+            const form = event.target.closest('form[data-order-action-confirm]');
+            if (!form) return;
+            event.preventDefault();
+            const confirmed = await askConfirmation({
+                title: 'Xác nhận xử lý đơn',
+                message: form.dataset.orderActionConfirm || 'Bạn có chắc muốn tiếp tục?',
+                confirmText: 'Đồng ý',
+                cancelText: 'Quay lại',
+                type: 'warning'
+            });
+            if (confirmed) form.submit();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initModalCleanup();
         initDeleteConfirmation();
-        initManagedSelectComboboxes();
-        initCategoryModal();
-        initAttributeModal();
+        initHierarchyManagers();
         initProductDetailModal();
+        initProductVariantDisplay();
         initProductModal();
+        initProductVariantModal();
         initProductFormControls();
+        initProductVariantEditor();
         initLoadMoreProducts();
         initCategoryNavigationMenu();
         initRevealAnimations();
         initCatalogFilterControls();
+        initCartSystem();
+        initCartDropdown();
+        initCartPage();
+        initCheckoutPage();
+        initOrderActionConfirmation();
     });
 })();

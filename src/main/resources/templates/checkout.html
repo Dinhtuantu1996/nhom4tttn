@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Đặt hàng - N4</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-5"
+      data-checkout-page
+      th:attr="data-authenticated=${currentUser != null},data-authenticated-email=${currentUser != null ? currentUser.email : ''}">
+    <div class="commerce-page-head mb-4">
+        <div>
+            <span class="eyebrow">ĐẶT HÀNG</span>
+            <h1 class="display-6 fw-bold mt-2 mb-1">Thông tin nhận hàng</h1>
+            <p class="text-secondary mb-0">Sau khi gửi, đơn sẽ ở trạng thái chờ ADMIN duyệt.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-7">
+            <form class="commerce-card p-4 p-md-5" data-checkout-form novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" for="checkoutName">Họ và tên <span class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutName" name="customerName" maxlength="120" required
+                               th:value="${currentUser != null ? currentUser.name : ''}" placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" for="checkoutEmail">Email <span class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutEmail" name="customerEmail" type="email" maxlength="180" required
+                               th:value="${currentUser != null ? currentUser.email : ''}"
+                               th:readonly="${currentUser != null}" placeholder="ban@email.com">
+                        <div class="form-text" th:if="${currentUser != null}">Email lấy từ tài khoản đăng nhập và không thể sửa tại đây.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" for="checkoutPhone">Số điện thoại <span class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutPhone" name="phone" type="tel" maxlength="30" required placeholder="Số điện thoại nhận hàng">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" for="checkoutAddress">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="checkoutAddress" name="address" rows="3" maxlength="1000" required placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" for="checkoutNote">Ghi chú</label>
+                        <textarea class="form-control" id="checkoutNote" name="note" rows="3" maxlength="2000" placeholder="Ghi chú thêm cho ADMIN nếu cần"></textarea>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning d-none mt-4 mb-0" data-checkout-warning></div>
+                <button class="btn btn-dark btn-lg rounded-pill w-100 mt-4" type="submit" data-checkout-submit disabled>
+                    <span data-checkout-submit-label>Gửi đơn hàng</span>
+                    <span class="spinner-border spinner-border-sm ms-2 d-none" data-checkout-submit-spinner aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <aside class="commerce-card p-4 sticky-lg-top checkout-summary-card">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                    <div>
+                        <span class="eyebrow">ĐƠN CỦA BẠN</span>
+                        <h2 class="h5 fw-bold mt-1 mb-0">Tóm tắt sản phẩm</h2>
+                    </div>
+                    <button class="btn btn-link btn-sm p-0 text-decoration-none" type="button" data-open-cart>Sửa giỏ</button>
+                </div>
+                <div class="checkout-loading text-secondary py-4 text-center" data-checkout-loading>
+                    <span class="spinner-border spinner-border-sm me-2"></span>Đang kiểm tra...
+                </div>
+                <div class="checkout-items d-grid gap-3" data-checkout-items></div>
+                <div class="d-flex justify-content-between align-items-end gap-3 border-top pt-3 mt-3">
+                    <span class="fw-semibold">Tổng cộng</span>
+                    <strong class="cart-total" data-checkout-total>0 VNĐ</strong>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

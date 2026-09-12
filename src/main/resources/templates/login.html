@@ -58,6 +58,7 @@
                 <div class="d-none" aria-hidden="true">
                     <span th:if="${param.error}" data-base-flash data-popup-type="error">Email hoặc mật khẩu không đúng.</span>
                     <span th:if="${param.logout}" data-base-flash data-popup-type="success">Đã đăng xuất.</span>
+                    <span th:if="${param.expired}" data-base-flash data-popup-type="warning">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</span>
                     <span th:if="${googleError != null}" data-base-flash data-popup-type="error" th:text="${googleError}"></span>
                 </div>
 

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="product-variant-editor">
+    <div class="modal-header border-0 pb-0">
+        <div class="min-w-0">
+            <span class="eyebrow">BIẾN THỂ SẢN PHẨM</span>
+            <h2 class="modal-title h4 fw-bold mt-2 mb-1 text-truncate" th:text="${product.name}"></h2>
+            <p class="text-secondary small mb-0">Thiết lập giá và số lượng theo từng lựa chọn sản phẩm.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+    </div>
+
+    <div class="modal-body pt-4" data-product-variant-editor>
+        <form th:action="@{/products/{id}/variants/save(id=${product.id})}"
+              method="post"
+              data-product-variant-form>
+
+            <section class="product-form-section variant-type-section">
+                <label class="form-label fw-semibold mb-3">Loại biến thể</label>
+                <div class="variant-type-grid" role="radiogroup" aria-label="Loại biến thể">
+                    <label class="variant-type-option">
+                        <input type="radio" name="variantType" value="0"
+                               th:checked="${variantSettings.variantType == 0}" data-variant-type>
+                        <span class="variant-type-dot"></span>
+                        <span>Không</span>
+                    </label>
+                    <label class="variant-type-option">
+                        <input type="radio" name="variantType" value="1"
+                               th:checked="${variantSettings.variantType == 1}" data-variant-type>
+                        <span class="variant-type-dot"></span>
+                        <span>Level 1</span>
+                    </label>
+                    <label class="variant-type-option">
+                        <input type="radio" name="variantType" value="2"
+                               th:checked="${variantSettings.variantType == 2}" data-variant-type>
+                        <span class="variant-type-dot"></span>
+                        <span>Level 2</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="product-form-section" data-variant-base-panel>
+                <div class="variant-price-stock-grid">
+                    <div>
+                        <label class="form-label fw-semibold">Giá thành</label>
+                        <div class="product-money-input">
+                            <input class="form-control" type="number" min="0" step="1" inputmode="numeric"
+                                   name="price"
+                                   th:value="${variantSettings.price == null or variantSettings.price.signum() == 0 ? '' : variantSettings.price}"
+                                   placeholder="0">
+                            <span>VNĐ</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Số lượng</label>
+                        <input class="form-control" type="number" min="0" step="1" inputmode="numeric"
+                               name="quantity"
+                               th:value="${variantSettings.quantity == null or variantSettings.quantity == 0 ? '' : variantSettings.quantity}"
+                               placeholder="0">
+                    </div>
+                </div>
+            </section>
+
+            <section class="product-form-section d-none" data-variant-combination-panel>
+                <div class="variant-parent-grid" data-variant-parent-grid>
+                    <div class="variant-parent-field" data-variant-parent-select data-level="1">
+                        <label class="form-label fw-semibold">Biến thể cấp 1</label>
+                        <input type="hidden" name="parentVariantIds" data-variant-parent-input
+                               th:value="${variantSettings.parentVariantIds.size() > 0 ? variantSettings.parentVariantIds[0] : ''}">
+                        <div class="filter-combobox variant-parent-combobox">
+                            <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-variant-parent-trigger>
+                                <span class="filter-combobox-value" data-variant-parent-label>Chọn biến thể</span>
+                                <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                            </button>
+                            <div class="filter-combobox-menu variant-parent-menu" data-variant-parent-menu>
+                                <div class="filter-combobox-search-wrap">
+                                    <input type="search" class="filter-combobox-search" placeholder="Tìm biến thể..." autocomplete="off" data-variant-parent-search>
+                                </div>
+                                <div class="filter-combobox-options" data-variant-parent-options>
+                                    <button type="button" class="filter-combobox-option" data-variant-parent-option data-value="">
+                                        <span>Chọn biến thể</span>
+                                        <span class="filter-option-check" aria-hidden="true">✓</span>
+                                    </button>
+                                    <button type="button" class="filter-combobox-option"
+                                            th:each="root : ${variants}"
+                                            th:attr="data-value=${root.id},data-search-text=${root.name}"
+                                            data-variant-parent-option>
+                                        <span th:text="${root.name}"></span>
+                                        <span class="filter-option-check" aria-hidden="true">✓</span>
+                                    </button>
+                                </div>
+                                <div class="filter-combobox-empty d-none" data-variant-parent-empty>Không tìm thấy biến thể.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="variant-parent-field" data-variant-level-two-parent data-variant-parent-select data-level="2">
+                        <label class="form-label fw-semibold">Biến thể cấp 2</label>
+                        <input type="hidden" name="parentVariantIds" data-variant-parent-input
+                               th:value="${variantSettings.parentVariantIds.size() > 1 ? variantSettings.parentVariantIds[1] : ''}">
+                        <div class="filter-combobox variant-parent-combobox">
+                            <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-variant-parent-trigger>
+                                <span class="filter-combobox-value" data-variant-parent-label>Chọn biến thể</span>
+                                <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                            </button>
+                            <div class="filter-combobox-menu variant-parent-menu" data-variant-parent-menu>
+                                <div class="filter-combobox-search-wrap">
+                                    <input type="search" class="filter-combobox-search" placeholder="Tìm biến thể..." autocomplete="off" data-variant-parent-search>
+                                </div>
+                                <div class="filter-combobox-options" data-variant-parent-options>
+                                    <button type="button" class="filter-combobox-option" data-variant-parent-option data-value="">
+                                        <span>Chọn biến thể</span>
+                                        <span class="filter-option-check" aria-hidden="true">✓</span>
+                                    </button>
+                                    <button type="button" class="filter-combobox-option"
+                                            th:each="root : ${variants}"
+                                            th:attr="data-value=${root.id},data-search-text=${root.name}"
+                                            data-variant-parent-option>
+                                        <span th:text="${root.name}"></span>
+                                        <span class="filter-option-check" aria-hidden="true">✓</span>
+                                    </button>
+                                </div>
+                                <div class="filter-combobox-empty d-none" data-variant-parent-empty>Không tìm thấy biến thể.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="variant-editor-help mt-3">
+                    <span class="variant-editor-help-icon">i</span>
+                    <span>Chỉ những giá trị được tích chọn mới được lưu cho sản phẩm.</span>
+                </div>
+
+                <div class="mt-4" data-variant-combinations></div>
+                <div class="variant-editor-empty d-none" data-variant-combinations-empty>
+                    Chọn nhóm biến thể phía trên để tạo các lựa chọn.
+                </div>
+            </section>
+
+            <div class="d-none" data-variant-tree-source>
+                <div th:each="root : ${variants}"
+                     data-variant-root
+                     th:attr="data-id=${root.id},data-name=${root.name}">
+                    <span th:each="child : ${root.children}"
+                          data-variant-child
+                          th:attr="data-id=${child.id},data-name=${child.name}"></span>
+                </div>
+            </div>
+
+            <div class="d-none" data-existing-variant-rows>
+                <span th:each="row : ${variantSettings.rows}"
+                      data-existing-variant-row
+                      th:attr="data-values=${row.valueIdsCsv},
+                               data-price=${row.price == null or row.price.signum() == 0 ? '' : row.price},
+                               data-quantity=${row.quantity == null or row.quantity == 0 ? '' : row.quantity}"></span>
+            </div>
+
+            <div class="variant-editor-actions mt-4 pt-3 border-top">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Thoát</button>
+                <button type="submit" class="btn btn-dark rounded-pill px-4" data-variant-save>
+                    <span data-variant-save-label>Lưu biến thể</span>
+                    <span class="spinner-border spinner-border-sm ms-2 d-none" aria-hidden="true" data-variant-save-spinner></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

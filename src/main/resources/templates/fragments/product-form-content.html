@@ -33,38 +33,6 @@
                          th:errors="*{name}"></div>
                 </div>
 
-                <div class="product-form-commercial-grid mb-4">
-                    <div>
-                        <label class="form-label fw-semibold">Giá tiền</label>
-                        <div class="product-money-input">
-                            <input class="form-control"
-                                   type="number"
-                                   min="0"
-                                   step="1"
-                                   inputmode="numeric"
-                                   th:field="*{price}"
-                                   placeholder="0">
-                            <span>VNĐ</span>
-                        </div>
-                        <div class="text-danger small mt-1"
-                             th:if="${#fields.hasErrors('price')}"
-                             th:errors="*{price}"></div>
-                    </div>
-                    <div>
-                        <label class="form-label fw-semibold">Số lượng</label>
-                        <input class="form-control"
-                               type="number"
-                               min="0"
-                               step="1"
-                               inputmode="numeric"
-                               th:field="*{quantity}"
-                               placeholder="0">
-                        <div class="text-danger small mt-1"
-                             th:if="${#fields.hasErrors('quantity')}"
-                             th:errors="*{quantity}"></div>
-                    </div>
-                </div>
-
                 <div>
                     <label class="form-label fw-semibold">Mô tả *</label>
                     <textarea class="form-control"

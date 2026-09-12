@@ -11,6 +11,10 @@
               data-base-flash
               data-popup-type="error"
               th:text="${error}"></span>
+        <span th:if="${warning}"
+              data-base-flash
+              data-popup-type="warning"
+              th:text="${warning}"></span>
     </div>
 
     <dialog class="base-confirm-dialog" data-base-confirm-dialog aria-labelledby="baseConfirmTitle" aria-describedby="baseConfirmMessage">

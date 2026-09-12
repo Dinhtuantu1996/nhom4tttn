@@ -14,13 +14,17 @@
             <div class="col-6 col-md-3">
                 <h6>Mua sắm</h6>
                 <a class="footer-link d-block" th:href="@{/products}">Tất cả sản phẩm</a>
+                <a class="footer-link d-block" th:href="@{/products(cart='open')}">Giỏ hàng</a>
                 <a class="footer-link d-block" th:href="@{/contact}">Liên hệ</a>
             </div>
             <div class="col-6 col-md-3">
                 <h6 th:text="${isAdmin ? 'Quản trị' : 'Tài khoản'}"></h6>
+                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products}">Quản lý trên catalog</a>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products/new}">Thêm sản phẩm</a>
+                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/orders/lookup}">Tra cứu đơn hàng</a>
                 <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/login}">Đăng nhập</a>
+                <a class="footer-link d-block" th:if="${!isAdmin && currentUser != null}" th:href="@{/orders/my}">Đơn hàng của tôi</a>
                 <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}" th:text="${currentUser.name}"></span>
             </div>
         </div>

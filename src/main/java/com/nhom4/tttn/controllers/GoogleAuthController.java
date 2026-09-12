@@ -41,6 +41,9 @@ public class GoogleAuthController {
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
+            if (request.getSession(false) != null) {
+                request.changeSessionId();
+            }
             securityContextRepository.saveContext(context, request, response);
             redirect.addFlashAttribute("success", "Đăng nhập Google thành công.");
             return "redirect:/products";

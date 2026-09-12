@@ -14,6 +14,8 @@ public class ProductSqlDeleteService {
     public void deleteProductData(Long productId) {
         jdbcTemplate.update("DELETE FROM product_images WHERE product_id = ?", productId);
         jdbcTemplate.update("DELETE FROM product_attributes WHERE product_id = ?", productId);
+        jdbcTemplate.update("DELETE pvv FROM product_variant_values pvv JOIN product_variants pv ON pv.id = pvv.product_variant_id WHERE pv.product_id = ?", productId);
+        jdbcTemplate.update("DELETE FROM product_variants WHERE product_id = ?", productId);
         jdbcTemplate.update("DELETE FROM product_categories WHERE product_id = ?", productId);
 
         int deleted = jdbcTemplate.update("DELETE FROM products WHERE id = ?", productId);

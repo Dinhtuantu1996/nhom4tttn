@@ -43,14 +43,22 @@ public class SecurityConfig {
             SecurityContextRepository securityContextRepository
     ) throws Exception {
         http
+                .csrf(csrf -> csrf
+                        // Hai endpoint dưới đây chỉ đọc/kiểm tra dữ liệu, không thay đổi trạng thái server.
+                        // Cho phép dùng từ trang public mà không cần tạo HttpSession chỉ để sinh CSRF token.
+                        .ignoringRequestMatchers("/api/cart/validate", "/orders/lookup")
+                )
                 .authenticationProvider(authenticationProvider)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/uploads/**", "/error/**").permitAll()
-                        .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form").hasRole("ADMIN")
+                        .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form", "/products/*/variants").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/categories/**", "/attributes/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register").permitAll()
+                        .requestMatchers("/admin/orders/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/products/*/variants/save", "/categories/**", "/attributes/**", "/variants/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/success").permitAll()
+                        .requestMatchers("/orders/my/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

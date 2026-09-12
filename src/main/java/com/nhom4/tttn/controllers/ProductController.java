@@ -1,10 +1,13 @@
 package com.nhom4.tttn.controllers;
 
 import com.nhom4.tttn.dto.ProductForm;
+import com.nhom4.tttn.dto.ProductVariantSettingsForm;
 import com.nhom4.tttn.entity.Product;
 import com.nhom4.tttn.service.AttributeService;
 import com.nhom4.tttn.service.CategoryService;
 import com.nhom4.tttn.service.ProductService;
+import com.nhom4.tttn.service.ProductVariantService;
+import com.nhom4.tttn.service.VariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,25 +33,30 @@ public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final AttributeService attributeService;
+    private final VariantService variantService;
+    private final ProductVariantService productVariantService;
 
     @GetMapping("/products")
     public String products(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<Long> attributeIds,
+            @RequestParam(required = false) List<Long> variantIds,
             @RequestParam(defaultValue = "newest") String sort,
             Model model
     ) {
         List<Long> selectedAttributeIds = attributeIds == null ? List.of() : attributeIds;
+        List<Long> selectedVariantIds = variantIds == null ? List.of() : variantIds;
         Page<Product> products = productService.search(
                 keyword,
                 categoryId,
                 selectedAttributeIds,
+                selectedVariantIds,
                 sort,
                 0,
                 PRODUCT_BATCH_SIZE
         );
-        prepareCatalog(model, products, keyword, categoryId, selectedAttributeIds, sort);
+        prepareCatalog(model, products, keyword, categoryId, selectedAttributeIds, selectedVariantIds, sort);
         return "products";
     }
 
@@ -57,6 +65,7 @@ public class ProductController {
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<Long> attributeIds,
+            @RequestParam(required = false) List<Long> variantIds,
             @RequestParam(defaultValue = "newest") String sort,
             @RequestParam(defaultValue = "1") int page,
             Model model
@@ -65,6 +74,7 @@ public class ProductController {
                 keyword,
                 categoryId,
                 attributeIds == null ? List.of() : attributeIds,
+                variantIds == null ? List.of() : variantIds,
                 sort,
                 page,
                 PRODUCT_BATCH_SIZE
@@ -136,6 +146,30 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/products/{id}/variants")
+    public String variantModal(@PathVariable Long id, Model model) {
+        Product product = productService.getDetailed(id);
+        model.addAttribute("product", product);
+        model.addAttribute("variantSettings", productVariantService.getSettings(id));
+        model.addAttribute("variants", variantService.roots());
+        return "fragments/product-variant-content :: content";
+    }
+
+    @PostMapping("/products/{id}/variants/save")
+    public String saveVariants(
+            @PathVariable Long id,
+            @ModelAttribute ProductVariantSettingsForm variantSettings,
+            RedirectAttributes redirect
+    ) {
+        try {
+            productVariantService.saveSettings(id, variantSettings);
+            redirect.addFlashAttribute("success", "Lưu biến thể sản phẩm thành công.");
+        } catch (RuntimeException exception) {
+            redirect.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/products";
+    }
+
     @PostMapping("/products/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -150,12 +184,14 @@ public class ProductController {
     @GetMapping("/products/{id}/detail")
     public String detailModal(@PathVariable Long id, Model model) {
         model.addAttribute("product", productService.view(id));
+        model.addAttribute("variantDisplay", productVariantService.getDisplay(id));
         return "fragments/product-detail-modal-content :: content";
     }
 
     @GetMapping("/products/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("product", productService.view(id));
+        model.addAttribute("variantDisplay", productVariantService.getDisplay(id));
         return "product-detail";
     }
 
@@ -165,14 +201,17 @@ public class ProductController {
             String keyword,
             Long categoryId,
             List<Long> attributeIds,
+            List<Long> variantIds,
             String sort
     ) {
         model.addAttribute("products", products);
         model.addAttribute("categories", categoryService.roots());
         model.addAttribute("attributes", attributeService.roots());
+        model.addAttribute("variants", variantService.roots());
         model.addAttribute("keyword", keyword);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("attributeIds", attributeIds);
+        model.addAttribute("variantIds", variantIds);
         model.addAttribute("sort", sort);
     }
 
