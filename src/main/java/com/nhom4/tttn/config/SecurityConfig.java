@@ -52,10 +52,10 @@ public class SecurityConfig {
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/uploads/**", "/error/**").permitAll()
-                        .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form", "/products/*/variants").hasRole("ADMIN")
+                        .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
                         .requestMatchers("/admin/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/products/*/variants/save", "/categories/**", "/attributes/**", "/variants/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/categories/**", "/attributes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/success").permitAll()
                         .requestMatchers("/orders/my/**").authenticated()

@@ -1,6 +1,6 @@
 package com.nhom4.tttn.repository;
 
-import com.nhom4.tttn.dto.ProductImage;
+import com.nhom4.tttn.entity.ProductImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -6,9 +6,7 @@ import java.util.Locale;
 
 public record CartItemView(
         Long productId,
-        Long productVariantId,
         String productName,
-        String variantName,
         String imageUrl,
         BigDecimal unitPrice,
         int quantity,

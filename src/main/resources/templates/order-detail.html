@@ -24,6 +24,10 @@
                         <span class="eyebrow">HÓA ĐƠN / ĐƠN HÀNG</span>
                         <h1 class="h3 fw-bold mt-2 mb-1" th:text="${order.code}"></h1>
                         <div class="text-secondary small" th:text="${'Đặt lúc ' + order.createdDateText}"></div>
+                        <div class="text-success small mt-1" th:if="${order.completedDate != null}"
+                             th:text="${'Hoàn thành lúc ' + order.completedDateText}"></div>
+                        <div class="text-danger small mt-1" th:if="${order.cancelledDate != null}"
+                             th:text="${'Hủy lúc ' + order.cancelledDateText}"></div>
                     </div>
                     <span class="order-status-badge order-status-badge-lg" th:classappend="${' status-' + #strings.toLowerCase(order.status.name())}" th:text="${order.status.label}"></span>
                 </div>
@@ -32,7 +36,6 @@
                     <article class="order-line" th:each="item : ${order.items}">
                         <div class="min-w-0">
                             <div class="fw-bold" th:text="${item.productName}"></div>
-                            <div class="small text-secondary mt-1" th:if="${item.variantName != null}" th:text="${item.variantName}"></div>
                             <div class="small text-secondary mt-1" th:text="${item.unitPriceText + ' × ' + item.quantity}"></div>
                         </div>
                         <strong class="text-nowrap" th:text="${item.lineTotalText}"></strong>

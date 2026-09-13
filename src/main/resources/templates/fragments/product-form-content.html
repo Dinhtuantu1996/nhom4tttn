@@ -20,6 +20,7 @@
               class="product-form-stack"
               data-product-editor-form>
             <input type="hidden" th:field="*{id}">
+            <input th:if="${returnUrl != null}" type="hidden" name="returnUrl" th:value="${returnUrl}">
 
             <section class="product-form-section">
                 <div class="mb-4">
@@ -42,6 +43,38 @@
                     <div class="text-danger small mt-1"
                          th:if="${#fields.hasErrors('description')}"
                          th:errors="*{description}"></div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Giá sản phẩm *</label>
+                        <div class="input-group">
+                            <input class="form-control"
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   inputmode="numeric"
+                                   th:field="*{price}"
+                                   placeholder="0">
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('price')}"
+                             th:errors="*{price}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Số lượng tồn kho *</label>
+                        <input class="form-control"
+                               type="number"
+                               min="0"
+                               step="1"
+                               inputmode="numeric"
+                               th:field="*{quantity}"
+                               placeholder="0">
+                        <div class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('quantity')}"
+                             th:errors="*{quantity}"></div>
+                    </div>
                 </div>
             </section>
 

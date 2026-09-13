@@ -1,6 +1,5 @@
-package com.nhom4.tttn.dto;
+package com.nhom4.tttn.entity;
 
-import com.nhom4.tttn.entity.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

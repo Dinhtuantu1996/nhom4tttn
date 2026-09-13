@@ -12,7 +12,8 @@
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container py-5">
     <div class="mb-4">
-        <a th:href="@{/products}" class="text-decoration-none text-secondary">← Quay lại sản phẩm</a>
+        <a th:if="${returnUrl != null}" th:href="${returnUrl}" class="text-decoration-none text-secondary">← Quay lại hóa đơn</a>
+        <a th:if="${returnUrl == null}" th:href="@{/products}" class="text-decoration-none text-secondary">← Quay lại sản phẩm</a>
     </div>
     <div class="admin-card p-3 p-lg-4">
         <div th:replace="~{fragments/product-form-content :: content}"></div>

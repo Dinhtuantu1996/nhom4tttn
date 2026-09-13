@@ -6,20 +6,21 @@ import java.util.Locale;
 
 public record OrderLineView(
         Long productId,
-        Long productVariantId,
         String productName,
-        String variantName,
         BigDecimal unitPrice,
-        int quantity,
-        BigDecimal lineTotal,
-        int stockDeductedQuantity
+        int quantity
 ) {
+    public BigDecimal getLineTotal() {
+        BigDecimal safePrice = unitPrice == null ? BigDecimal.ZERO : unitPrice;
+        return safePrice.multiply(BigDecimal.valueOf(Math.max(quantity, 0)));
+    }
+
     public String getUnitPriceText() {
         return formatMoney(unitPrice);
     }
 
     public String getLineTotalText() {
-        return formatMoney(lineTotal);
+        return formatMoney(getLineTotal());
     }
 
     private static String formatMoney(BigDecimal value) {

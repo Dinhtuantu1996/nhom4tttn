@@ -38,9 +38,11 @@ public class OrderController {
             User currentUser = currentUser(authentication);
             OrderService.CreateResult result = orderService.create(request, currentUser);
             if (!result.created()) {
-                String message = result.cartChanged().checkoutAllowed()
+                String message = !result.cartChanged().messages().isEmpty()
+                        ? String.join(" ", result.cartChanged().messages())
+                        : (result.cartChanged().checkoutAllowed()
                         ? "Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại trước khi đặt hàng."
-                        : "Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Vui lòng giảm số lượng trong giỏ hàng trước khi đặt hàng.";
+                        : "Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Vui lòng giảm số lượng trong giỏ hàng trước khi đặt hàng.");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(CreateOrderResponse.cartChanged(
                         message,
                         result.cartChanged()

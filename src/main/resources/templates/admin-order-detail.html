@@ -18,12 +18,16 @@
             <span class="eyebrow">ADMIN · CHI TIẾT ĐƠN</span>
             <h1 class="h2 fw-bold mt-2 mb-1" th:text="${review.order.code}"></h1>
             <div class="text-secondary" th:text="${'Đặt lúc ' + review.order.createdDateText}"></div>
+            <div class="text-success small mt-1" th:if="${review.order.completedDate != null}"
+                 th:text="${'Hoàn thành lúc ' + review.order.completedDateText}"></div>
+            <div class="text-danger small mt-1" th:if="${review.order.cancelledDate != null}"
+                 th:text="${'Hủy lúc ' + review.order.cancelledDateText}"></div>
         </div>
         <span class="order-status-badge order-status-badge-lg" th:classappend="${' status-' + #strings.toLowerCase(review.order.status.name())}" th:text="${review.order.status.label}"></span>
     </div>
 
-    <div class="alert alert-warning" th:if="${review.hasWarnings() and review.order.status.name() == 'PENDING'}">
-        <strong>Cần ADMIN kiểm tra:</strong> Có dòng hàng không còn khớp với catalog hoặc tồn kho hiện tại. Bạn vẫn có thể xác nhận đơn theo quyết định cuối cùng.
+    <div class="alert alert-danger" th:if="${review.hasWarnings() and review.order.status.name() == 'PENDING'}">
+        <strong>Không thể hoàn thành đơn:</strong> Có sản phẩm không đủ tồn kho. Hãy bổ sung số lượng sản phẩm rồi tải lại trang, hoặc hủy đơn.
     </div>
 
     <div class="row g-4 align-items-start">
@@ -31,11 +35,10 @@
             <section class="commerce-card p-4">
                 <h2 class="h5 fw-bold mb-3">Sản phẩm đã chốt trên hóa đơn</h2>
                 <div class="admin-order-lines">
-                    <article class="admin-order-line" th:each="reviewItem : ${review.items}" th:classappend="${reviewItem.hasWarning() ? ' has-warning' : ''}">
+                    <article class="admin-order-line" th:each="reviewItem : ${review.items}" th:classappend="${!reviewItem.stockSufficient ? ' has-stock-error' : ''}">
                         <div class="d-flex justify-content-between gap-3 align-items-start">
                             <div class="min-w-0">
                                 <div class="fw-bold" th:text="${reviewItem.item.productName}"></div>
-                                <div class="small text-secondary mt-1" th:if="${reviewItem.item.variantName != null}" th:text="${reviewItem.item.variantName}"></div>
                                 <div class="small text-secondary mt-1" th:text="${reviewItem.item.unitPriceText + ' × ' + reviewItem.item.quantity}"></div>
                             </div>
                             <strong class="text-nowrap" th:text="${reviewItem.item.lineTotalText}"></strong>
@@ -44,13 +47,16 @@
                         <div class="admin-order-stock mt-3">
                             <span>Kho hiện tại:</span>
                             <strong th:text="${reviewItem.availableQuantity != null ? reviewItem.availableQuantity : 'Không xác định'}"></strong>
-                            <span th:if="${review.order.status.name() == 'COMPLETED'}">· Đã trừ khi chốt đơn:</span>
-                            <strong th:if="${review.order.status.name() == 'COMPLETED'}" th:text="${reviewItem.item.stockDeductedQuantity}"></strong>
+                            <span>· Hóa đơn cần:</span>
+                            <strong th:text="${reviewItem.item.quantity}"></strong>
                         </div>
 
                         <ul class="admin-order-warnings mt-2 mb-0" th:if="${reviewItem.hasWarning()}">
                             <li th:each="warning : ${reviewItem.warnings}" th:text="${warning}"></li>
                         </ul>
+                        <a class="btn btn-sm btn-outline-danger rounded-pill mt-2"
+                           th:if="${review.order.status.name() == 'PENDING' and !reviewItem.stockSufficient and reviewItem.availableQuantity != null}"
+                           th:href="@{/products/{id}/edit(id=${reviewItem.item.productId},returnUrl=${'/admin/orders/' + review.order.id})}">Cập nhật tồn kho sản phẩm</a>
                     </article>
                 </div>
 
@@ -77,8 +83,16 @@
                 <span class="eyebrow">XỬ LÝ ĐƠN</span>
                 <div class="d-grid gap-2 mt-3">
                     <form th:action="@{/admin/orders/{id}/complete(id=${review.order.id})}" method="post"
-                          data-order-action-confirm="Xác nhận chốt đơn hoàn thành? Hệ thống sẽ trừ tồn kho hiện có. Nếu thiếu hàng hoặc dữ liệu gốc đã mất, đơn vẫn được hoàn thành theo quyết định của ADMIN.">
-                        <button class="btn btn-dark w-100 rounded-pill" type="submit">Xác nhận chốt đơn</button>
+                          data-order-action-confirm="Xác nhận hoàn thành đơn? Hệ thống sẽ trừ đúng số lượng trên hóa đơn khỏi tồn kho sản phẩm.">
+                        <button class="btn btn-dark w-100 rounded-pill admin-order-complete-button"
+                                type="submit"
+                                th:disabled="${!review.canComplete()}"
+                                th:title="${review.canComplete() ? 'Hoàn thành đơn' : 'Chưa đủ tồn kho để hoàn thành đơn'}">
+                            Hoàn thành đơn
+                        </button>
+                        <div class="small text-danger text-center mt-2" th:if="${!review.canComplete()}">
+                            Cần bổ sung đủ tồn kho trước khi hoàn thành.
+                        </div>
                     </form>
                     <form th:action="@{/admin/orders/{id}/cancel(id=${review.order.id})}" method="post"
                           data-order-action-confirm="Xác nhận hủy đơn đang chờ duyệt này?">

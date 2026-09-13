@@ -1,6 +1,7 @@
 package com.nhom4.tttn.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,13 +13,31 @@ public class ProductSqlDeleteService {
 
     @Transactional
     public void deleteProductData(Long productId) {
+        Integer orderItemCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM order_items WHERE product_id = ?",
+                Integer.class,
+                productId
+        );
+        if (orderItemCount != null && orderItemCount > 0) {
+            throw new IllegalStateException(
+                    "Không thể xóa sản phẩm vì sản phẩm đã xuất hiện trong hóa đơn. "
+                            + "Bạn có thể cập nhật sản phẩm hoặc đưa số lượng về 0 nếu không muốn tiếp tục bán."
+            );
+        }
+
         jdbcTemplate.update("DELETE FROM product_images WHERE product_id = ?", productId);
         jdbcTemplate.update("DELETE FROM product_attributes WHERE product_id = ?", productId);
-        jdbcTemplate.update("DELETE pvv FROM product_variant_values pvv JOIN product_variants pv ON pv.id = pvv.product_variant_id WHERE pv.product_id = ?", productId);
-        jdbcTemplate.update("DELETE FROM product_variants WHERE product_id = ?", productId);
         jdbcTemplate.update("DELETE FROM product_categories WHERE product_id = ?", productId);
 
-        int deleted = jdbcTemplate.update("DELETE FROM products WHERE id = ?", productId);
+        int deleted;
+        try {
+            deleted = jdbcTemplate.update("DELETE FROM products WHERE id = ?", productId);
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalStateException(
+                    "Không thể xóa sản phẩm vì sản phẩm đã xuất hiện trong hóa đơn.",
+                    exception
+            );
+        }
         if (deleted != 1) {
             throw new IllegalStateException("Không thể xóa sản phẩm khỏi cơ sở dữ liệu.");
         }

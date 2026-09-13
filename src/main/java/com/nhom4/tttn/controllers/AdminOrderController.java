@@ -1,6 +1,5 @@
 package com.nhom4.tttn.controllers;
 
-import com.nhom4.tttn.dto.OrderActionResult;
 import com.nhom4.tttn.enums.OrderStatus;
 import com.nhom4.tttn.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -47,11 +46,8 @@ public class AdminOrderController {
 
     private String handleAction(Long id, RedirectAttributes redirect, Action action) {
         try {
-            OrderActionResult result = action.run();
-            redirect.addFlashAttribute("success", result.message());
-            if (result.hasWarnings()) {
-                redirect.addFlashAttribute("warning", String.join(" ", result.warnings()));
-            }
+            String message = action.run();
+            redirect.addFlashAttribute("success", message);
         } catch (RuntimeException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
@@ -60,6 +56,6 @@ public class AdminOrderController {
 
     @FunctionalInterface
     private interface Action {
-        OrderActionResult run();
+        String run();
     }
 }

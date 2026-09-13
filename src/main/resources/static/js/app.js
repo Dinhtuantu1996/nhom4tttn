@@ -374,111 +374,6 @@
     }
 
 
-    function initProductVariantDisplay(scope = document) {
-        const hosts = [];
-        if (scope.matches?.('[data-product-detail-scope]')) hosts.push(scope);
-        scope.querySelectorAll?.('[data-product-detail-scope]').forEach((host) => hosts.push(host));
-
-        hosts.forEach((host) => {
-            const selector = host.querySelector('[data-product-variant-display]');
-            const commercial = host.querySelector('[data-product-commercial]');
-            if (!selector || !commercial || selector.dataset.variantDisplayReady === 'true') return;
-            selector.dataset.variantDisplayReady = 'true';
-
-            const variantType = Number.parseInt(selector.dataset.variantType || '0', 10) || 0;
-            const priceNode = commercial.querySelector('[data-product-price]');
-            const stockNode = commercial.querySelector('[data-product-stock]');
-            const levels = Array.from(selector.querySelectorAll('[data-variant-level]'));
-            const buttons = Array.from(selector.querySelectorAll('[data-variant-value-id]'));
-            const combinations = Array.from(selector.querySelectorAll('[data-variant-combination]')).map((node) => ({
-                id: Number.parseInt(node.dataset.id || '0', 10) || null,
-                valueIds: String(node.dataset.values || '').split(',').map(Number).filter(Number.isFinite),
-                priceText: node.dataset.priceText || '0 VNĐ',
-                quantity: Number.parseInt(node.dataset.quantity || '0', 10) || 0
-            }));
-            let selected = [];
-
-            const setCommercial = (combination = null, pendingMessage = '') => {
-                if (!priceNode || !stockNode) return;
-                stockNode.classList.remove('is-out');
-
-                if (!combination) {
-                    const available = commercial.dataset.defaultAvailable === 'true';
-                    priceNode.textContent = commercial.dataset.defaultPriceText || 'Liên hệ';
-                    priceNode.className = available ? 'product-detail-price' : 'product-detail-contact-price';
-                    stockNode.textContent = pendingMessage || (available
-                        ? 'Chọn biến thể để xem giá và số lượng.'
-                        : 'Hiện chưa có biến thể còn hàng.');
-                    commercial.classList.add('variant-price-pending');
-                    commercial.classList.remove('is-resolved');
-                    host.dataset.selectedProductVariantId = '';
-                    host.dataset.selectedAvailableQuantity = '0';
-                    updateAddToCartButton(host);
-                    return;
-                }
-
-                priceNode.textContent = combination.priceText;
-                priceNode.className = 'product-detail-price';
-                if (combination.quantity > 0) {
-                    stockNode.textContent = `Còn ${combination.quantity} sản phẩm`;
-                } else {
-                    stockNode.textContent = 'Hết hàng';
-                    stockNode.classList.add('is-out');
-                }
-                commercial.classList.remove('variant-price-pending');
-                commercial.classList.add('is-resolved');
-                host.dataset.selectedProductVariantId = combination.id ? String(combination.id) : '';
-                host.dataset.selectedAvailableQuantity = String(combination.quantity || 0);
-                updateAddToCartButton(host);
-            };
-
-            const combinationFor = (values) => combinations.find((item) => (
-                item.valueIds.length === values.length
-                && item.valueIds.every((value, index) => value === values[index])
-            ));
-
-            const refreshButtons = () => {
-                buttons.forEach((button) => {
-                    const level = Number.parseInt(button.dataset.level || '0', 10);
-                    const valueId = Number(button.dataset.variantValueId);
-                    button.classList.toggle('is-selected', selected[level - 1] === valueId);
-
-                    let enabled = false;
-                    if (level === 1) {
-                        enabled = combinations.some((item) => item.valueIds[0] === valueId);
-                    } else if (level === 2 && selected[0]) {
-                        enabled = combinations.some((item) => item.valueIds[0] === selected[0] && item.valueIds[1] === valueId);
-                    }
-                    button.disabled = !enabled;
-                    button.classList.toggle('is-unavailable', !enabled);
-                });
-            };
-
-            buttons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    if (button.disabled) return;
-                    const level = Number.parseInt(button.dataset.level || '0', 10);
-                    const valueId = Number(button.dataset.variantValueId);
-                    selected[level - 1] = valueId;
-                    selected = selected.slice(0, level);
-
-                    if (variantType === 2 && level === 1) {
-                        const levelTwoLabel = levels.find((item) => Number(item.dataset.variantLevel) === 2)
-                            ?.querySelector('.product-detail-variant-label')?.textContent?.trim();
-                        setCommercial(null, `Chọn tiếp ${levelTwoLabel || 'biến thể cấp 2'}.`);
-                    } else {
-                        const combination = combinationFor(selected.slice(0, variantType));
-                        if (combination) setCommercial(combination);
-                    }
-                    refreshButtons();
-                });
-            });
-
-            setCommercial(null);
-            refreshButtons();
-        });
-    }
-
     function initProductDetailModal() {
         const modal = document.getElementById('productDetailModal');
         const content = modal?.querySelector('[data-product-detail-content]');
@@ -510,7 +405,6 @@
                 wrapper.innerHTML = html.trim();
                 const fragment = wrapper.firstElementChild;
                 content.innerHTML = fragment ? fragment.innerHTML : html;
-                initProductVariantDisplay(content);
                 initCartProductScopes(content);
 
                 const card = trigger.closest('.product-card');
@@ -831,410 +725,6 @@
 
 
 
-    function initProductVariantEditor(scope = document) {
-        const editors = [];
-        if (scope.matches?.('[data-product-variant-editor]')) editors.push(scope);
-        scope.querySelectorAll?.('[data-product-variant-editor]').forEach((editor) => editors.push(editor));
-
-        editors.forEach((editor) => {
-            if (editor.dataset.variantEditorReady === 'true') return;
-            editor.dataset.variantEditorReady = 'true';
-
-            const form = editor.querySelector('[data-product-variant-form]');
-            const typeInputs = Array.from(editor.querySelectorAll('[data-variant-type]'));
-            const basePanel = editor.querySelector('[data-variant-base-panel]');
-            const combinationPanel = editor.querySelector('[data-variant-combination-panel]');
-            const parentFields = Array.from(editor.querySelectorAll('[data-variant-parent-select]'));
-            const levelTwoParent = editor.querySelector('[data-variant-level-two-parent]');
-            const host = editor.querySelector('[data-variant-combinations]');
-            const empty = editor.querySelector('[data-variant-combinations-empty]');
-            const saveButton = editor.querySelector('[data-variant-save]');
-            const saveLabel = editor.querySelector('[data-variant-save-label]');
-            const spinner = editor.querySelector('[data-variant-save-spinner]');
-            if (!form || !basePanel || !combinationPanel || !host || !empty) return;
-
-            const normalize = (value) => (value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim();
-
-            const variantTree = new Map();
-            editor.querySelectorAll('[data-variant-root]').forEach((root) => {
-                variantTree.set(Number(root.dataset.id), {
-                    id: Number(root.dataset.id),
-                    name: root.dataset.name || '',
-                    children: Array.from(root.querySelectorAll('[data-variant-child]')).map((child) => ({
-                        id: Number(child.dataset.id),
-                        name: child.dataset.name || ''
-                    }))
-                });
-            });
-
-            let selectedRows = new Map();
-            editor.querySelectorAll('[data-existing-variant-row]').forEach((row) => {
-                const valueIds = String(row.dataset.values || '').split(',').map(Number).filter(Number.isFinite);
-                if (!valueIds.length) return;
-                selectedRows.set(valueIds.join(':'), {
-                    valueIds,
-                    price: row.dataset.price || '',
-                    quantity: row.dataset.quantity || ''
-                });
-            });
-
-            const type = () => Number.parseInt(typeInputs.find((input) => input.checked)?.value || '0', 10) || 0;
-            const parentInput = (field) => field?.querySelector('[data-variant-parent-input]');
-            const parentIds = () => parentFields.map((field) => Number(parentInput(field)?.value) || null);
-            const keyOf = (ids) => ids.join(':');
-
-            function closeParentCombo(field) {
-                const combo = field?.querySelector('.variant-parent-combobox');
-                if (!combo) return;
-                combo.classList.remove('is-open');
-                field.querySelector('[data-variant-parent-trigger]')?.setAttribute('aria-expanded', 'false');
-            }
-
-            function syncParentField(field, index) {
-                const input = parentInput(field);
-                const value = Number(input?.value) || null;
-                const selected = value ? variantTree.get(value) : null;
-                const label = field.querySelector('[data-variant-parent-label]');
-                if (label) label.textContent = selected?.name || 'Chọn biến thể';
-
-                const otherIndex = index === 0 ? 1 : 0;
-                const otherValue = parentIds()[otherIndex];
-                field.querySelectorAll('[data-variant-parent-option]').forEach((option) => {
-                    const optionValue = Number(option.dataset.value) || null;
-                    const duplicated = type() === 2 && optionValue != null && optionValue === otherValue;
-                    option.disabled = duplicated;
-                    option.classList.toggle('is-disabled', duplicated);
-                    option.classList.toggle('is-selected', optionValue === value || (!optionValue && !value));
-                });
-            }
-
-            function syncParentOptions() {
-                parentFields.forEach(syncParentField);
-            }
-
-            function setParentValue(field, value) {
-                const input = parentInput(field);
-                if (!input) return;
-                const nextValue = value ? String(value) : '';
-                if (input.value === nextValue) {
-                    closeParentCombo(field);
-                    return;
-                }
-                input.value = nextValue;
-                selectedRows = new Map();
-                syncParentOptions();
-                renderCombinations();
-                closeParentCombo(field);
-            }
-
-            parentFields.forEach((field, index) => {
-                const combo = field.querySelector('.variant-parent-combobox');
-                const trigger = field.querySelector('[data-variant-parent-trigger]');
-                const menu = field.querySelector('[data-variant-parent-menu]');
-                const search = field.querySelector('[data-variant-parent-search]');
-                const emptyState = field.querySelector('[data-variant-parent-empty]');
-                const options = Array.from(field.querySelectorAll('[data-variant-parent-option]'));
-                if (!combo || !trigger || !menu) return;
-
-                trigger.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    const willOpen = !combo.classList.contains('is-open');
-                    parentFields.forEach((item) => {
-                        if (item !== field) closeParentCombo(item);
-                    });
-                    combo.classList.toggle('is-open', willOpen);
-                    trigger.setAttribute('aria-expanded', String(willOpen));
-                    if (willOpen && search) {
-                        search.value = '';
-                        options.forEach((option) => option.hidden = false);
-                        emptyState?.classList.add('d-none');
-                        window.setTimeout(() => search.focus(), 0);
-                    }
-                });
-
-                menu.addEventListener('click', (event) => event.stopPropagation());
-                options.forEach((option) => {
-                    option.addEventListener('click', () => {
-                        if (option.disabled || option.classList.contains('is-disabled')) return;
-                        setParentValue(field, Number(option.dataset.value) || null);
-                    });
-                });
-
-                search?.addEventListener('input', () => {
-                    const query = normalize(search.value);
-                    let visible = 0;
-                    options.forEach((option) => {
-                        const value = option.dataset.value || '';
-                        if (!value) {
-                            option.hidden = Boolean(query);
-                            return;
-                        }
-                        const matches = !query || normalize(option.dataset.searchText || option.textContent).includes(query);
-                        option.hidden = !matches;
-                        if (matches) visible += 1;
-                    });
-                    emptyState?.classList.toggle('d-none', visible > 0 || !query);
-                });
-
-                syncParentField(field, index);
-            });
-
-            editor.addEventListener('click', (event) => {
-                parentFields.forEach((field) => {
-                    if (!field.contains(event.target)) closeParentCombo(field);
-                });
-            });
-            editor.addEventListener('keydown', (event) => {
-                if (event.key !== 'Escape') return;
-                parentFields.forEach(closeParentCombo);
-            });
-
-            function updateRowField(ids, field, value) {
-                const key = keyOf(ids);
-                const current = selectedRows.get(key);
-                if (!current) return;
-                selectedRows.set(key, {...current, [field]: value});
-            }
-
-            function makeCard(ids, label, index) {
-                const key = keyOf(ids);
-                const selected = selectedRows.get(key);
-                const card = document.createElement('div');
-                card.className = `variant-combination-card${selected ? ' is-selected' : ''}`;
-
-                const header = document.createElement('div');
-                header.className = 'variant-combination-check';
-                const check = document.createElement('input');
-                check.type = 'checkbox';
-                check.className = 'form-check-input m-0';
-                check.checked = Boolean(selected);
-                check.setAttribute('aria-label', `Chọn ${label}`);
-                const text = document.createElement('span');
-                text.textContent = label;
-                header.append(check, text);
-                card.appendChild(header);
-
-                check.addEventListener('change', () => {
-                    if (check.checked) {
-                        selectedRows.set(key, {valueIds: ids, price: '', quantity: ''});
-                    } else {
-                        selectedRows.delete(key);
-                    }
-                    renderCombinations();
-                });
-
-                if (selected) {
-                    const fields = document.createElement('div');
-                    fields.className = 'variant-combination-fields';
-
-                    const priceWrap = document.createElement('div');
-                    const priceLabel = document.createElement('label');
-                    priceLabel.className = 'form-label fw-semibold';
-                    priceLabel.textContent = 'Giá thành (VNĐ)';
-                    const price = document.createElement('input');
-                    price.type = 'number';
-                    price.min = '0';
-                    price.step = '1';
-                    price.inputMode = 'numeric';
-                    price.className = 'form-control';
-                    price.value = selected.price || '';
-                    price.placeholder = '0';
-                    price.name = `rows[${index}].price`;
-                    ids.forEach((id) => {
-                        const hidden = document.createElement('input');
-                        hidden.type = 'hidden';
-                        hidden.name = `rows[${index}].variantValueIds`;
-                        hidden.value = String(id);
-                        priceWrap.appendChild(hidden);
-                    });
-                    price.addEventListener('input', () => updateRowField(ids, 'price', price.value));
-                    priceWrap.append(priceLabel, price);
-
-                    const quantityWrap = document.createElement('div');
-                    const quantityLabel = document.createElement('label');
-                    quantityLabel.className = 'form-label fw-semibold';
-                    quantityLabel.textContent = 'Số lượng';
-                    const quantity = document.createElement('input');
-                    quantity.type = 'number';
-                    quantity.min = '0';
-                    quantity.step = '1';
-                    quantity.inputMode = 'numeric';
-                    quantity.className = 'form-control';
-                    quantity.value = selected.quantity || '';
-                    quantity.placeholder = '0';
-                    quantity.name = `rows[${index}].quantity`;
-                    quantity.addEventListener('input', () => updateRowField(ids, 'quantity', quantity.value));
-                    quantityWrap.append(quantityLabel, quantity);
-
-                    fields.append(priceWrap, quantityWrap);
-                    card.appendChild(fields);
-                }
-                return card;
-            }
-
-            function renderCombinations() {
-                host.innerHTML = '';
-                const currentType = type();
-                const parents = parentIds();
-                const first = variantTree.get(parents[0]);
-                const second = variantTree.get(parents[1]);
-                let selectedIndex = 0;
-
-                if (currentType === 1 && first) {
-                    const section = document.createElement('div');
-                    section.className = 'variant-combination-group';
-                    const title = document.createElement('div');
-                    title.className = 'variant-combination-group-title';
-                    title.textContent = first.name;
-                    const grid = document.createElement('div');
-                    grid.className = 'variant-combination-grid';
-                    first.children.forEach((child) => {
-                        const ids = [child.id];
-                        const selected = selectedRows.has(keyOf(ids));
-                        grid.appendChild(makeCard(ids, child.name, selected ? selectedIndex++ : selectedIndex));
-                    });
-                    section.append(title, grid);
-                    host.appendChild(section);
-                } else if (currentType === 2 && first && second) {
-                    first.children.forEach((firstChild) => {
-                        const group = document.createElement('div');
-                        group.className = 'variant-combination-group';
-                        const title = document.createElement('div');
-                        title.className = 'variant-combination-group-title';
-                        title.textContent = firstChild.name;
-                        const grid = document.createElement('div');
-                        grid.className = 'variant-combination-grid';
-                        second.children.forEach((secondChild) => {
-                            const ids = [firstChild.id, secondChild.id];
-                            const selected = selectedRows.has(keyOf(ids));
-                            grid.appendChild(makeCard(ids, secondChild.name, selected ? selectedIndex++ : selectedIndex));
-                        });
-                        group.append(title, grid);
-                        host.appendChild(group);
-                    });
-                }
-
-                const hasParents = currentType === 1 ? Boolean(first) : Boolean(first && second);
-                empty.classList.toggle('d-none', hasParents);
-                if (!hasParents) {
-                    empty.textContent = currentType === 1
-                        ? 'Chọn biến thể cấp 1 để hiển thị các giá trị.'
-                        : 'Chọn đủ hai biến thể để tạo các tổ hợp.';
-                }
-            }
-
-            function renderMode(resetDraft = false) {
-                const currentType = type();
-                if (resetDraft) {
-                    selectedRows = new Map();
-                    parentFields.forEach((field) => {
-                        const input = parentInput(field);
-                        if (input) input.value = '';
-                        closeParentCombo(field);
-                    });
-                }
-                basePanel.classList.toggle('d-none', currentType !== 0);
-                combinationPanel.classList.toggle('d-none', currentType === 0);
-                levelTwoParent?.classList.toggle('d-none', currentType !== 2);
-                syncParentOptions();
-                renderCombinations();
-            }
-
-            typeInputs.forEach((input) => {
-                input.addEventListener('change', () => renderMode(true));
-            });
-
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const currentType = type();
-                const parents = parentIds();
-                if (currentType > 0) {
-                    if (!parents[0] || (currentType === 2 && !parents[1])) {
-                        showNotification('Hãy chọn đủ nhóm biến thể trước khi lưu.', 'error');
-                        return;
-                    }
-                    if (currentType === 2 && parents[0] === parents[1]) {
-                        showNotification('Hai cấp biến thể phải là hai nhóm khác nhau.', 'error');
-                        return;
-                    }
-                    if (selectedRows.size === 0) {
-                        showNotification('Hãy tích ít nhất một giá trị biến thể để lưu.', 'error');
-                        return;
-                    }
-                }
-
-                if (saveButton) saveButton.disabled = true;
-                if (saveLabel) saveLabel.textContent = 'Đang lưu...';
-                spinner?.classList.remove('d-none');
-
-                try {
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: new FormData(form),
-                        headers: {'X-Requested-With': 'XMLHttpRequest'}
-                    });
-                    if (response.redirected) {
-                        window.location.assign(response.url);
-                        return;
-                    }
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    window.location.assign('/products');
-                } catch (error) {
-                    console.error(error);
-                    showNotification('Không thể lưu biến thể sản phẩm. Hãy thử lại.', 'error');
-                    if (saveButton) saveButton.disabled = false;
-                    if (saveLabel) saveLabel.textContent = 'Lưu biến thể';
-                    spinner?.classList.add('d-none');
-                }
-            });
-
-            renderMode(false);
-        });
-    }
-
-    function initProductVariantModal() {
-        const modal = document.getElementById('productVariantModal');
-        const content = modal?.querySelector('[data-product-variant-modal-content]');
-        if (!modal || !content || typeof bootstrap === 'undefined') return;
-
-        moveModalToBody(modal);
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
-
-        document.addEventListener('click', async (event) => {
-            const trigger = event.target.closest('[data-product-variant-url]');
-            if (!trigger) return;
-            event.preventDefault();
-
-            const url = trigger.dataset.productVariantUrl;
-            if (!url) return;
-
-            const detailElement = document.getElementById('productDetailModal');
-            const detailInstance = detailElement ? bootstrap.Modal.getInstance(detailElement) : null;
-            if (detailElement?.classList.contains('show') && detailInstance) {
-                const hidden = waitForModalHidden(detailElement);
-                detailInstance.hide();
-                await hidden;
-            }
-
-            content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Đang tải biến thể...</div>';
-            modalInstance.show();
-
-            try {
-                const response = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                setProductModalContent(content, await response.text());
-                initProductVariantEditor(content);
-            } catch (error) {
-                console.error(error);
-                content.innerHTML = '<div class="modal-body py-5 text-center"><p class="text-danger mb-3">Không thể tải cấu hình biến thể.</p><button type="button" class="btn btn-outline-dark rounded-pill" data-bs-dismiss="modal">Đóng</button></div>';
-            }
-        });
-    }
-
     function initCategoryNavigationMenu() {
         const nav = document.querySelector('[data-category-nav]');
         const trigger = nav?.querySelector('.category-trigger');
@@ -1539,94 +1029,6 @@
 
         attributeSearch?.addEventListener('input', () => filterAttributes(attributeSearch.value));
 
-        const variantFilter = form.querySelector('[data-variant-filter]');
-        const variantLabel = variantFilter?.querySelector('[data-variant-label]');
-        const variantCount = variantFilter?.querySelector('[data-variant-count]');
-        const variantClear = variantFilter?.querySelector('[data-variant-clear]');
-        const variantSearch = variantFilter?.querySelector('[data-variant-search]');
-        const variantGroups = variantFilter ? Array.from(variantFilter.querySelectorAll('[data-variant-group]')) : [];
-        const variantChildren = variantFilter ? Array.from(variantFilter.querySelectorAll('[data-variant-child]')) : [];
-        const variantEmpty = variantFilter?.querySelector('[data-variant-empty]');
-
-        function variantChildLabel(input) {
-            return input.closest('.attribute-tree-value')?.querySelector('span')?.textContent?.trim() || '';
-        }
-
-        function syncVariantRoot(group) {
-            const root = group.querySelector('[data-variant-root-check]');
-            const children = Array.from(group.querySelectorAll('[data-variant-child]'));
-            if (!root || !children.length) return;
-            const checked = children.filter((child) => child.checked).length;
-            root.checked = checked === children.length;
-            root.indeterminate = checked > 0 && checked < children.length;
-        }
-
-        function syncVariants() {
-            variantGroups.forEach(syncVariantRoot);
-            const checked = variantChildren.filter((input) => input.checked);
-            const count = checked.length;
-            if (variantLabel) {
-                variantLabel.textContent = count === 0
-                    ? 'Tất cả biến thể'
-                    : count === 1
-                        ? variantChildLabel(checked[0])
-                        : 'Biến thể đã chọn';
-            }
-            if (variantCount) {
-                variantCount.textContent = String(count);
-                variantCount.classList.toggle('d-none', count === 0);
-            }
-            updateSummary();
-        }
-
-        variantGroups.forEach((group) => {
-            const rootCheck = group.querySelector('[data-variant-root-check]');
-            const toggle = group.querySelector('[data-variant-tree-toggle]');
-            const children = Array.from(group.querySelectorAll('[data-variant-child]'));
-
-            rootCheck?.addEventListener('change', () => {
-                children.forEach((child) => child.checked = rootCheck.checked);
-                syncVariants();
-            });
-            toggle?.addEventListener('click', () => {
-                const collapsed = group.classList.toggle('is-collapsed');
-                toggle.setAttribute('aria-expanded', String(!collapsed));
-            });
-        });
-
-        variantChildren.forEach((input) => input.addEventListener('change', syncVariants));
-        variantClear?.addEventListener('click', () => {
-            variantChildren.forEach((input) => input.checked = false);
-            syncVariants();
-        });
-
-        function filterVariants(value) {
-            const query = normalize(value);
-            let visibleGroups = 0;
-            variantGroups.forEach((group) => {
-                const rootMatches = !query || normalize(group.dataset.searchText).includes(query);
-                const values = Array.from(group.querySelectorAll('.attribute-tree-value'));
-                let childMatches = 0;
-                values.forEach((label) => {
-                    const matches = !query || rootMatches || normalize(label.dataset.searchText).includes(query);
-                    label.hidden = !matches;
-                    if (matches) childMatches += 1;
-                });
-                const visible = rootMatches || childMatches > 0;
-                group.hidden = !visible;
-                if (visible) {
-                    visibleGroups += 1;
-                    if (query) {
-                        group.classList.remove('is-collapsed');
-                        group.querySelector('[data-variant-tree-toggle]')?.setAttribute('aria-expanded', 'true');
-                    }
-                }
-            });
-            variantEmpty?.classList.toggle('d-none', visibleGroups > 0);
-        }
-
-        variantSearch?.addEventListener('input', () => filterVariants(variantSearch.value));
-
         function updateSearchClear() {
             keywordClear?.classList.toggle('is-visible', Boolean(keywordInput?.value.trim()));
         }
@@ -1643,10 +1045,10 @@
             updateSummary();
         });
 
-        function addSummaryChip(text, variant = '') {
+        function addSummaryChip(text, styleClass = '') {
             if (!summaryChips || !text) return;
             const chip = document.createElement('span');
-            chip.className = `filter-summary-chip${variant ? ` ${variant}` : ''}`;
+            chip.className = `filter-summary-chip${styleClass ? ` ${styleClass}` : ''}`;
             chip.textContent = text;
             summaryChips.appendChild(chip);
         }
@@ -1658,7 +1060,6 @@
             const keyword = keywordInput?.value.trim();
             const selectedCategory = selectedCategoryOption();
             const selectedAttributes = attributeChildren.filter((input) => input.checked);
-            const selectedVariants = variantChildren.filter((input) => input.checked);
 
             if (keyword) {
                 addSummaryChip(`“${keyword}”`);
@@ -1676,21 +1077,12 @@
                 addSummaryChip(`+${selectedAttributes.length - 3}`, 'is-more');
                 total += 1;
             }
-            selectedVariants.slice(0, 3).forEach((input) => {
-                addSummaryChip(variantChildLabel(input), 'is-variant');
-                total += 1;
-            });
-            if (selectedVariants.length > 3) {
-                addSummaryChip(`+${selectedVariants.length - 3} biến thể`, 'is-more');
-                total += 1;
-            }
             summaryEmpty.classList.toggle('d-none', total > 0);
         }
 
         syncCategory();
         syncSort();
         syncAttributes();
-        syncVariants();
         updateSearchClear();
         updateSummary();
     }
@@ -1785,7 +1177,24 @@
     }
 
 
-    const CART_STORAGE_KEY = 'n4.cart.v1';
+    const CART_STORAGE_KEY = 'n4.cart.v2';
+    const MAX_CART_DISTINCT_ITEMS = 10;
+
+    function normalizeLocalCartItems(items) {
+        const byProduct = new Map();
+        (Array.isArray(items) ? items : []).forEach((item) => {
+            const productId = Number.parseInt(item?.productId, 10) || null;
+            const quantity = Math.max(Number.parseInt(item?.quantity, 10) || 0, 0);
+            if (!productId || quantity <= 0) return;
+
+            const previous = byProduct.get(productId)?.quantity || 0;
+            byProduct.set(productId, {
+                productId,
+                quantity: Math.min(previous + quantity, 2147483647)
+            });
+        });
+        return [...byProduct.values()];
+    }
 
     function readCartItems() {
         try {
@@ -1793,13 +1202,7 @@
             if (!raw) return [];
             const parsed = JSON.parse(raw);
             const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.items) ? parsed.items : []);
-            return items
-                .map((item) => ({
-                    productId: Number.parseInt(item?.productId, 10) || null,
-                    productVariantId: item?.productVariantId == null ? null : (Number.parseInt(item.productVariantId, 10) || null),
-                    quantity: Number.parseInt(item?.quantity, 10) || 0
-                }))
-                .filter((item) => item.productId && item.quantity > 0);
+            return normalizeLocalCartItems(items);
         } catch (error) {
             console.warn('Không đọc được giỏ hàng localStorage.', error);
             return [];
@@ -1807,13 +1210,7 @@
     }
 
     function writeCartItems(items) {
-        const normalized = (Array.isArray(items) ? items : [])
-            .map((item) => ({
-                productId: Number.parseInt(item?.productId, 10) || null,
-                productVariantId: item?.productVariantId == null ? null : (Number.parseInt(item.productVariantId, 10) || null),
-                quantity: Math.max(Number.parseInt(item?.quantity, 10) || 0, 0)
-            }))
-            .filter((item) => item.productId && item.quantity > 0);
+        const normalized = normalizeLocalCartItems(items);
 
         try {
             window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
@@ -1868,7 +1265,6 @@
         const normalizedItems = Array.isArray(payload?.items) ? payload.items : [];
         writeCartItems(normalizedItems.map((item) => ({
             productId: item.productId,
-            productVariantId: item.productVariantId,
             quantity: item.quantity
         })));
         return {...payload, items: normalizedItems};
@@ -1880,27 +1276,16 @@
     }
 
     function cartItemKey(item) {
-        return `${Number(item.productId)}:${item.productVariantId == null ? 'base' : Number(item.productVariantId)}`;
+        return String(Number(item.productId));
     }
 
     function updateAddToCartButton(host) {
         if (!host) return;
         const button = host.querySelector('[data-add-to-cart]');
         if (!button) return;
-        const variantType = Number.parseInt(host.dataset.productVariantType || '0', 10) || 0;
-        const available = variantType === 0
-            ? Number.parseInt(host.dataset.productQuantity || '0', 10) || 0
-            : Number.parseInt(host.dataset.selectedAvailableQuantity || '0', 10) || 0;
-        const selectedVariantId = Number.parseInt(host.dataset.selectedProductVariantId || '0', 10) || null;
-        const ready = variantType === 0 ? available > 0 : Boolean(selectedVariantId && available > 0);
-        button.disabled = !ready;
-        if (variantType > 0 && !selectedVariantId) {
-            button.textContent = 'Chọn biến thể để thêm vào giỏ';
-        } else if (available <= 0) {
-            button.textContent = 'Hết hàng';
-        } else {
-            button.textContent = 'Thêm vào giỏ hàng';
-        }
+        const available = Number.parseInt(host.dataset.productQuantity || '0', 10) || 0;
+        button.disabled = available <= 0;
+        button.textContent = available <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng';
     }
 
     function initCartProductScopes(scope = document) {
@@ -1914,27 +1299,16 @@
         const host = button.closest('[data-product-detail-scope]');
         if (!host) return;
         const productId = Number.parseInt(host.dataset.productId || '0', 10) || null;
-        const variantType = Number.parseInt(host.dataset.productVariantType || '0', 10) || 0;
-        const productVariantId = variantType > 0
-            ? (Number.parseInt(host.dataset.selectedProductVariantId || '0', 10) || null)
-            : null;
-        const available = variantType === 0
-            ? Number.parseInt(host.dataset.productQuantity || '0', 10) || 0
-            : Number.parseInt(host.dataset.selectedAvailableQuantity || '0', 10) || 0;
+        const available = Number.parseInt(host.dataset.productQuantity || '0', 10) || 0;
 
         if (!productId) return;
-        if (variantType > 0 && !productVariantId) {
-            showNotification('Hãy chọn đủ biến thể trước khi thêm vào giỏ.', 'warning');
-            return;
-        }
         if (available <= 0) {
-            showNotification('Lựa chọn này hiện đã hết hàng.', 'warning');
+            showNotification('Sản phẩm này hiện đã hết hàng.', 'warning');
             return;
         }
 
         const items = readCartItems();
-        const targetKey = `${productId}:${productVariantId == null ? 'base' : productVariantId}`;
-        const existing = items.find((item) => cartItemKey(item) === targetKey);
+        const existing = items.find((item) => Number(item.productId) === productId);
         if (existing) {
             if (existing.quantity >= available) {
                 showNotification(`Bạn đã chọn tối đa ${available} sản phẩm theo tồn kho hiện tại.`, 'warning');
@@ -1942,7 +1316,12 @@
             }
             existing.quantity += 1;
         } else {
-            items.push({productId, productVariantId, quantity: 1});
+            const distinctProductCount = new Set(items.map((item) => Number(item.productId))).size;
+            if (distinctProductCount >= MAX_CART_DISTINCT_ITEMS) {
+                showNotification(`Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`, 'warning');
+                return;
+            }
+            items.push({productId, quantity: 1});
         }
         writeCartItems(items);
         showNotification('Đã thêm sản phẩm vào giỏ hàng.', 'success');
@@ -2004,13 +1383,6 @@
         remove.addEventListener('click', () => onRemove(item));
         top.append(name, remove);
         main.appendChild(top);
-
-        if (item.variantName) {
-            const variant = document.createElement('div');
-            variant.className = 'cart-mini-line-variant';
-            variant.textContent = item.variantName;
-            main.appendChild(variant);
-        }
 
         const availability = document.createElement('div');
         availability.className = 'cart-mini-line-availability';
@@ -2098,7 +1470,6 @@
         function persistCurrentItems() {
             writeCartItems(currentItems.map((item) => ({
                 productId: item.productId,
-                productVariantId: item.productVariantId,
                 quantity: item.quantity
             })));
         }
@@ -2141,13 +1512,16 @@
             if (total) total.textContent = formatMoney(totalAmount);
             if (checkout) {
                 const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
-                const disabled = currentItems.length === 0 || hasStockIssue;
+                const hasItemLimitIssue = currentItems.length > MAX_CART_DISTINCT_ITEMS;
+                const disabled = currentItems.length === 0 || hasStockIssue || hasItemLimitIssue;
                 checkout.classList.toggle('disabled', disabled);
                 checkout.setAttribute('aria-disabled', String(disabled));
                 checkout.tabIndex = disabled ? -1 : 0;
-                checkout.title = hasStockIssue
+                checkout.title = hasItemLimitIssue
+                    ? `Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`
+                    : (hasStockIssue
                     ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
-                    : '';
+                    : '');
             }
         }
 
@@ -2238,12 +1612,6 @@
         name.className = 'cart-line-name';
         name.textContent = item.productName || 'Sản phẩm';
         main.appendChild(name);
-        if (item.variantName) {
-            const variant = document.createElement('div');
-            variant.className = 'cart-line-variant';
-            variant.textContent = item.variantName;
-            main.appendChild(variant);
-        }
         const price = document.createElement('div');
         price.className = 'cart-line-price';
         price.textContent = formatMoney(item.unitPrice);
@@ -2329,7 +1697,6 @@
         function persistCurrentItems() {
             writeCartItems(currentItems.map((item) => ({
                 productId: item.productId,
-                productVariantId: item.productVariantId,
                 quantity: item.quantity
             })));
         }
@@ -2372,13 +1739,16 @@
             if (total) total.textContent = formatMoney(totalAmount);
             if (checkout) {
                 const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
-                const disabled = currentItems.length === 0 || hasStockIssue;
+                const hasItemLimitIssue = currentItems.length > MAX_CART_DISTINCT_ITEMS;
+                const disabled = currentItems.length === 0 || hasStockIssue || hasItemLimitIssue;
                 checkout.classList.toggle('disabled', disabled);
                 checkout.setAttribute('aria-disabled', String(disabled));
                 checkout.tabIndex = disabled ? -1 : 0;
-                checkout.title = hasStockIssue
+                checkout.title = hasItemLimitIssue
+                    ? `Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`
+                    : (hasStockIssue
                     ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
-                    : '';
+                    : '');
             }
         }
 
@@ -2417,13 +1787,6 @@
         name.className = 'fw-semibold text-truncate';
         name.textContent = item.productName || 'Sản phẩm';
         copy.appendChild(name);
-        if (item.variantName) {
-            const variant = document.createElement('div');
-            variant.className = 'small text-secondary text-truncate';
-            variant.textContent = item.variantName;
-            copy.appendChild(variant);
-        }
-
         const meta = document.createElement('div');
         meta.className = 'small text-secondary d-flex flex-wrap align-items-center gap-1';
         const price = document.createElement('span');
@@ -2469,10 +1832,14 @@
             currentItems.forEach((item) => itemsHost.appendChild(createCheckoutLine(item)));
             const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
             const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
+            const hasItemLimitIssue = currentItems.length > MAX_CART_DISTINCT_ITEMS;
             if (total) total.textContent = formatMoney(totalAmount);
-            submit.disabled = currentItems.length === 0 || hasStockIssue || submitting;
+            submit.disabled = currentItems.length === 0 || hasStockIssue || hasItemLimitIssue || submitting;
 
             const messages = Array.isArray(result?.messages) ? [...result.messages] : [];
+            if (hasItemLimitIssue) {
+                messages.push(`Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`);
+            }
             if (hasStockIssue) {
                 messages.push('Có sản phẩm đang chọn số lượng lớn hơn tồn kho hiện tại. Hãy quay lại giỏ hàng và giảm số lượng trước khi đặt hàng.');
             }
@@ -2539,7 +1906,6 @@
                     currentItems = result.cart.items || [];
                     writeCartItems(currentItems.map((item) => ({
                         productId: item.productId,
-                        productVariantId: item.productVariantId,
                         quantity: item.quantity
                     })));
                     render(result.cart);
@@ -2563,6 +1929,7 @@
                 submitSpinner?.classList.add('d-none');
                 submitLabel.textContent = 'Gửi đơn hàng';
                 submit.disabled = currentItems.length === 0
+                    || currentItems.length > MAX_CART_DISTINCT_ITEMS
                     || currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
             }
         });
@@ -2595,11 +1962,8 @@
         initDeleteConfirmation();
         initHierarchyManagers();
         initProductDetailModal();
-        initProductVariantDisplay();
         initProductModal();
-        initProductVariantModal();
         initProductFormControls();
-        initProductVariantEditor();
         initLoadMoreProducts();
         initCategoryNavigationMenu();
         initRevealAnimations();

@@ -1,6 +1,5 @@
 package com.nhom4.tttn.entity;
 
-import com.nhom4.tttn.dto.ProductImage;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,10 +8,10 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Entity
@@ -44,14 +43,6 @@ public class Product {
     @Column(nullable = false)
     @Setter
     private int quantity = 0;
-
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
-    @Setter
-    private int variantType = 0;
-
-    @Transient
-    @Setter
-    private BigDecimal displayPrice;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -87,7 +78,6 @@ public class Product {
     void prePersist() {
         if (price == null) price = BigDecimal.ZERO;
         if (quantity < 0) quantity = 0;
-        if (variantType < 0 || variantType > 2) variantType = 0;
         createdDate = LocalDateTime.now();
         updatedDate = createdDate;
     }
@@ -106,20 +96,7 @@ public class Product {
     }
 
     public String getPriceText() {
-        return formatPrice(price);
-    }
-
-    public boolean isDisplayPriceAvailable() {
-        return variantType == 0 ? quantity > 0 : displayPrice != null;
-    }
-
-    public String getDisplayPriceText() {
-        BigDecimal value = variantType == 0 ? price : displayPrice;
-        return formatPrice(value);
-    }
-
-    private String formatPrice(BigDecimal value) {
-        BigDecimal safePrice = value == null ? BigDecimal.ZERO : value;
+        BigDecimal safePrice = price == null ? BigDecimal.ZERO : price;
         return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safePrice) + " VNĐ";
     }
 }

@@ -4,12 +4,10 @@ import com.nhom4.tttn.dto.*;
 import com.nhom4.tttn.entity.CustomerOrder;
 import com.nhom4.tttn.entity.OrderItem;
 import com.nhom4.tttn.entity.Product;
-import com.nhom4.tttn.entity.ProductVariant;
 import com.nhom4.tttn.entity.User;
 import com.nhom4.tttn.enums.OrderStatus;
 import com.nhom4.tttn.repository.CustomerOrderRepository;
 import com.nhom4.tttn.repository.ProductRepository;
-import com.nhom4.tttn.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,8 +21,11 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +36,6 @@ public class OrderService {
 
     private final CustomerOrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final ProductVariantRepository productVariantRepository;
     private final CartService cartService;
 
     @Transactional
@@ -58,7 +58,6 @@ public class OrderService {
 
         CustomerOrder order = new CustomerOrder();
         order.setCode(generateUniqueCode());
-        order.setUserId(authenticatedUser == null ? null : authenticatedUser.getId());
         order.setCustomerName(customerName);
         order.setCustomerEmail(email);
         order.setPhone(phone);
@@ -70,13 +69,9 @@ public class OrderService {
         for (CartItemView cartItem : cart.items()) {
             OrderItem item = new OrderItem();
             item.setProductId(cartItem.productId());
-            item.setProductVariantId(cartItem.productVariantId());
             item.setProductName(cartItem.productName());
-            item.setVariantName(cartItem.variantName());
             item.setUnitPrice(cartItem.unitPrice());
             item.setQuantity(cartItem.quantity());
-            item.setLineTotal(cartItem.lineTotal());
-            item.setStockDeductedQuantity(0);
             order.addItem(item);
         }
 
@@ -138,68 +133,97 @@ public class OrderService {
     public OrderReview review(Long id) {
         CustomerOrder order = getDetailed(id);
         List<OrderItemReview> reviews = new ArrayList<>();
+        Map<Long, Long> requestedByProduct = new TreeMap<>();
+        for (OrderItem item : order.getItems()) {
+            if (item.getProductId() != null && item.getQuantity() > 0) {
+                requestedByProduct.merge(item.getProductId(), (long) item.getQuantity(), Long::sum);
+            }
+        }
 
         for (OrderItem item : order.getItems()) {
             List<String> warnings = new ArrayList<>();
             Integer available = null;
+            boolean stockSufficient = true;
 
             Product product = item.getProductId() == null
                     ? null
                     : productRepository.findById(item.getProductId()).orElse(null);
-            if (product == null) {
-                warnings.add("Sản phẩm gốc không còn tồn tại trong hệ thống.");
+            if (product != null) {
+                available = Math.max(product.getQuantity(), 0);
             }
 
-            if (item.getProductVariantId() != null) {
-                ProductVariant variant = productVariantRepository.findById(item.getProductVariantId()).orElse(null);
-                if (variant == null || variant.getProduct() == null
-                        || item.getProductId() == null
-                        || !item.getProductId().equals(variant.getProduct().getId())) {
-                    warnings.add("Biến thể gốc không còn tồn tại hoặc không còn thuộc sản phẩm này.");
+            if (order.getStatus() == OrderStatus.PENDING) {
+                if (product == null) {
+                    stockSufficient = false;
+                    warnings.add("Sản phẩm gốc không còn tồn tại. Không thể hoàn thành đơn.");
+                } else if (item.getQuantity() <= 0) {
+                    stockSufficient = false;
+                    warnings.add("Số lượng trên hóa đơn không hợp lệ. Không thể hoàn thành đơn.");
                 } else {
-                    available = variant.getQuantity();
-                }
-            } else if (product != null) {
-                if (product.getVariantType() != 0) {
-                    warnings.add("Sản phẩm hiện đã chuyển sang quản lý tồn kho theo biến thể.");
-                } else {
-                    available = product.getQuantity();
+                    long required = requestedByProduct.getOrDefault(item.getProductId(), (long) item.getQuantity());
+                    if (available < required) {
+                        stockSufficient = false;
+                        warnings.add("Kho hiện chỉ còn " + available + " nhưng hóa đơn cần " + required
+                                + ". Hãy bổ sung tồn kho hoặc hủy đơn.");
+                    }
                 }
             }
 
-            if (order.getStatus() == OrderStatus.PENDING && available != null && available < item.getQuantity()) {
-                warnings.add("Kho hiện chỉ còn " + available + " nhưng đơn cần " + item.getQuantity() + ". ADMIN vẫn có thể xác nhận.");
-            }
-
-            reviews.add(new OrderItemReview(toLineView(item), available, List.copyOf(warnings)));
+            reviews.add(new OrderItemReview(
+                    toLineView(item),
+                    available,
+                    stockSufficient,
+                    List.copyOf(warnings)
+            ));
         }
         return new OrderReview(toDetailView(order), List.copyOf(reviews));
     }
 
     @Transactional
-    public OrderActionResult complete(Long orderId) {
+    public String complete(Long orderId) {
         CustomerOrder order = lockOrder(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Chỉ đơn đang chờ ADMIN duyệt mới được chốt hoàn thành.");
+            throw new IllegalStateException("Chỉ đơn đang chờ ADMIN duyệt mới được hoàn thành.");
         }
 
-        List<String> warnings = new ArrayList<>();
-        for (OrderItem item : stockOrderedItems(order)) {
-            int deducted = deductStock(item, warnings);
-            item.setStockDeductedQuantity(deducted);
+        Map<Long, StockRequirement> requirements = buildStockRequirements(order);
+        Map<Long, Product> lockedProducts = new LinkedHashMap<>();
+
+        // Lock and validate every product first. Nothing is deducted unless the whole order is valid.
+        for (Map.Entry<Long, StockRequirement> entry : requirements.entrySet()) {
+            Long productId = entry.getKey();
+            StockRequirement requirement = entry.getValue();
+            Product product = productRepository.findByIdForUpdate(productId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Sản phẩm \"" + requirement.productName() + "\" không còn tồn tại. Không thể hoàn thành đơn."
+                    ));
+
+            int available = Math.max(product.getQuantity(), 0);
+            if (available < requirement.quantity()) {
+                throw new IllegalStateException(
+                        "Không đủ tồn kho cho \"" + requirement.productName() + "\". Kho hiện còn " + available
+                                + ", hóa đơn cần " + requirement.quantity()
+                                + ". Hãy bổ sung tồn kho hoặc hủy đơn."
+                );
+            }
+            lockedProducts.put(productId, product);
+        }
+
+        // Only after every line passes validation do we deduct stock and complete the order.
+        for (Map.Entry<Long, StockRequirement> entry : requirements.entrySet()) {
+            Product product = lockedProducts.get(entry.getKey());
+            product.setQuantity(product.getQuantity() - entry.getValue().quantity());
+            productRepository.save(product);
         }
 
         order.setStatus(OrderStatus.COMPLETED);
         order.setCompletedDate(LocalDateTime.now());
         orderRepository.save(order);
-        return new OrderActionResult(
-                "Đã chốt đơn hoàn thành và đồng bộ tồn kho.",
-                List.copyOf(warnings)
-        );
+        return "Đã hoàn thành đơn và trừ tồn kho thành công.";
     }
 
     @Transactional
-    public OrderActionResult cancel(Long orderId) {
+    public String cancel(Long orderId) {
         CustomerOrder order = lockOrder(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Chỉ đơn đang chờ ADMIN duyệt mới được hủy.");
@@ -208,69 +232,42 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledDate(LocalDateTime.now());
         orderRepository.save(order);
-        return new OrderActionResult("Đã hủy đơn hàng.", List.of());
+        return "Đã hủy đơn hàng.";
     }
 
-    private List<OrderItem> stockOrderedItems(CustomerOrder order) {
-        List<OrderItem> items = new ArrayList<>(order.getItems());
-        items.sort((left, right) -> {
-            int leftType = left.getProductVariantId() == null ? 0 : 1;
-            int rightType = right.getProductVariantId() == null ? 0 : 1;
-            int typeCompare = Integer.compare(leftType, rightType);
-            if (typeCompare != 0) return typeCompare;
-            Long leftId = leftType == 0 ? left.getProductId() : left.getProductVariantId();
-            Long rightId = rightType == 0 ? right.getProductId() : right.getProductVariantId();
-            if (leftId == null) return rightId == null ? 0 : 1;
-            if (rightId == null) return -1;
-            return Long.compare(leftId, rightId);
-        });
-        return items;
-    }
+    private Map<Long, StockRequirement> buildStockRequirements(CustomerOrder order) {
+        Map<Long, StockRequirement> requirements = new TreeMap<>();
 
-    private int deductStock(OrderItem item, List<String> warnings) {
-        int requested = Math.max(item.getQuantity(), 0);
-        if (requested == 0) return 0;
-
-        if (item.getProductVariantId() != null) {
-            ProductVariant variant = productVariantRepository.findByIdForUpdate(item.getProductVariantId()).orElse(null);
-            if (variant == null || variant.getProduct() == null || item.getProductId() == null
-                    || !item.getProductId().equals(variant.getProduct().getId())) {
-                warnings.add(item.getProductName() + ": không tìm thấy biến thể hiện tại, không trừ tồn kho.");
-                return 0;
+        for (OrderItem item : order.getItems()) {
+            if (item.getProductId() == null) {
+                throw new IllegalStateException("Hóa đơn có sản phẩm thiếu mã sản phẩm gốc. Không thể hoàn thành đơn.");
             }
-            int available = Math.max(variant.getQuantity(), 0);
-            int deducted = Math.min(available, requested);
-            variant.setQuantity(available - deducted);
-            productVariantRepository.save(variant);
-            if (deducted < requested) {
-                warnings.add(item.getProductName() + variantSuffix(item) + ": cần " + requested
-                        + ", kho chỉ có " + available + ". Đã trừ " + deducted + " và vẫn xác nhận đơn theo quyết định ADMIN.");
+            if (item.getQuantity() <= 0) {
+                throw new IllegalStateException("Hóa đơn có số lượng sản phẩm không hợp lệ. Không thể hoàn thành đơn.");
             }
-            return deducted;
+
+            StockRequirement previous = requirements.get(item.getProductId());
+            long totalQuantity = item.getQuantity();
+            if (previous != null) {
+                totalQuantity += previous.quantity();
+            }
+            if (totalQuantity > Integer.MAX_VALUE) {
+                throw new IllegalStateException("Số lượng sản phẩm trên hóa đơn vượt giới hạn cho phép.");
+            }
+
+            requirements.put(
+                    item.getProductId(),
+                    new StockRequirement(
+                            previous == null ? item.getProductName() : previous.productName(),
+                            (int) totalQuantity
+                    )
+            );
         }
 
-        if (item.getProductId() == null) {
-            warnings.add(item.getProductName() + ": thiếu mã sản phẩm gốc, không trừ tồn kho.");
-            return 0;
+        if (requirements.isEmpty()) {
+            throw new IllegalStateException("Hóa đơn không có sản phẩm để hoàn thành.");
         }
-        Product product = productRepository.findByIdForUpdate(item.getProductId()).orElse(null);
-        if (product == null) {
-            warnings.add(item.getProductName() + ": sản phẩm gốc không còn tồn tại, không trừ tồn kho.");
-            return 0;
-        }
-        if (product.getVariantType() != 0) {
-            warnings.add(item.getProductName() + ": sản phẩm hiện đã chuyển sang biến thể, không thể trừ tồn kho cũ tự động.");
-            return 0;
-        }
-        int available = Math.max(product.getQuantity(), 0);
-        int deducted = Math.min(available, requested);
-        product.setQuantity(available - deducted);
-        productRepository.save(product);
-        if (deducted < requested) {
-            warnings.add(item.getProductName() + ": cần " + requested + ", kho chỉ có " + available
-                    + ". Đã trừ " + deducted + " và vẫn xác nhận đơn theo quyết định ADMIN.");
-        }
-        return deducted;
+        return requirements;
     }
 
     private CustomerOrder lockOrder(Long id) {
@@ -298,7 +295,6 @@ public class OrderService {
         return new OrderDetailView(
                 order.getId(),
                 order.getCode(),
-                order.getUserId(),
                 order.getCustomerName(),
                 order.getCustomerEmail(),
                 order.getPhone(),
@@ -317,13 +313,9 @@ public class OrderService {
     private OrderLineView toLineView(OrderItem item) {
         return new OrderLineView(
                 item.getProductId(),
-                item.getProductVariantId(),
                 item.getProductName(),
-                item.getVariantName(),
                 item.getUnitPrice(),
-                item.getQuantity(),
-                item.getLineTotal(),
-                item.getStockDeductedQuantity()
+                item.getQuantity()
         );
     }
 
@@ -364,8 +356,7 @@ public class OrderService {
         return normalized.isBlank() ? null : normalized;
     }
 
-    private String variantSuffix(OrderItem item) {
-        return item.getVariantName() == null || item.getVariantName().isBlank() ? "" : " (" + item.getVariantName() + ")";
+    private record StockRequirement(String productName, int quantity) {
     }
 
     public record CreateResult(CustomerOrder order, CartValidationResponse cartChanged) {

@@ -6,12 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Entity
 @Table(name = "orders", indexes = {
@@ -20,8 +17,6 @@ import java.util.Locale;
 })
 @Getter
 public class CustomerOrder {
-    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,10 +24,6 @@ public class CustomerOrder {
     @Column(nullable = false, unique = true, length = 40)
     @Setter
     private String code;
-
-    @Column(name = "user_id")
-    @Setter
-    private Long userId;
 
     @Column(name = "customer_name", nullable = false, length = 120)
     @Setter
@@ -97,22 +88,5 @@ public class CustomerOrder {
     public void addItem(OrderItem item) {
         item.setOrder(this);
         items.add(item);
-    }
-
-    public String getCreatedDateText() {
-        return createdDate == null ? "" : createdDate.format(DATE_TIME_FORMAT);
-    }
-
-    public String getUpdatedDateText() {
-        return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT);
-    }
-
-    public String getTotalAmountText() {
-        return formatMoney(totalAmount);
-    }
-
-    private String formatMoney(BigDecimal value) {
-        BigDecimal safe = value == null ? BigDecimal.ZERO : value;
-        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safe) + " VNĐ";
     }
 }

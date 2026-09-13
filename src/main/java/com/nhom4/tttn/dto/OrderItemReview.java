@@ -5,6 +5,7 @@ import java.util.List;
 public record OrderItemReview(
         OrderLineView item,
         Integer availableQuantity,
+        boolean stockSufficient,
         List<String> warnings
 ) {
     public boolean hasWarning() {

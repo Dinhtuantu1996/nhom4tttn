@@ -12,7 +12,6 @@ import java.util.Locale;
 public record OrderDetailView(
         Long id,
         String code,
-        Long userId,
         String customerName,
         String customerEmail,
         String phone,
@@ -34,6 +33,14 @@ public record OrderDetailView(
 
     public String getUpdatedDateText() {
         return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT);
+    }
+
+    public String getCompletedDateText() {
+        return completedDate == null ? "" : completedDate.format(DATE_TIME_FORMAT);
+    }
+
+    public String getCancelledDateText() {
+        return cancelledDate == null ? "" : cancelledDate.format(DATE_TIME_FORMAT);
     }
 
     public String getTotalAmountText() {
