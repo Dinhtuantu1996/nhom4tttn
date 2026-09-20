@@ -1177,7 +1177,7 @@
     }
 
 
-    const CART_STORAGE_KEY = 'n4.cart.v2';
+    const CART_STORAGE_KEY = 'gocnha.cart.v1';
     const MAX_CART_DISTINCT_ITEMS = 10;
 
     function normalizeLocalCartItems(items) {
@@ -1363,7 +1363,7 @@
         } else {
             const placeholder = document.createElement('div');
             placeholder.className = 'cart-line-placeholder';
-            placeholder.textContent = 'N4';
+            placeholder.textContent = 'GN';
             media.appendChild(placeholder);
         }
 
@@ -1602,7 +1602,7 @@
         } else {
             const placeholder = document.createElement('div');
             placeholder.className = 'cart-line-placeholder';
-            placeholder.textContent = 'N4';
+            placeholder.textContent = 'GN';
             media.appendChild(placeholder);
         }
 

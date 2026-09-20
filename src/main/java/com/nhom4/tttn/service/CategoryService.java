@@ -37,7 +37,7 @@ public class CategoryService {
                 throw new IllegalArgumentException("Danh mục chỉ hỗ trợ tối đa 2 cấp.");
             }
             if (id != null && id.equals(parentId)) {
-                throw new IllegalArgumentException("Danh muc khong the la cha cua chinh no.");
+                throw new IllegalArgumentException("Danh mục không thể là cha của chính nó.");
             }
         }
 
@@ -47,11 +47,11 @@ public class CategoryService {
 
         if (duplicate && (id == null || !category.getName().equalsIgnoreCase(name)
                 || !sameParent(category.getParent(), parent))) {
-            throw new IllegalArgumentException("Ten danh muc da ton tai cung cap.");
+            throw new IllegalArgumentException("Tên danh mục đã tồn tại cùng cấp.");
         }
 
         if (id != null && category.isRoot() && parent != null && categoryRepository.existsByParent_Id(id)) {
-            throw new IllegalArgumentException("Khong the doi danh muc dang co danh muc con thanh danh muc con.");
+            throw new IllegalArgumentException("Không thể chuyển danh mục đang có danh mục con thành danh mục con.");
         }
 
         category.setName(name);
@@ -65,10 +65,10 @@ public class CategoryService {
 
         if (category.isRoot()) {
             if (categoryRepository.existsByParent_Id(id)) {
-                throw new IllegalArgumentException("Không thể xóa danh mục lớn vì vẫn còn danh mục con.");
+                throw new IllegalArgumentException("Không thể xóa danh mục cha vì vẫn còn danh mục con.");
             }
             if (productRepository.existsByCategories_Id(id)) {
-                throw new IllegalArgumentException("Không thể xóa danh mục lớn vì vẫn còn sản phẩm thuộc danh mục này.");
+                throw new IllegalArgumentException("Không thể xóa danh mục cha vì vẫn còn sản phẩm thuộc danh mục này.");
             }
         } else {
             if (categoryRepository.existsByParent_Id(id)) {
@@ -86,12 +86,12 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public Category get(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay danh muc ID " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục ID " + id));
     }
 
     private String normalizeName(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Ten danh muc khong duoc de trong.");
+            throw new IllegalArgumentException("Tên danh mục không được để trống.");
         }
         return value.trim().replaceAll("\\s+", " ");
     }

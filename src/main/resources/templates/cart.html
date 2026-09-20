@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title>Giỏ hàng - N4</title>
+    <title>Giỏ hàng - Góc Nhà</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
@@ -18,7 +18,7 @@
         <div>
             <span class="eyebrow">GIỎ HÀNG</span>
             <h1 class="display-6 fw-bold mt-2 mb-1">Sản phẩm bạn đã chọn</h1>
-            <p class="text-secondary mb-0">Giỏ hàng được lưu trên thiết bị này và luôn được kiểm tra lại với tồn kho hiện tại.</p>
+            <p class="text-secondary mb-0">Kiểm tra lại sản phẩm và số lượng trước khi chuyển sang bước đặt hàng.</p>
         </div>
         <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/products}">Tiếp tục mua sắm</a>
     </div>
@@ -33,7 +33,7 @@
                 </div>
                 <div class="d-grid gap-3" data-cart-items></div>
                 <div class="cart-empty-state d-none text-center py-5" data-cart-empty>
-                    <div class="cart-empty-icon mb-3">N4</div>
+                    <div class="cart-empty-icon mb-3">GN</div>
                     <h2 class="h5 fw-bold">Giỏ hàng đang trống</h2>
                     <p class="text-secondary">Chọn sản phẩm phù hợp rồi quay lại đây nhé.</p>
                     <a class="btn btn-dark rounded-pill px-4" th:href="@{/products}">Xem sản phẩm</a>
@@ -53,7 +53,7 @@
                     <strong class="cart-total" data-cart-total>0 VNĐ</strong>
                 </div>
                 <a class="btn btn-teal btn-lg rounded-pill w-100 mt-4 disabled" href="/checkout" data-cart-checkout-link aria-disabled="true">Tiến hành đặt hàng</a>
-                <div class="small text-secondary mt-3">Giá và tồn kho sẽ được kiểm tra lại lần cuối trước khi tạo đơn.</div>
+                <div class="small text-secondary mt-3">Giá và số lượng còn lại sẽ được xác nhận khi bạn gửi đơn hàng.</div>
             </aside>
         </div>
     </div>

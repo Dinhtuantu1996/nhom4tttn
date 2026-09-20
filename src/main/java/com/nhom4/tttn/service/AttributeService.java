@@ -37,7 +37,7 @@ public class AttributeService {
                 throw new IllegalArgumentException("Thuộc tính chỉ hỗ trợ tối đa 2 cấp.");
             }
             if (id != null && id.equals(parentId)) {
-                throw new IllegalArgumentException("Thuoc tinh khong the la cha cua chinh no.");
+                throw new IllegalArgumentException("Thuộc tính không thể là cha của chính nó.");
             }
         }
 
@@ -47,14 +47,14 @@ public class AttributeService {
 
         if (duplicate && (id == null || !attribute.getName().equalsIgnoreCase(name)
                 || !sameParent(attribute.getParent(), parent))) {
-            throw new IllegalArgumentException("Ten thuoc tinh/gia tri da ton tai cung cap.");
+            throw new IllegalArgumentException("Tên thuộc tính hoặc giá trị đã tồn tại cùng cấp.");
         }
 
         if (id != null && !sameParent(attribute.getParent(), parent)) {
             throw new IllegalArgumentException(
                     attribute.isRoot()
-                            ? "Không thể đổi thuộc tính lớn thành giá trị con."
-                            : "Không thể đổi nhóm cha của giá trị thuộc tính."
+                            ? "Không thể chuyển nhóm thuộc tính thành một giá trị."
+                            : "Không thể đổi nhóm của giá trị thuộc tính."
             );
         }
 
@@ -69,14 +69,14 @@ public class AttributeService {
 
         if (attribute.isRoot()) {
             if (attributeRepository.existsByParent_Id(id)) {
-                throw new IllegalArgumentException("Không thể xóa thuộc tính lớn vì vẫn còn thuộc tính con.");
+                throw new IllegalArgumentException("Không thể xóa nhóm thuộc tính vì vẫn còn giá trị bên trong.");
             }
             if (productRepository.existsByAttributes_Id(id)) {
-                throw new IllegalArgumentException("Không thể xóa thuộc tính lớn vì đang được sản phẩm sử dụng.");
+                throw new IllegalArgumentException("Không thể xóa nhóm thuộc tính vì đang được sản phẩm sử dụng.");
             }
         } else {
             if (attributeRepository.existsByParent_Id(id)) {
-                throw new IllegalArgumentException("Không thể xóa thuộc tính vì vẫn còn thuộc tính con.");
+                throw new IllegalArgumentException("Không thể xóa thuộc tính vì vẫn còn giá trị bên trong.");
             }
             if (productRepository.existsByAttributes_Id(id)) {
                 throw new IllegalArgumentException("Không thể xóa giá trị thuộc tính vì đang có sản phẩm sử dụng.");
@@ -90,12 +90,12 @@ public class AttributeService {
     @Transactional(readOnly = true)
     public Attribute get(Long id) {
         return attributeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay thuoc tinh ID " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thuộc tính ID " + id));
     }
 
     private String normalizeName(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Ten thuoc tinh khong duoc de trong.");
+            throw new IllegalArgumentException("Tên thuộc tính không được để trống.");
         }
         return value.trim().replaceAll("\\s+", " ");
     }

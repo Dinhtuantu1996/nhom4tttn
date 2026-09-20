@@ -36,11 +36,25 @@ public class Product {
     @Setter
     private long viewCount = 0;
 
-    @Column(nullable = false, precision = 19, scale = 0)
+    @Column(
+            nullable = false,
+            precision = 19,
+            scale = 0,
+            check = @CheckConstraint(
+                    name = "chk_products_price_non_negative",
+                    constraint = "price >= 0"
+            )
+    )
     @Setter
     private BigDecimal price = BigDecimal.ZERO;
 
-    @Column(nullable = false)
+    @Column(
+            nullable = false,
+            check = @CheckConstraint(
+                    name = "chk_products_quantity_non_negative",
+                    constraint = "quantity >= 0"
+            )
+    )
     @Setter
     private int quantity = 0;
 

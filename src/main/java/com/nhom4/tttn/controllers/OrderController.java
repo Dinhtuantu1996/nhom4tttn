@@ -54,7 +54,7 @@ public class OrderController {
                     ? "/orders/success?code=" + order.getCode()
                     : "/orders/my/" + order.getCode();
             return ResponseEntity.ok(CreateOrderResponse.success(
-                    "Đặt hàng thành công. Đơn đang chờ ADMIN duyệt.",
+                    "Đặt hàng thành công. Đơn hàng đang chờ cửa hàng xác nhận.",
                     order.getCode(),
                     redirectUrl
             ));

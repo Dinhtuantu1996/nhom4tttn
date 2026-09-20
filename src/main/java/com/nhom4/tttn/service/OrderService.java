@@ -68,7 +68,7 @@ public class OrderService {
 
         for (CartItemView cartItem : cart.items()) {
             OrderItem item = new OrderItem();
-            item.setProductId(cartItem.productId());
+            item.setProduct(productRepository.getReferenceById(cartItem.productId()));
             item.setProductName(cartItem.productName());
             item.setUnitPrice(cartItem.unitPrice());
             item.setQuantity(cartItem.quantity());
@@ -183,13 +183,11 @@ public class OrderService {
     public String complete(Long orderId) {
         CustomerOrder order = lockOrder(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Chỉ đơn đang chờ ADMIN duyệt mới được hoàn thành.");
+            throw new IllegalStateException("Chỉ đơn đang chờ xác nhận mới được hoàn thành.");
         }
 
         Map<Long, StockRequirement> requirements = buildStockRequirements(order);
         Map<Long, Product> lockedProducts = new LinkedHashMap<>();
-
-        // Lock and validate every product first. Nothing is deducted unless the whole order is valid.
         for (Map.Entry<Long, StockRequirement> entry : requirements.entrySet()) {
             Long productId = entry.getKey();
             StockRequirement requirement = entry.getValue();
@@ -208,8 +206,6 @@ public class OrderService {
             }
             lockedProducts.put(productId, product);
         }
-
-        // Only after every line passes validation do we deduct stock and complete the order.
         for (Map.Entry<Long, StockRequirement> entry : requirements.entrySet()) {
             Product product = lockedProducts.get(entry.getKey());
             product.setQuantity(product.getQuantity() - entry.getValue().quantity());
@@ -226,7 +222,7 @@ public class OrderService {
     public String cancel(Long orderId) {
         CustomerOrder order = lockOrder(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Chỉ đơn đang chờ ADMIN duyệt mới được hủy.");
+            throw new IllegalStateException("Chỉ đơn đang chờ xác nhận mới được hủy.");
         }
 
         order.setStatus(OrderStatus.CANCELLED);
@@ -325,7 +321,7 @@ public class OrderService {
             for (int i = 0; i < 6; i++) {
                 suffix.append(CODE_ALPHABET.charAt(RANDOM.nextInt(CODE_ALPHABET.length())));
             }
-            String code = "N4-" + LocalDateTime.now().format(CODE_DATE) + "-" + suffix;
+            String code = "GN-" + LocalDateTime.now().format(CODE_DATE) + "-" + suffix;
             if (!orderRepository.existsByCodeIgnoreCase(code)) return code;
         }
         throw new IllegalStateException("Không thể tạo mã đơn hàng. Vui lòng thử lại.");

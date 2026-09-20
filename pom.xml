@@ -15,7 +15,7 @@
     <artifactId>nhom4tttn</artifactId>
     <version>1.0.0</version>
     <name>nhom4tttn</name>
-    <description>N4 Store</description>
+    <description>Góc Nhà - Đồ gia dụng và tiện ích</description>
 
     <properties>
         <java.version>21</java.version>

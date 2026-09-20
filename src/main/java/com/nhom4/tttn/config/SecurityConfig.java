@@ -44,8 +44,6 @@ public class SecurityConfig {
     ) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        // Hai endpoint dưới đây chỉ đọc/kiểm tra dữ liệu, không thay đổi trạng thái server.
-                        // Cho phép dùng từ trang public mà không cần tạo HttpSession chỉ để sinh CSRF token.
                         .ignoringRequestMatchers("/api/cart/validate", "/orders/lookup")
                 )
                 .authenticationProvider(authenticationProvider)

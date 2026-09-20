@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sản phẩm - N4</title>
+    <title>Sản phẩm - Góc Nhà</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <div>
             <span class="eyebrow">DANH MỤC SẢN PHẨM</span>
-            <h1 class="display-6 fw-bold mt-2 mb-1">Khám phá sản phẩm</h1>
+            <h1 class="display-6 fw-bold mt-2 mb-1">Đồ gia dụng cho mọi góc nhà</h1>
             <p class="text-secondary mb-0" th:text="${products.totalElements + ' sản phẩm phù hợp'}"></p>
         </div>
         <div class="d-flex flex-wrap gap-2" th:if="${isAdmin}">
@@ -115,7 +115,7 @@
                         <div class="attribute-tree-toolbar">
                             <div>
                                 <div class="fw-bold">Chọn thuộc tính</div>
-                                <div class="small text-secondary">Có thể chọn nhiều giá trị.</div>
+                                <div class="small text-secondary">Chọn các đặc điểm phù hợp để lọc sản phẩm.</div>
                             </div>
                             <button type="button" class="attribute-tree-clear" data-attribute-clear>Xóa chọn</button>
                         </div>
@@ -379,7 +379,7 @@
                 <div>
                     <span class="eyebrow">QUẢN LÝ THUỘC TÍNH</span>
                     <h2 class="modal-title h4 fw-bold mt-2 mb-1">Thuộc tính sản phẩm</h2>
-                    <p class="text-secondary mb-0 small">Thuộc tính cha chỉnh ở phía trên; các giá trị được quản lý ngay trong từng nhóm.</p>
+                    <p class="text-secondary mb-0 small">Chọn nhóm thuộc tính để thêm hoặc chỉnh sửa các giá trị bên trong.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
@@ -389,7 +389,7 @@
                         <div class="mb-3">
                             <span class="eyebrow" data-hierarchy-root-eyebrow>THÊM MỤC CHA</span>
                             <h3 class="h6 fw-bold mt-2 mb-1" data-hierarchy-root-title>Thêm thuộc tính</h3>
-                            <p class="small text-secondary mb-0">Tạo hoặc đổi tên thuộc tính cha như Màu sắc, Kích thước, Chất liệu...</p>
+                            <p class="small text-secondary mb-0">Tạo hoặc đổi tên nhóm thuộc tính như Chất liệu, Công dụng, Kiểu dáng...</p>
                         </div>
                         <form th:action="@{/attributes/save}" method="post" data-hierarchy-root-form>
                             <input type="hidden" name="id" data-hierarchy-root-id>
@@ -412,7 +412,7 @@
                         <div class="hierarchy-manager-list-header">
                             <div>
                                 <h3 class="h6 fw-bold mb-1">Danh sách thuộc tính</h3>
-                                <p class="small text-secondary mb-0">Mỗi khung là một thuộc tính cha; thêm và sửa giá trị ngay tại khung đó.</p>
+                                <p class="small text-secondary mb-0">Mỗi nhóm chứa các giá trị dùng để mô tả và lọc sản phẩm.</p>
                             </div>
                             <div class="hierarchy-manager-search-wrap">
                                 <input type="search" class="form-control form-control-sm" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-hierarchy-search>

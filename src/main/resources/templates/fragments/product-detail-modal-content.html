@@ -43,7 +43,7 @@
                     </button>
                 </div>
                 <div class="product-detail-empty rounded-4"
-                     th:if="${#lists.isEmpty(product.images)}">N4</div>
+                     th:if="${#lists.isEmpty(product.images)}">Góc Nhà</div>
             </div>
 
             <div class="col-lg-5" data-product-detail-scope
@@ -67,7 +67,7 @@
                          th:class="${product.quantity > 0 ? 'product-detail-price' : 'product-detail-contact-price'}"
                          th:text="${product.quantity > 0 ? product.priceText : 'Liên hệ'}"></div>
                     <div class="product-detail-stock" data-product-stock
-                         th:text="${product.quantity > 0 ? 'Còn ' + product.quantity + ' sản phẩm' : 'Liên hệ N4 để biết thêm thông tin.'}"></div>
+                         th:text="${product.quantity > 0 ? 'Còn ' + product.quantity + ' sản phẩm' : 'Liên hệ cửa hàng để biết thêm thông tin.'}"></div>
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap mt-3" th:if="${!#sets.isEmpty(product.attributes)}">

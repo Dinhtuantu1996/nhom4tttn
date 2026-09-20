@@ -25,26 +25,49 @@ public class OrderItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(
+            name = "order_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_items_order")
+    )
     @Setter
     private CustomerOrder order;
-
-    // Used to compare the invoice quantity with the product's current stock.
-    // Product deletion is blocked while any order item still references this ID.
-    @Column(name = "product_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "product_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_items_product")
+    )
     @Setter
-    private Long productId;
-
-    // Snapshot fields keep old invoices unchanged when product name/price is edited later.
+    private Product product;
     @Column(name = "product_name", nullable = false, length = 255)
     @Setter
     private String productName;
 
-    @Column(name = "unit_price", nullable = false, precision = 19, scale = 0)
+    @Column(
+            name = "unit_price",
+            nullable = false,
+            precision = 19,
+            scale = 0,
+            check = @CheckConstraint(
+                    name = "chk_order_items_unit_price_non_negative",
+                    constraint = "unit_price >= 0"
+            )
+    )
     @Setter
     private BigDecimal unitPrice = BigDecimal.ZERO;
 
-    @Column(nullable = false)
+    @Column(
+            nullable = false,
+            check = @CheckConstraint(
+                    name = "chk_order_items_quantity_positive",
+                    constraint = "quantity > 0"
+            )
+    )
     @Setter
     private int quantity;
+
+    public Long getProductId() {
+        return product == null ? null : product.getId();
+    }
 }

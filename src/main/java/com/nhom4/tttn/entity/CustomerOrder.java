@@ -50,7 +50,16 @@ public class CustomerOrder {
     @Setter
     private OrderStatus status = OrderStatus.PENDING;
 
-    @Column(name = "total_amount", nullable = false, precision = 19, scale = 0)
+    @Column(
+            name = "total_amount",
+            nullable = false,
+            precision = 19,
+            scale = 0,
+            check = @CheckConstraint(
+                    name = "chk_orders_total_amount_non_negative",
+                    constraint = "total_amount >= 0"
+            )
+    )
     @Setter
     private BigDecimal totalAmount = BigDecimal.ZERO;
 

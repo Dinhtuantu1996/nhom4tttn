@@ -1,7 +1,7 @@
 package com.nhom4.tttn.enums;
 
 public enum OrderStatus {
-    PENDING("Chờ ADMIN duyệt"),
+    PENDING("Chờ xác nhận"),
     COMPLETED("Đã hoàn thành"),
     CANCELLED("Đã hủy");
 

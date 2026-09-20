@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${'ADMIN - ' + review.order.code + ' - N4'}"></title>
+    <title th:text="${'Quản trị - ' + review.order.code + ' - Góc Nhà'}"></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/n4-logo.svg}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
-            <span class="eyebrow">ADMIN · CHI TIẾT ĐƠN</span>
+            <span class="eyebrow">QUẢN TRỊ · CHI TIẾT ĐƠN</span>
             <h1 class="h2 fw-bold mt-2 mb-1" th:text="${review.order.code}"></h1>
             <div class="text-secondary" th:text="${'Đặt lúc ' + review.order.createdDateText}"></div>
             <div class="text-success small mt-1" th:if="${review.order.completedDate != null}"
@@ -33,7 +33,7 @@
     <div class="row g-4 align-items-start">
         <div class="col-lg-8">
             <section class="commerce-card p-4">
-                <h2 class="h5 fw-bold mb-3">Sản phẩm đã chốt trên hóa đơn</h2>
+                <h2 class="h5 fw-bold mb-3">Sản phẩm trong đơn hàng</h2>
                 <div class="admin-order-lines">
                     <article class="admin-order-line" th:each="reviewItem : ${review.items}" th:classappend="${!reviewItem.stockSufficient ? ' has-stock-error' : ''}">
                         <div class="d-flex justify-content-between gap-3 align-items-start">
@@ -83,7 +83,7 @@
                 <span class="eyebrow">XỬ LÝ ĐƠN</span>
                 <div class="d-grid gap-2 mt-3">
                     <form th:action="@{/admin/orders/{id}/complete(id=${review.order.id})}" method="post"
-                          data-order-action-confirm="Xác nhận hoàn thành đơn? Hệ thống sẽ trừ đúng số lượng trên hóa đơn khỏi tồn kho sản phẩm.">
+                          data-order-action-confirm="Xác nhận hoàn thành đơn? Số lượng sản phẩm trong đơn sẽ được trừ khỏi tồn kho.">
                         <button class="btn btn-dark w-100 rounded-pill admin-order-complete-button"
                                 type="submit"
                                 th:disabled="${!review.canComplete()}"
@@ -95,7 +95,7 @@
                         </div>
                     </form>
                     <form th:action="@{/admin/orders/{id}/cancel(id=${review.order.id})}" method="post"
-                          data-order-action-confirm="Xác nhận hủy đơn đang chờ duyệt này?">
+                          data-order-action-confirm="Xác nhận hủy đơn hàng này?">
                         <button class="btn btn-outline-danger w-100 rounded-pill" type="submit">Hủy đơn</button>
                     </form>
                 </div>
