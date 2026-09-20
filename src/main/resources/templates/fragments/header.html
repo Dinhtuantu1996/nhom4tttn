@@ -155,6 +155,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li th:if="${!isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/orders/my}">Đơn hàng của tôi</a></li>
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/statistics}">Thống kê</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><form th:action="@{/logout}" method="post"><button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button></form></li>
                         </ul>

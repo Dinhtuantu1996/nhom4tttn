@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/uploads/**", "/error/**").permitAll()
                         .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
-                        .requestMatchers("/admin/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/orders/**", "/admin/statistics/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/categories/**", "/attributes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/success").permitAll()

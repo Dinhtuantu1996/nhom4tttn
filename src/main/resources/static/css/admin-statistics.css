@@ -1,0 +1,222 @@
+.statistics-toolbar {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.statistics-range-tabs {
+    display: flex;
+    gap: .45rem;
+    flex-wrap: wrap;
+}
+
+.statistics-range-tabs .btn {
+    min-width: 92px;
+}
+
+.statistics-summary-card {
+    height: 100%;
+    padding: 1.15rem 1.2rem;
+    border: 1px solid var(--gn-border);
+    border-radius: 20px;
+    background: var(--gn-surface);
+    box-shadow: var(--gn-shadow-sm);
+}
+
+.statistics-summary-card.is-primary {
+    background: linear-gradient(135deg, #111827, #1f3d3a);
+    color: #fff;
+    border-color: transparent;
+}
+
+.statistics-summary-label {
+    display: block;
+    margin-bottom: .45rem;
+    color: var(--gn-muted);
+    font-size: .74rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.statistics-summary-card.is-primary .statistics-summary-label {
+    color: rgba(255, 255, 255, .68);
+}
+
+.statistics-summary-value {
+    margin: 0;
+    font-size: clamp(1.25rem, 2.4vw, 1.8rem);
+    font-weight: 850;
+    letter-spacing: -.035em;
+}
+
+.statistics-summary-note {
+    display: block;
+    margin-top: .4rem;
+    color: var(--gn-subtle);
+    font-size: .8rem;
+}
+
+.statistics-summary-card.is-primary .statistics-summary-note {
+    color: rgba(255, 255, 255, .62);
+}
+
+.statistics-panel {
+    height: 100%;
+    padding: 1.25rem;
+    border: 1px solid var(--gn-border);
+    border-radius: 22px;
+    background: var(--gn-surface);
+    box-shadow: var(--gn-shadow-sm);
+}
+
+.statistics-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.statistics-panel-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+}
+
+.statistics-panel-subtitle {
+    margin: .22rem 0 0;
+    color: var(--gn-muted);
+    font-size: .82rem;
+}
+
+.statistics-chart-wrap {
+    position: relative;
+    min-height: 310px;
+}
+
+.statistics-chart-wrap.is-donut {
+    min-height: 280px;
+}
+
+.statistics-table {
+    --bs-table-bg: transparent;
+}
+
+.statistics-table th {
+    border-top: 0;
+}
+
+.statistics-table td,
+.statistics-table th {
+    padding-left: .25rem;
+    padding-right: .25rem;
+}
+
+.statistics-product-name {
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-rank {
+    width: 32px;
+    height: 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #f1f5f4;
+    color: var(--gn-ink);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.statistics-stock-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+.statistics-stock-item {
+    padding: .9rem;
+    border-radius: 16px;
+    background: var(--gn-surface-soft);
+    border: 1px solid var(--gn-border);
+}
+
+.statistics-stock-item strong {
+    display: block;
+    font-size: 1.35rem;
+    letter-spacing: -.03em;
+}
+
+.statistics-stock-item span {
+    display: block;
+    margin-top: .15rem;
+    color: var(--gn-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.statistics-stock-item.is-empty strong { color: var(--gn-danger); }
+.statistics-stock-item.is-low strong { color: var(--gn-warning); }
+.statistics-stock-item.is-ok strong { color: var(--gn-teal); }
+
+.statistics-empty {
+    padding: 2.25rem 1rem;
+    text-align: center;
+    color: var(--gn-muted);
+    font-size: .9rem;
+}
+
+.statistics-filter-card {
+    padding: 1rem;
+    border: 1px solid var(--gn-border);
+    border-radius: 20px;
+    background: #fff;
+}
+
+.statistics-custom-range {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
+    gap: .65rem;
+    align-items: end;
+}
+
+.statistics-note {
+    padding: .8rem 1rem;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: var(--gn-muted);
+    font-size: .82rem;
+    line-height: 1.55;
+}
+
+@media (max-width: 767.98px) {
+    .statistics-range-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .statistics-range-tabs .btn {
+        min-width: 0;
+    }
+
+    .statistics-custom-range {
+        grid-template-columns: 1fr;
+    }
+
+    .statistics-stock-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .statistics-chart-wrap,
+    .statistics-chart-wrap.is-donut {
+        min-height: 250px;
+    }
+}

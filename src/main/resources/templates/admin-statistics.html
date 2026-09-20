@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thống kê - Góc Nhà</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+    <link th:href="@{/css/admin-statistics.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-5">
+    <div class="commerce-page-head mb-4">
+        <div>
+            <span class="eyebrow">QUẢN TRỊ</span>
+            <h1 class="display-6 fw-bold mt-2 mb-1">Thống kê</h1>
+            <p class="text-secondary mb-0">
+                <span th:text="${statistics.rangeLabel}"></span>
+                <span> · Đơn hàng theo ngày đặt, doanh thu theo ngày hoàn thành.</span>
+            </p>
+        </div>
+        <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
+    </div>
+
+    <div class="statistics-filter-card mb-4">
+        <div class="statistics-toolbar">
+            <div class="statistics-range-tabs">
+                <a class="btn rounded-pill"
+                   th:classappend="${statistics.rangeKey == 'today' ? ' btn-dark' : ' btn-outline-dark'}"
+                   th:href="@{/admin/statistics(range='today')}">Hôm nay</a>
+                <a class="btn rounded-pill"
+                   th:classappend="${statistics.rangeKey == '7d' ? ' btn-dark' : ' btn-outline-dark'}"
+                   th:href="@{/admin/statistics(range='7d')}">7 ngày</a>
+                <a class="btn rounded-pill"
+                   th:classappend="${statistics.rangeKey == '30d' ? ' btn-dark' : ' btn-outline-dark'}"
+                   th:href="@{/admin/statistics(range='30d')}">30 ngày</a>
+                <a class="btn rounded-pill"
+                   th:classappend="${statistics.rangeKey == 'month' ? ' btn-dark' : ' btn-outline-dark'}"
+                   th:href="@{/admin/statistics(range='month')}">Tháng này</a>
+                <a class="btn rounded-pill"
+                   th:classappend="${statistics.rangeKey == 'year' ? ' btn-dark' : ' btn-outline-dark'}"
+                   th:href="@{/admin/statistics(range='year')}">Năm nay</a>
+            </div>
+
+            <form class="statistics-custom-range" method="get" th:action="@{/admin/statistics}">
+                <input type="hidden" name="range" value="custom">
+                <div>
+                    <label class="form-label small fw-semibold mb-1" for="statisticsFrom">Từ ngày</label>
+                    <input class="form-control" id="statisticsFrom" type="date" name="from" required
+                           th:value="${statistics.from}">
+                </div>
+                <div>
+                    <label class="form-label small fw-semibold mb-1" for="statisticsTo">Đến ngày</label>
+                    <input class="form-control" id="statisticsTo" type="date" name="to" required
+                           th:value="${statistics.to}">
+                </div>
+                <button class="btn btn-dark rounded-pill px-4" type="submit">Áp dụng</button>
+            </form>
+        </div>
+    </div>
+
+    <section class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-xl-4">
+            <article class="statistics-summary-card is-primary">
+                <span class="statistics-summary-label">Doanh thu</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.revenueText}"></h2>
+                <span class="statistics-summary-note">Chỉ tính đơn đã hoàn thành</span>
+            </article>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <article class="statistics-summary-card">
+                <span class="statistics-summary-label">Đơn hàng</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.totalOrdersText}"></h2>
+                <span class="statistics-summary-note">Đơn phát sinh</span>
+            </article>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <article class="statistics-summary-card">
+                <span class="statistics-summary-label">Hoàn thành</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.completedOrdersText}"></h2>
+                <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
+            </article>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <article class="statistics-summary-card">
+                <span class="statistics-summary-label">Chờ xử lý</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.pendingOrdersText}"></h2>
+                <span class="statistics-summary-note">Cần xác nhận</span>
+            </article>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <article class="statistics-summary-card">
+                <span class="statistics-summary-label">Đã hủy</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.cancelledOrdersText}"></h2>
+                <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
+            </article>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <article class="statistics-summary-card">
+                <span class="statistics-summary-label">Sản phẩm đã bán</span>
+                <h2 class="statistics-summary-value" th:text="${statistics.overview.soldQuantityText}"></h2>
+                <span class="statistics-summary-note">Tổng số lượng trong đơn hoàn thành</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="row g-4 mb-4">
+        <div class="col-12 col-xl-8">
+            <article class="statistics-panel">
+                <div class="statistics-panel-head">
+                    <div>
+                        <h2 class="statistics-panel-title">Doanh thu theo thời gian</h2>
+                        <p class="statistics-panel-subtitle" th:text="${statistics.chartGranularity + ' · Chỉ tính đơn đã hoàn thành'}"></p>
+                    </div>
+                </div>
+                <div class="statistics-chart-wrap">
+                    <canvas id="revenueChart" aria-label="Biểu đồ doanh thu"></canvas>
+                </div>
+            </article>
+        </div>
+        <div class="col-12 col-xl-4">
+            <article class="statistics-panel">
+                <div class="statistics-panel-head">
+                    <div>
+                        <h2 class="statistics-panel-title">Trạng thái đơn hàng</h2>
+                        <p class="statistics-panel-subtitle">Các đơn phát sinh trong khoảng đã chọn</p>
+                    </div>
+                </div>
+                <div class="statistics-chart-wrap is-donut">
+                    <canvas id="orderStatusChart" aria-label="Biểu đồ trạng thái đơn hàng"></canvas>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section class="row g-4 mb-4">
+        <div class="col-12 col-xl-7">
+            <article class="statistics-panel">
+                <div class="statistics-panel-head">
+                    <div>
+                        <h2 class="statistics-panel-title">Top sản phẩm bán chạy</h2>
+                        <p class="statistics-panel-subtitle">Xếp theo số lượng bán trong đơn hoàn thành</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive" th:if="${!#lists.isEmpty(statistics.topSellingProducts)}">
+                    <table class="table statistics-table align-middle mb-0">
+                        <thead>
+                        <tr><th>#</th><th>Sản phẩm</th><th class="text-end">Đã bán</th><th class="text-end">Doanh thu</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="product, stat : ${statistics.topSellingProducts}">
+                            <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
+                            <td>
+                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
+                                   th:href="@{/products/{id}(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
+                            </td>
+                            <td class="text-end fw-semibold" th:text="${product.soldQuantityText}"></td>
+                            <td class="text-end text-nowrap" th:text="${product.revenueText}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="statistics-empty" th:if="${#lists.isEmpty(statistics.topSellingProducts)}">
+                    Chưa có sản phẩm bán ra trong khoảng thời gian này.
+                </div>
+            </article>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <article class="statistics-panel">
+                <div class="statistics-panel-head">
+                    <div>
+                        <h2 class="statistics-panel-title">Tồn kho</h2>
+                        <p class="statistics-panel-subtitle">Cảnh báo theo số lượng hiện tại</p>
+                    </div>
+                </div>
+
+                <div class="statistics-stock-grid mb-3">
+                    <div class="statistics-stock-item is-empty">
+                        <strong th:text="${statistics.inventory.outOfStock}"></strong>
+                        <span>Hết hàng</span>
+                    </div>
+                    <div class="statistics-stock-item is-low">
+                        <strong th:text="${statistics.inventory.lowStock}"></strong>
+                        <span>Sắp hết (1–5)</span>
+                    </div>
+                    <div class="statistics-stock-item is-ok">
+                        <strong th:text="${statistics.inventory.inStock}"></strong>
+                        <span>Còn hàng (&gt;5)</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive" th:if="${!#lists.isEmpty(statistics.lowStockProducts)}">
+                    <table class="table statistics-table align-middle mb-0">
+                        <thead><tr><th>Sản phẩm cần chú ý</th><th class="text-end">Còn</th></tr></thead>
+                        <tbody>
+                        <tr th:each="product : ${statistics.lowStockProducts}">
+                            <td>
+                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
+                                   th:href="@{/products/{id}(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
+                                <small class="text-secondary" th:text="${product.priceText}"></small>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge rounded-pill"
+                                      th:classappend="${product.quantity == 0 ? ' text-bg-danger' : ' text-bg-warning'}"
+                                      th:text="${product.quantity}"></span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="statistics-empty" th:if="${#lists.isEmpty(statistics.lowStockProducts)}">
+                    Không có sản phẩm nào còn từ 5 sản phẩm trở xuống.
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section class="row g-4">
+        <div class="col-12">
+            <article class="statistics-panel">
+                <div class="statistics-panel-head">
+                    <div>
+                        <h2 class="statistics-panel-title">Top lượt xem sản phẩm</h2>
+                        <p class="statistics-panel-subtitle">Lượt xem tích lũy hiện tại, không phụ thuộc bộ lọc thời gian</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive" th:if="${!#lists.isEmpty(statistics.topViewedProducts)}">
+                    <table class="table statistics-table align-middle mb-0">
+                        <thead><tr><th>#</th><th>Sản phẩm</th><th class="text-end">Lượt xem</th><th class="text-end">Tồn kho</th></tr></thead>
+                        <tbody>
+                        <tr th:each="product, stat : ${statistics.topViewedProducts}">
+                            <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
+                            <td>
+                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
+                                   th:href="@{/products/{id}(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
+                            </td>
+                            <td class="text-end fw-semibold" th:text="${product.viewCountText}"></td>
+                            <td class="text-end" th:text="${product.quantity}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="statistics-empty" th:if="${#lists.isEmpty(statistics.topViewedProducts)}">
+                    Chưa có dữ liệu sản phẩm.
+                </div>
+
+                <div class="statistics-note mt-3">
+                    Lượt xem hiện tại được lưu dạng tổng tích lũy trên sản phẩm, nên màn này chỉ xếp hạng tổng lượt xem; không tạo biểu đồ lượt xem theo ngày và không ghi thêm dữ liệu vào database.
+                </div>
+            </article>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    (() => {
+        const revenueLabels = /*[[${statistics.revenueLabels}]]*/ [];
+        const revenueValues = /*[[${statistics.revenueValues}]]*/ [];
+        const revenueOrderCounts = /*[[${statistics.revenueOrderCounts}]]*/ [];
+        const completed = /*[[${statistics.overview.completedOrders}]]*/ 0;
+        const pending = /*[[${statistics.overview.pendingOrders}]]*/ 0;
+        const cancelled = /*[[${statistics.overview.cancelledOrders}]]*/ 0;
+
+        const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+        const commonFont = { family: 'Inter, system-ui, sans-serif' };
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: revenueValues,
+                    borderColor: '#0f766e',
+                    backgroundColor: 'rgba(15, 118, 110, .10)',
+                    pointBackgroundColor: '#0f766e',
+                    pointRadius: revenueValues.length > 31 ? 0 : 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2.5,
+                    tension: .28,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                const index = context.dataIndex;
+                                const orders = revenueOrderCounts[index] || 0;
+                                return `${money.format(context.raw || 0)} đ · ${orders} đơn hoàn thành`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12, font: commonFont }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        border: { display: false },
+                        grid: { color: 'rgba(148, 163, 184, .16)' },
+                        ticks: {
+                            font: commonFont,
+                            callback(value) {
+                                if (value >= 1000000) return `${money.format(value / 1000000)}tr`;
+                                if (value >= 1000) return `${money.format(value / 1000)}k`;
+                                return money.format(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('orderStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Đã hoàn thành', 'Chờ xác nhận', 'Đã hủy'],
+                datasets: [{
+                    data: [completed, pending, cancelled],
+                    backgroundColor: ['#16a34a', '#f59e0b', '#e11d48'],
+                    borderColor: '#ffffff',
+                    borderWidth: 4,
+                    hoverOffset: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, boxWidth: 8, padding: 18, font: commonFont }
+                    }
+                }
+            }
+        });
+    })();
+</script>
+</body>
+</html>
