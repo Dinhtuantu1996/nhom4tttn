@@ -155,9 +155,8 @@
                         <tr th:each="product, stat : ${statistics.topSellingProducts}">
                             <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
                             <td>
-                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
-                                   th:href="@{/products/{id}(id=${product.productId})}"
-                                   th:text="${product.productName}"></a>
+                                <span class="statistics-product-name d-block fw-semibold text-dark"
+                                      th:text="${product.productName}"></span>
                             </td>
                             <td class="text-end fw-semibold" th:text="${product.soldQuantityText}"></td>
                             <td class="text-end text-nowrap" th:text="${product.revenueText}"></td>
@@ -201,9 +200,8 @@
                         <tbody>
                         <tr th:each="product : ${statistics.lowStockProducts}">
                             <td>
-                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
-                                   th:href="@{/products/{id}(id=${product.productId})}"
-                                   th:text="${product.productName}"></a>
+                                <span class="statistics-product-name d-block fw-semibold text-dark"
+                                      th:text="${product.productName}"></span>
                                 <small class="text-secondary" th:text="${product.priceText}"></small>
                             </td>
                             <td class="text-end">
@@ -239,9 +237,8 @@
                         <tr th:each="product, stat : ${statistics.topViewedProducts}">
                             <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
                             <td>
-                                <a class="statistics-product-name d-block fw-semibold text-dark text-decoration-none"
-                                   th:href="@{/products/{id}(id=${product.productId})}"
-                                   th:text="${product.productName}"></a>
+                                <span class="statistics-product-name d-block fw-semibold text-dark"
+                                      th:text="${product.productName}"></span>
                             </td>
                             <td class="text-end fw-semibold" th:text="${product.viewCountText}"></td>
                             <td class="text-end" th:text="${product.quantity}"></td>
@@ -274,7 +271,7 @@
         const cancelled = /*[[${statistics.overview.cancelledOrders}]]*/ 0;
 
         const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
-        const commonFont = { family: 'Inter, system-ui, sans-serif' };
+        const commonFont = { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' };
 
         new Chart(document.getElementById('revenueChart'), {
             type: 'line',

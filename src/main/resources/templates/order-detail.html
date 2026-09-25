@@ -16,8 +16,8 @@
         <a class="text-decoration-none text-secondary" th:if="${lookupMode}" th:href="@{/orders/lookup}">← Tra cứu đơn khác</a>
     </div>
 
-    <div class="row g-4 align-items-start">
-        <div class="col-lg-8">
+    <div class="d-grid gap-4">
+        <div>
             <section class="commerce-card p-4 p-md-5">
                 <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
                     <div>
@@ -49,8 +49,8 @@
             </section>
         </div>
 
-        <div class="col-lg-4">
-            <aside class="commerce-card p-4">
+        <div>
+            <aside class="commerce-card p-4 p-md-5">
                 <span class="eyebrow">THÔNG TIN NHẬN HÀNG</span>
                 <dl class="order-info-list mt-3 mb-0">
                     <div><dt>Họ tên</dt><dd th:text="${order.customerName}"></dd></div>

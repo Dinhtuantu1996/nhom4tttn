@@ -5,6 +5,7 @@ import com.nhom4.tttn.entity.ProductImage;
 import com.nhom4.tttn.entity.Attribute;
 import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.entity.Product;
+import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.repository.AttributeRepository;
 import com.nhom4.tttn.repository.CategoryRepository;
 import com.nhom4.tttn.repository.ProductImageRepository;
@@ -36,7 +37,6 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
     private final LocalFileStorageService fileStorage;
-    private final ProductSqlDeleteService productSqlDeleteService;
 
     @Transactional(readOnly = true)
     public Page<Product> search(
@@ -44,6 +44,7 @@ public class ProductService {
             Long categoryId,
             List<Long> attributeIds,
             String sort,
+            ProductVisibility visibility,
             int page,
             int size
     ) {
@@ -52,6 +53,13 @@ public class ProductService {
         Pageable pageable = PageRequest.of(safePage, safeSize, sortOf(sort));
 
         Specification<Product> spec = Specification.unrestricted();
+        ProductVisibility safeVisibility = visibility == null ? ProductVisibility.VISIBLE : visibility;
+        if (safeVisibility == ProductVisibility.VISIBLE) {
+            spec = spec.and((root, query, cb) -> cb.isTrue(root.get("enable")));
+        } else if (safeVisibility == ProductVisibility.HIDDEN) {
+            spec = spec.and((root, query, cb) -> cb.isFalse(root.get("enable")));
+        }
+
         if (keyword != null && !keyword.isBlank()) {
             String value = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), value));
@@ -85,7 +93,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Product getDetailed(Long id) {
         Product product = productRepository.findDetailedById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm ID " + id));
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
         product.getCategories().size();
         product.getAttributes().forEach(attribute -> {
@@ -97,17 +105,18 @@ public class ProductService {
     }
 
     @Transactional
-    public Product view(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm ID " + id));
+    public Product view(Long id, boolean allowHidden) {
+        Product product = getDetailed(id);
+        if (!allowHidden && !product.isEnable()) {
+            throw new ProductNotFoundException(id);
+        }
         product.setViewCount(product.getViewCount() + 1);
-        productRepository.save(product);
-        return getDetailed(id);
+        return product;
     }
 
     @Transactional(readOnly = true)
     public List<Product> latestUpdated() {
-        return productRepository.findTop8ByOrderByUpdatedDateDesc();
+        return productRepository.findTop8ByEnableTrueOrderByUpdatedDateDesc();
     }
 
     @Transactional
@@ -142,12 +151,12 @@ public class ProductService {
         return product;
     }
 
-    public void delete(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new IllegalArgumentException("Không tìm thấy sản phẩm ID " + id);
-        }
-        productSqlDeleteService.deleteProductData(id);
-        fileStorage.deleteProductFolder(id);
+    @Transactional
+    public void setVisibility(Long id, boolean enable) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+        if (product.isEnable() == enable) return;
+        product.setEnable(enable);
     }
 
     public ProductForm toForm(Product product) {

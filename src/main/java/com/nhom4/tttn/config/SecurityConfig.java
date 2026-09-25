@@ -44,7 +44,7 @@ public class SecurityConfig {
     ) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/cart/validate", "/orders/lookup")
+                        .ignoringRequestMatchers("/api/cart/validate", "/orders/lookup", "/orders/modal/lookup")
                 )
                 .authenticationProvider(authenticationProvider)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
@@ -53,10 +53,10 @@ public class SecurityConfig {
                         .requestMatchers("/products/new", "/products/form", "/products/*/edit", "/products/*/form").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
                         .requestMatchers("/admin/orders/**", "/admin/statistics/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/delete", "/categories/**", "/attributes/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/success").permitAll()
-                        .requestMatchers("/orders/my/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/visibility", "/categories/**", "/attributes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup", "/orders/modal/lookup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/modal/lookup", "/orders/success").permitAll()
+                        .requestMatchers("/orders/my/**", "/orders/modal/my/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

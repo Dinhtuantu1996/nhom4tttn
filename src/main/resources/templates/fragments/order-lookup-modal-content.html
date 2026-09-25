@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="modal-header border-0 pb-0">
+        <div>
+            <span class="eyebrow">TRA CỨU ĐƠN HÀNG</span>
+            <h2 class="modal-title h4 fw-bold mt-2 mb-1">Theo dõi đơn hàng của bạn</h2>
+            <p class="text-secondary mb-0 small">Nhập mã đơn và email đã dùng khi đặt hàng.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+    </div>
+
+    <div class="modal-body pt-4 customer-order-scroll">
+        <div class="alert alert-danger" th:if="${lookupError}" th:text="${lookupError}"></div>
+
+        <form method="post"
+              th:action="@{/orders/modal/lookup}"
+              class="d-grid gap-3"
+              data-order-remote-form>
+            <div>
+                <label class="form-label fw-semibold" for="modalLookupCode">Mã đơn hàng</label>
+                <input class="form-control form-control-lg text-uppercase"
+                       id="modalLookupCode"
+                       name="code"
+                       required
+                       maxlength="40"
+                       autocomplete="off"
+                       th:value="${lookupCode}"
+                       placeholder="GN-20260912-ABC123">
+            </div>
+            <div>
+                <label class="form-label fw-semibold" for="modalLookupEmail">Email đặt hàng</label>
+                <input class="form-control form-control-lg"
+                       id="modalLookupEmail"
+                       name="email"
+                       type="email"
+                       required
+                       maxlength="180"
+                       autocomplete="email"
+                       th:value="${lookupEmail}"
+                       placeholder="ban@email.com">
+            </div>
+            <button class="btn btn-dark btn-lg rounded-pill mt-2" type="submit">Tra cứu</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

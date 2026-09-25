@@ -2,12 +2,14 @@ package com.nhom4.tttn.controllers;
 
 import com.nhom4.tttn.dto.ProductForm;
 import com.nhom4.tttn.entity.Product;
+import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.service.AttributeService;
 import com.nhom4.tttn.service.CategoryService;
 import com.nhom4.tttn.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URI;
 import java.util.List;
 
 @Controller
@@ -37,18 +40,22 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<Long> attributeIds,
             @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "VISIBLE") ProductVisibility visibility,
+            Authentication authentication,
             Model model
     ) {
         List<Long> selectedAttributeIds = attributeIds == null ? List.of() : attributeIds;
+        ProductVisibility effectiveVisibility = visibilityFor(authentication, visibility);
         Page<Product> products = productService.search(
                 keyword,
                 categoryId,
                 selectedAttributeIds,
                 sort,
+                effectiveVisibility,
                 0,
                 PRODUCT_BATCH_SIZE
         );
-        prepareCatalog(model, products, keyword, categoryId, selectedAttributeIds, sort);
+        prepareCatalog(model, products, keyword, categoryId, selectedAttributeIds, sort, effectiveVisibility);
         return "products";
     }
 
@@ -58,7 +65,9 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<Long> attributeIds,
             @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "VISIBLE") ProductVisibility visibility,
             @RequestParam(defaultValue = "1") int page,
+            Authentication authentication,
             Model model
     ) {
         Page<Product> products = productService.search(
@@ -66,6 +75,7 @@ public class ProductController {
                 categoryId,
                 attributeIds == null ? List.of() : attributeIds,
                 sort,
+                visibilityFor(authentication, visibility),
                 page,
                 PRODUCT_BATCH_SIZE
         );
@@ -130,7 +140,12 @@ public class ProductController {
         }
 
         try {
-            productService.save(form, imageFiles);
+            Product savedProduct = productService.save(form, imageFiles);
+            if (modalRequest) {
+                model.addAttribute("savedProduct", savedProduct);
+                model.addAttribute("successMessage", "Lưu sản phẩm thành công.");
+                return "fragments/product-form-success :: content";
+            }
             redirect.addFlashAttribute("success", "Lưu sản phẩm thành công.");
             return safeReturnUrl == null ? "redirect:/products" : "redirect:" + safeReturnUrl;
         } catch (RuntimeException exception) {
@@ -145,27 +160,53 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/products/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+    @PostMapping("/products/{id}/visibility")
+    public String setVisibility(
+            @PathVariable Long id,
+            @RequestParam boolean enable,
+            @RequestHeader(name = "Referer", required = false) String referer,
+            RedirectAttributes redirect
+    ) {
         try {
-            productService.delete(id);
-            redirect.addFlashAttribute("success", "Xóa sản phẩm thành công.");
+            productService.setVisibility(id, enable);
+            redirect.addFlashAttribute("success", enable ? "Đã hiện sản phẩm." : "Đã ẩn sản phẩm.");
         } catch (RuntimeException exception) {
             redirect.addFlashAttribute("error", exception.getMessage());
         }
-        return "redirect:/products";
+        return "redirect:" + normalizeProductsReturnUrl(referer);
     }
 
     @GetMapping("/products/{id}/detail")
-    public String detailModal(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.view(id));
+    public String detailModal(
+            @PathVariable Long id,
+            Authentication authentication,
+            Model model
+    ) {
+        model.addAttribute("product", productService.view(id, isAdmin(authentication)));
         return "fragments/product-detail-modal-content :: content";
     }
 
-    @GetMapping("/products/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.view(id));
-        return "product-detail";
+
+    private ProductVisibility visibilityFor(Authentication authentication, ProductVisibility requested) {
+        if (!isAdmin(authentication)) return ProductVisibility.VISIBLE;
+        return requested == null ? ProductVisibility.VISIBLE : requested;
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private String normalizeProductsReturnUrl(String referer) {
+        if (referer == null || referer.isBlank()) return "/products";
+        try {
+            URI uri = URI.create(referer);
+            if (!"/products".equals(uri.getPath())) return "/products";
+            String query = uri.getRawQuery();
+            return query == null || query.isBlank() ? "/products" : "/products?" + query;
+        } catch (IllegalArgumentException ignored) {
+            return "/products";
+        }
     }
 
     private String normalizeReturnUrl(String returnUrl) {
@@ -180,7 +221,8 @@ public class ProductController {
             String keyword,
             Long categoryId,
             List<Long> attributeIds,
-            String sort
+            String sort,
+            ProductVisibility visibility
     ) {
         model.addAttribute("products", products);
         model.addAttribute("categories", categoryService.roots());
@@ -189,6 +231,7 @@ public class ProductController {
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("attributeIds", attributeIds);
         model.addAttribute("sort", sort);
+        model.addAttribute("visibility", visibility);
     }
 
     private void prepareForm(Model model, ProductForm form, Product product) {

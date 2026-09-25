@@ -58,6 +58,10 @@ public class Product {
     @Setter
     private int quantity = 0;
 
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 1")
+    @Setter
+    private boolean enable = true;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "product_categories",

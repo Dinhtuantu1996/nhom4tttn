@@ -4,6 +4,7 @@ import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import com.nhom4.tttn.repository.ProductRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,8 +80,15 @@ public class CategoryService {
             }
         }
 
-        categoryRepository.delete(category);
-        categoryRepository.flush();
+        try {
+            categoryRepository.delete(category);
+            categoryRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa danh mục vì vẫn còn dữ liệu liên quan. Hãy gỡ hoặc chuyển danh mục khỏi sản phẩm trước.",
+                    exception
+            );
+        }
     }
 
     @Transactional(readOnly = true)

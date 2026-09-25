@@ -24,7 +24,11 @@ public class AdminStatisticsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             Model model
     ) {
-        model.addAttribute("statistics", statisticsService.dashboard(range, from, to));
+        prepareStatistics(range, from, to, model);
         return "admin-statistics";
+    }
+
+    private void prepareStatistics(String range, LocalDate from, LocalDate to, Model model) {
+        model.addAttribute("statistics", statisticsService.dashboard(range, from, to));
     }
 }

@@ -52,7 +52,8 @@
                             <a class="hero-showcase-card hero-showcase-card-lg text-decoration-none text-dark"
                                th:if="${!#lists.isEmpty(newestProducts)}"
                                th:with="featured=${newestProducts[0]}"
-                               th:href="@{/products/{id}(id=${featured.id})}">
+                               th:href="@{/products}"
+                               th:attr="data-product-detail-url=@{/products/{id}/detail(id=${featured.id})}">
                                 <div class="hero-showcase-media">
                                     <img th:if="${featured.primaryImageUrl != null}" th:src="${featured.primaryImageUrl}" th:alt="${featured.name}">
                                     <div th:if="${featured.primaryImageUrl == null}" class="product-placeholder">GN</div>
@@ -77,7 +78,9 @@
 
                             <th:block th:if="${!#lists.isEmpty(newestProducts)}">
                                 <th:block th:each="product, stat : ${newestProducts}" th:if="${stat.index > 0 and stat.index < 3}">
-                                    <a class="hero-showcase-card text-decoration-none text-dark" th:href="@{/products/{id}(id=${product.id})}">
+                                    <a class="hero-showcase-card text-decoration-none text-dark"
+                                       th:href="@{/products}"
+                                       th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
                                         <div class="hero-showcase-media hero-showcase-media-sm">
                                             <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
                                             <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">GN</div>
@@ -231,7 +234,9 @@
         </div>
         <div class="product-highlight-grid">
             <div th:each="product, stat : ${newestProducts}" class="reveal-up" th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}">
-                <a class="product-card text-decoration-none text-dark d-block h-100" th:href="@{/products/{id}(id=${product.id})}">
+                <a class="product-card text-decoration-none text-dark d-block h-100"
+                   th:href="@{/products}"
+                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
                     <div class="product-media">
                         <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
                         <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">GN</div>

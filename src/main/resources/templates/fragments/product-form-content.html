@@ -218,9 +218,6 @@
             </section>
 
             <div class="product-form-actions">
-                <a th:if="${form.id != null}"
-                   th:href="@{/products/{id}(id=${form.id})}"
-                   class="btn btn-outline-secondary rounded-pill px-4">Xem sản phẩm</a>
                 <button class="btn btn-dark rounded-pill px-4" type="submit" data-product-save-button>
                     <span data-product-save-label>Lưu sản phẩm</span>
                     <span class="spinner-border spinner-border-sm ms-2 d-none" aria-hidden="true" data-product-save-spinner></span>

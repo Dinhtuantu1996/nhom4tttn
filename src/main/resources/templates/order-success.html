@@ -19,7 +19,7 @@
         <div class="order-code" th:text="${orderCode}"></div>
         <p class="text-secondary mt-4">Hãy lưu mã đơn hàng. Bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để tra cứu bất cứ lúc nào.</p>
         <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
-            <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders/lookup}">Tra cứu đơn</a>
+            <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders/lookup}" data-bs-toggle="modal" data-bs-target="#orderLookupModal">Tra cứu đơn</a>
             <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/products}">Tiếp tục mua sắm</a>
         </div>
     </section>

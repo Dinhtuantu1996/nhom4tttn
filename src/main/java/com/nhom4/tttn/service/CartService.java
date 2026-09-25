@@ -71,7 +71,7 @@ public class CartService {
         }
 
         Set<Long> productIds = new LinkedHashSet<>(requestedByProduct.keySet());
-        Map<Long, Product> products = productRepository.findAllByIdIn(productIds).stream()
+        Map<Long, Product> products = productRepository.findAllByIdInAndEnableTrue(productIds).stream()
                 .collect(Collectors.toMap(Product::getId, product -> product, (left, right) -> left));
 
         List<CartItemView> normalizedItems = new ArrayList<>();
@@ -85,7 +85,7 @@ public class CartService {
 
             if (product == null) {
                 changed = true;
-                messages.add("Đã bỏ một sản phẩm khỏi giỏ vì sản phẩm không còn tồn tại.");
+                messages.add("Đã bỏ một sản phẩm khỏi giỏ vì sản phẩm hiện không còn được bán.");
                 continue;
             }
 

@@ -4,6 +4,7 @@ import com.nhom4.tttn.entity.Attribute;
 import com.nhom4.tttn.repository.AttributeRepository;
 import com.nhom4.tttn.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,8 +84,15 @@ public class AttributeService {
             }
         }
 
-        attributeRepository.delete(attribute);
-        attributeRepository.flush();
+        try {
+            attributeRepository.delete(attribute);
+            attributeRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa thuộc tính vì vẫn còn dữ liệu liên quan. Hãy gỡ thuộc tính khỏi sản phẩm trước.",
+                    exception
+            );
+        }
     }
 
     @Transactional(readOnly = true)

@@ -48,7 +48,7 @@
 .statistics-summary-value {
     margin: 0;
     font-size: clamp(1.25rem, 2.4vw, 1.8rem);
-    font-weight: 850;
+    font-weight: 800;
     letter-spacing: -.035em;
 }
 

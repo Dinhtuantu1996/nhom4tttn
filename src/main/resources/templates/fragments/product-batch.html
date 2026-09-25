@@ -5,25 +5,34 @@
      class="product-batch"
      th:attr="data-last=${products.last},data-next-page=${products.number + 1}">
     <div class="product-load-item" th:each="product : ${products.content}">
-        <article class="product-card h-100 position-relative">
+        <article class="product-card h-100 position-relative"
+                 th:classappend="${!product.enable ? ' is-hidden-product' : ''}">
+            <span class="product-hidden-badge" th:if="${isAdmin and !product.enable}">Đã ẩn</span>
+
             <div class="product-admin-actions" th:if="${isAdmin}">
                 <button type="button"
                         class="btn btn-sm btn-light rounded-circle shadow-sm"
                         title="Sửa sản phẩm"
                         aria-label="Sửa sản phẩm"
                         th:attr="data-product-form-url=@{/products/{id}/form(id=${product.id})}">✎</button>
-                <form th:action="@{/products/{id}/delete(id=${product.id})}"
+
+                <form th:action="@{/products/{id}/visibility(id=${product.id})}"
                       method="post"
-                      data-confirm-delete="Xóa sản phẩm, ảnh và các liên kết thuộc tính?">
-                    <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm"
+                      th:attr="data-confirm-action=${product.enable ? 'Sản phẩm sẽ được ẩn khỏi trang bán hàng và khách sẽ không thể đặt mua. Bạn vẫn có thể hiện lại bất cứ lúc nào.' : null},
+                               data-confirm-title=${product.enable ? 'Ẩn sản phẩm?' : null},
+                               data-confirm-button=${product.enable ? 'Ẩn sản phẩm' : null}">
+                    <input type="hidden" name="enable" th:value="${!product.enable}">
+                    <button class="btn btn-sm btn-light rounded-pill shadow-sm product-visibility-button"
+                            th:classappend="${product.enable ? ' text-warning' : ' text-success'}"
                             type="submit"
-                            title="Xóa sản phẩm"
-                            aria-label="Xóa sản phẩm">×</button>
+                            th:title="${product.enable ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}"
+                            th:attr="aria-label=${product.enable ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}"
+                            th:text="${product.enable ? 'Ẩn' : 'Hiện'}">Ẩn</button>
                 </form>
             </div>
 
             <a class="text-decoration-none text-dark d-block"
-               th:href="@{/products/{id}(id=${product.id})}"
+               th:href="@{/products}"
                th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
                 <div class="product-media">
                     <img th:if="${product.primaryImageUrl != null}"

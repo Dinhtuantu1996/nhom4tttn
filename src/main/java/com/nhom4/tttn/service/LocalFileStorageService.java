@@ -58,16 +58,5 @@ public class LocalFileStorageService {
         }
     }
 
-    public void deleteProductFolder(Long productId) {
-        Path folder = uploadRoot.resolve("products").resolve(productId.toString()).normalize();
-        if (!Files.exists(folder)) return;
-        try (var paths = Files.walk(folder)) {
-            paths.sorted((a, b) -> b.compareTo(a)).forEach(path -> {
-                try { Files.deleteIfExists(path); }
-                catch (IOException e) { throw new IllegalStateException(e); }
-            });
-        } catch (IOException exception) {
-            throw new IllegalStateException("Không thể xóa thư mục upload của sản phẩm.", exception);
-        }
-    }
+
 }

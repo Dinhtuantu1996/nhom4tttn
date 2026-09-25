@@ -1,7 +1,7 @@
 @import url("./base-popup.css");
 
 :root {
-    --gn-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --gn-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --gn-ink: #111827;
     --gn-text: #26313d;
     --gn-muted: #667085;
@@ -18,6 +18,10 @@
     --gn-warning: #d97706;
     --gn-info: #2563eb;
     --gn-control-height: 48px;
+    --gn-button-height: 44px;
+    --gn-button-sm-height: 36px;
+    --gn-button-lg-height: 50px;
+    --gn-header-control-height: 46px;
     --gn-radius-sm: 10px;
     --gn-radius-md: 14px;
     --gn-radius-lg: 18px;
@@ -32,7 +36,7 @@
 }
 
 html { scroll-behavior: smooth; }
-body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-font); }
 .site-header { backdrop-filter: blur(14px); background: rgba(255,255,255,.94) !important; }
 .brand-logo { width: 38px; height: 38px; border-radius: 12px; display: inline-block; object-fit: cover; flex: 0 0 auto; }
 .brand-logo-lg { width: 56px; height: 56px; border-radius: 16px; }
@@ -56,7 +60,6 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .product-detail-gallery .carousel-item { aspect-ratio: 1/1; }
 .product-detail-gallery img { height:100%; object-fit:contain; background:#fff; }
 .product-description { white-space:pre-wrap; line-height:1.75; color:#374151; }
-.detail-sticky { top:110px !important; }
 .contact-hero { background:linear-gradient(120deg,#111827,#0f766e); }
 .footer-link { color:var(--gn-muted); text-decoration:none; margin-top:.5rem; }
 .footer-link:hover { color:var(--gn-ink); }
@@ -365,6 +368,10 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .product-admin-actions { position: absolute; top: .65rem; right: .65rem; z-index: 4; display: flex; gap: .35rem; }
 .product-admin-actions form { margin: 0; }
 .product-admin-actions .btn { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; background: rgba(255,255,255,.94); }
+.product-admin-actions .btn.product-visibility-button { width: auto; min-width: 48px; padding: 0 .7rem; font-weight: 700; }
+.product-hidden-badge { position: absolute; top: .7rem; left: .7rem; z-index: 4; padding: .35rem .65rem; border-radius: 999px; background: rgba(17,24,39,.9); color: #fff; font-size: .72rem; font-weight: 800; letter-spacing: .03em; }
+.product-card.is-hidden-product { border-style: dashed; border-color: #cbd5e1; background: #f8fafc; }
+.product-card.is-hidden-product .product-media { opacity: .62; filter: grayscale(.35); }
 .scroll-loader { min-height: 84px; }
 .product-form-side { background: #f8fafc; border: 1px solid #e5e7eb; }
 
@@ -385,8 +392,41 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 #productDetailModal .product-detail-gallery .carousel-item { aspect-ratio: 1 / 1; }
 #productDetailModal .product-detail-gallery img { height: 100%; object-fit: contain; background: #fff; }
 #productDetailModal .product-detail-empty { min-height: 420px; border: 1px solid #e5e7eb; }
+.product-detail-dialog {
+    width: min(820px, calc(100% - 3rem));
+    max-width: 820px;
+    margin: 2rem auto;
+}
+.product-detail-dialog .modal-content {
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
+}
+#productDetailModal .modal-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+.product-detail-single {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.product-detail-media-wrap {
+    width: min(100%, 640px);
+    margin-inline: auto;
+}
+.product-detail-info {
+    width: min(100%, 760px);
+    margin-inline: auto;
+}
 @media (max-width: 991.98px) {
-    #productDetailModal .modal-dialog { margin: .75rem; }
+    .product-detail-dialog {
+        width: calc(100% - 1.5rem);
+        margin: .75rem auto;
+    }
+    .product-detail-dialog .modal-content {
+        max-height: calc(100vh - 1.5rem);
+    }
     #productDetailModal .product-detail-empty { min-height: 280px; }
 }
 
@@ -428,11 +468,11 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .hierarchy-manager-dialog {
     width: min(940px, calc(100% - 2rem));
     max-width: 940px;
-    height: calc(100% - 4rem);
     margin: 2rem auto;
 }
 .hierarchy-manager-dialog .modal-content {
-    max-height: 100%;
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
 }
 .hierarchy-manager-scroll {
     overflow-y: auto;
@@ -442,16 +482,17 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .hierarchy-manager-stack {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.15rem;
 }
 .hierarchy-manager-panel {
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    padding: 1.15rem;
-    background: #fff;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
 }
 .hierarchy-root-editor {
-    background: linear-gradient(180deg, #fbfdfc 0%, #f7faf9 100%);
+    padding: 0;
+    background: transparent;
 }
 .hierarchy-root-form-row,
 .hierarchy-child-editor-row {
@@ -507,7 +548,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 }
 .hierarchy-manager-root-name {
     color: #1f2937;
-    font-weight: 750;
+    font-weight: 700;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -554,7 +595,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     min-width: 0;
     color: #3f4b55;
     font-size: .9rem;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -572,18 +613,80 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     font-size: .85rem;
 }
 #categoryModal,
-#attributeModal {
+#attributeModal,
+#adminOrderDetailModal,
+#productFormModal,
+#orderLookupModal,
+#myOrdersModal {
     z-index: 1060;
 }
 
+.customer-order-dialog {
+    width: min(760px, calc(100% - 2rem));
+    max-width: 760px;
+    margin: 2rem auto;
+}
+.customer-order-dialog-wide {
+    width: min(1040px, calc(100% - 2rem));
+    max-width: 1040px;
+}
+.customer-order-dialog .modal-content {
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
+}
+.customer-order-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.admin-management-dialog {
+    width: min(1180px, calc(100% - 2rem));
+    max-width: 1180px;
+    margin: 2rem auto;
+}
+.admin-order-detail-dialog {
+    width: min(980px, calc(100% - 2rem));
+    max-width: 980px;
+    margin: 2rem auto;
+}
+.admin-order-detail-dialog .modal-content {
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
+}
+.admin-management-dialog .modal-content {
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
+}
+.admin-management-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+.admin-order-table-wrap {
+    max-height: 56vh;
+}
+.admin-order-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+}
+
 @media (max-width: 767.98px) {
-    .hierarchy-manager-dialog {
+    .hierarchy-manager-dialog,
+    .admin-management-dialog,
+    .admin-order-detail-dialog,
+    .customer-order-dialog,
+    .customer-order-dialog-wide {
         width: calc(100% - 1rem);
-        height: calc(100% - 2rem);
         margin: 1rem auto;
     }
-    .hierarchy-manager-panel {
-        padding: .9rem;
+    .hierarchy-manager-dialog .modal-content,
+    .admin-management-dialog .modal-content,
+    .admin-order-detail-dialog .modal-content,
+    .customer-order-dialog .modal-content {
+        max-height: calc(100vh - 2rem);
     }
     .hierarchy-manager-list-header,
     .hierarchy-manager-root-row {
@@ -611,11 +714,11 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .product-form-dialog {
     width: min(900px, calc(100% - 3rem));
     max-width: 900px;
-    height: calc(100% - 4rem);
     margin: 2rem auto;
 }
 .product-form-dialog .modal-content {
-    max-height: 100%;
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
 }
 #productFormModal .modal-body {
     overflow-y: auto;
@@ -647,8 +750,10 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 @media (max-width: 991.98px) {
     .product-form-dialog {
         width: calc(100% - 2rem);
-        height: calc(100% - 2rem);
         margin: 1rem auto;
+    }
+    .product-form-dialog .modal-content {
+        max-height: calc(100vh - 2rem);
     }
     .product-form-section {
         padding: 14px;
@@ -1183,7 +1288,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
 .category-root-link {
     padding: .65rem .75rem;
     font-size: .9rem;
-    font-weight: 650;
+    font-weight: 600;
     color: #273244;
 }
 .category-root-toggle {
@@ -1283,7 +1388,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     margin-bottom: .5rem;
     color: #273244;
     font-size: .88rem;
-    font-weight: 750;
+    font-weight: 700;
 }
 .filter-search-control {
     position: relative;
@@ -1575,7 +1680,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     padding: .45rem .2rem;
     color: #273244;
     font-size: .88rem;
-    font-weight: 750;
+    font-weight: 700;
     cursor: pointer;
 }
 .attribute-tree-toggle {
@@ -1674,7 +1779,7 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     background: #f8fafc;
     color: #475569;
     font-size: .78rem;
-    font-weight: 650;
+    font-weight: 600;
 }
 .filter-summary-chip.is-attribute {
     border-color: #d7ebe8;
@@ -1696,6 +1801,8 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
     display: flex;
     gap: .55rem;
 }
+.admin-product-visibility-filter { min-width: 170px; }
+.admin-product-visibility-filter .form-select { height: 42px; border-radius: 999px; padding-left: 1rem; font-size: .88rem; font-weight: 600; background-color: #fff; }
 
 @media (max-width: 1199.98px) {
     .filter-toolbar {
@@ -1730,6 +1837,13 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: Inter, ui-sa
         flex-direction: column;
     }
     .filter-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .admin-product-visibility-filter {
+        width: 100%;
+    }
+    .admin-product-visibility-filter .form-select {
         width: 100%;
     }
     .filter-actions .btn {
@@ -1794,7 +1908,7 @@ p { line-height: 1.65; }
 .nav-link {
     color: #44505c;
     font-size: .91rem;
-    font-weight: 650;
+    font-weight: 600;
 }
 .nav-link:hover, .nav-link:focus, .nav-link.show { color: var(--gn-ink); }
 .btn {
@@ -1957,12 +2071,12 @@ p { line-height: 1.65; }
 }
 .modal-header { padding: 1.15rem 1.25rem; border-color: var(--gn-border); }
 .modal-body { padding: 1.2rem 1.25rem; }
-.modal-title { font-size: 1.06rem; font-weight: 750; }
+.modal-title { font-size: 1.06rem; font-weight: 700; }
 .btn-close { opacity: .55; }
 .btn-close:hover { opacity: .85; }
 .category-menu { border-radius: var(--gn-radius-lg); }
 .category-menu-header { border-color: var(--gn-border); }
-.category-menu-heading { font-size: .9rem; font-weight: 750; }
+.category-menu-heading { font-size: .9rem; font-weight: 700; }
 .category-menu-all {
     border-color: var(--gn-border);
     border-radius: 12px;
@@ -2022,7 +2136,7 @@ p { line-height: 1.65; }
     background: var(--gn-surface-soft);
     color: #44505c;
     font-size: .78rem;
-    font-weight: 650;
+    font-weight: 600;
 }
 .filter-summary-chip.is-attribute {
     border-color: #cfe8e3;
@@ -2301,7 +2415,7 @@ p { line-height: 1.65; }
     font-size: clamp(2.4rem, 5vw, 4.6rem);
     line-height: .98;
     letter-spacing: -.055em;
-    font-weight: 850;
+    font-weight: 800;
 }
 .login-showcase-content > p {
     max-width: 510px;
@@ -2465,8 +2579,8 @@ p { line-height: 1.65; }
 .login-submit {
     min-height: 52px;
     margin-top: .15rem;
-    border-radius: 999px;
-    font-weight: 750;
+    border-radius: var(--gn-radius-md);
+    font-weight: 700;
 }
 .login-divider {
     display: flex;
@@ -2475,7 +2589,7 @@ p { line-height: 1.65; }
     margin: 1.5rem 0;
     color: #94a3b8;
     font-size: .78rem;
-    font-weight: 650;
+    font-weight: 600;
 }
 .login-divider::before,
 .login-divider::after {
@@ -2506,7 +2620,7 @@ p { line-height: 1.65; }
     gap: .7rem;
     padding: .65rem 1rem;
     border: 1px solid #d6dbe1;
-    border-radius: 999px;
+    border-radius: var(--gn-radius-md);
     background: #fff;
     color: #7c8592;
     font-size: .9rem;
@@ -2531,7 +2645,7 @@ p { line-height: 1.65; }
 .login-register a {
     color: var(--gn-teal);
     text-decoration: none;
-    font-weight: 750;
+    font-weight: 700;
 }
 .login-register a:hover {
     text-decoration: underline;
@@ -2635,7 +2749,7 @@ p { line-height: 1.65; }
     color: #fff;
     text-decoration: none;
     font-size: .82rem;
-    font-weight: 750;
+    font-weight: 700;
     line-height: 1;
 }
 
@@ -2698,7 +2812,7 @@ p { line-height: 1.65; }
 .product-detail-contact-price {
     color: var(--gn-teal);
     font-size: 1.35rem;
-    font-weight: 850;
+    font-weight: 800;
     letter-spacing: -.025em;
 }
 
@@ -2902,15 +3016,44 @@ p { line-height: 1.65; }
     color: var(--gn-ink);
     white-space: nowrap;
 }
+.checkout-single-column {
+    max-width: 860px;
+}
+.checkout-summary-card {
+    position: static !important;
+}
 .checkout-line {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    justify-content: space-between;
     gap: 1rem;
     padding: .75rem 0;
     border-bottom: 1px solid #eef1f0;
 }
 .checkout-line:last-child { border-bottom: 0; }
+.checkout-line-main {
+    min-width: 0;
+}
+.checkout-line-name {
+    color: var(--gn-ink);
+    font-weight: 700;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+.checkout-line-total-price {
+    white-space: nowrap;
+    text-align: right;
+}
+.checkout-total-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.checkout-total-row .cart-total {
+    white-space: nowrap;
+}
 
 .order-success-card,
 .order-lookup-card { max-width: 720px; }
@@ -3050,6 +3193,16 @@ p { line-height: 1.65; }
     }
     .cart-line-controls { justify-content: space-between; }
     .cart-line-total { grid-row: auto; text-align: left; }
+    .checkout-line {
+        grid-template-columns: 1fr;
+        gap: .35rem;
+    }
+    .checkout-line-total-price {
+        text-align: left;
+    }
+    .checkout-total-row {
+        align-items: flex-start;
+    }
     .order-line { flex-direction: column; }
 }
 .min-w-0 { min-width: 0 !important; }
@@ -3375,4 +3528,332 @@ p { line-height: 1.65; }
     .cart-mini-actions {
         grid-template-columns: 1fr;
     }
+}
+
+
+/* ===== Góc Nhà: shared UI consistency layer ===== */
+/* Keep typography, controls and action alignment predictable across every page/modal. */
+button,
+input,
+select,
+textarea,
+option {
+    font-family: var(--gn-font);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn {
+    min-height: var(--gn-button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: .62rem 1rem;
+    font-family: var(--gn-font);
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.btn-sm {
+    min-height: var(--gn-button-sm-height);
+    padding: .44rem .72rem;
+    font-size: .82rem;
+}
+
+.btn-lg {
+    min-height: var(--gn-button-lg-height);
+    padding: .72rem 1.1rem;
+    font-size: .94rem;
+}
+
+.btn-link {
+    min-height: auto;
+    padding-block: .3rem;
+}
+
+.btn:disabled,
+.btn.disabled {
+    transform: none !important;
+}
+
+/* Remove the remaining Bootstrap-blue actions from the visual language. */
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--gn-teal);
+    --bs-btn-border-color: var(--gn-teal);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--gn-teal-hover);
+    --bs-btn-hover-border-color: var(--gn-teal-hover);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--gn-teal-hover);
+    --bs-btn-active-border-color: var(--gn-teal-hover);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--gn-teal);
+    --bs-btn-border-color: #a9cbc5;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--gn-teal);
+    --bs-btn-hover-border-color: var(--gn-teal);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--gn-teal);
+    --bs-btn-active-border-color: var(--gn-teal);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: #52606d;
+    --bs-btn-border-color: var(--gn-border-strong);
+    --bs-btn-hover-color: var(--gn-ink);
+    --bs-btn-hover-bg: var(--gn-surface-soft);
+    --bs-btn-hover-border-color: #b9c6c2;
+}
+
+.btn-danger,
+.btn-outline-danger {
+    --bs-btn-font-weight: 700;
+}
+
+/* Bootstrap input groups and standalone fields now share the same vertical rhythm. */
+.form-control,
+.form-select,
+.input-group-text {
+    font-family: var(--gn-font);
+    font-size: .92rem;
+    line-height: 1.35;
+}
+
+.form-control:not(textarea),
+.form-select,
+.input-group-text {
+    min-height: var(--gn-control-height);
+}
+
+.form-control-lg,
+.form-select-lg {
+    min-height: 52px;
+    font-size: .98rem;
+}
+
+textarea.form-control {
+    height: auto;
+    min-height: 96px;
+    line-height: 1.55;
+}
+
+.input-group-text {
+    display: inline-flex;
+    align-items: center;
+    padding: .68rem .9rem;
+    border-color: var(--gn-border-strong);
+    background: var(--gn-surface-soft);
+    color: #52606d;
+    font-weight: 600;
+}
+
+/* Header controls use one shared baseline/height on desktop. */
+@media (min-width: 992px) {
+    .site-header .navbar-nav > .nav-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .site-header .nav-link,
+    .site-header .category-trigger,
+    .site-header .navbar-nav > .nav-item > .btn {
+        min-height: var(--gn-header-control-height);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+    }
+
+    .site-header .category-trigger {
+        border-radius: var(--gn-radius-md);
+    }
+}
+
+.cart-trigger {
+    width: var(--gn-header-control-height);
+    height: var(--gn-header-control-height);
+    border-radius: var(--gn-radius-md);
+}
+
+.cart-trigger .cart-count-badge {
+    top: -6px;
+    right: -6px;
+    min-width: 22px;
+    height: 22px;
+    padding-inline: .34rem;
+}
+
+/* Dropdown rows align text/buttons identically, including forms inside the menu. */
+.dropdown-menu {
+    padding: .45rem;
+}
+
+.dropdown-item,
+.dropdown-item-text {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    padding: .58rem .72rem;
+    border-radius: var(--gn-radius-sm);
+    font-size: .88rem;
+    line-height: 1.3;
+}
+
+.dropdown-menu form {
+    margin: 0;
+}
+
+.dropdown-menu form .dropdown-item {
+    width: 100%;
+    text-align: left;
+}
+
+.dropdown-divider {
+    margin: .35rem 0;
+    border-color: var(--gn-border);
+}
+
+/* Modal heading/close alignment is shared by product/admin/customer modals. */
+.modal-header {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.modal-header > :first-child {
+    min-width: 0;
+}
+
+.modal-header .btn-close {
+    flex: 0 0 auto;
+    margin: 0 0 0 auto;
+}
+
+.modal-title {
+    line-height: 1.25;
+}
+
+/* Common chip/badge typography. */
+.badge {
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* Tables and pagination use the same control dimensions as the rest of the app. */
+.table > :not(caption) > * > * {
+    vertical-align: middle;
+}
+
+.table .btn-sm {
+    min-height: 34px;
+}
+
+.pagination {
+    gap: .35rem;
+}
+
+.page-link {
+    min-width: 38px;
+    height: 38px;
+    display: inline-grid;
+    place-items: center;
+    padding: .35rem .6rem;
+    border-radius: var(--gn-radius-sm) !important;
+    font-size: .84rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Small custom controls that intentionally do not use .btn still share font/alignment. */
+.filter-search-clear,
+.attribute-tree-clear,
+.login-password-toggle,
+.cart-remove-button,
+.cart-mini-remove,
+.category-root-toggle {
+    font-family: var(--gn-font);
+}
+
+.login-submit,
+.google-login-placeholder {
+    border-radius: var(--gn-radius-md);
+}
+
+.google-login-shell,
+.google-login-button-host,
+.google-login-placeholder {
+    min-height: var(--gn-control-height);
+}
+
+/* Icon-only admin actions deliberately stay compact. */
+.product-admin-actions .btn {
+    min-height: 34px;
+}
+
+.hierarchy-manager-child-actions .btn-link {
+    min-height: auto;
+}
+
+/* Action rows should align rather than visually jump when labels differ in length. */
+.product-form-actions,
+.hierarchy-root-form-actions,
+.hierarchy-child-editor-actions,
+.hierarchy-manager-root-actions,
+.cart-mini-actions {
+    align-items: center;
+}
+
+@media (max-width: 575.98px) {
+    .btn {
+        min-height: 44px;
+    }
+
+    .btn-sm {
+        min-height: 36px;
+    }
+
+    .btn-lg {
+        min-height: 50px;
+    }
+
+    .cart-trigger {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+/* Final alignment for the few custom controls that sit beside standard controls. */
+.admin-product-visibility-filter .form-select {
+    height: var(--gn-control-height);
+    border-radius: var(--gn-radius-md);
+}
+
+.navbar-toggler {
+    width: 44px;
+    height: 44px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border-radius: var(--gn-radius-md);
+}
+
+.login-password-toggle {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }

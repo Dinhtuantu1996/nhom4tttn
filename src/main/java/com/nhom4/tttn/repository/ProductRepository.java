@@ -22,10 +22,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Optional<Product> findDetailedById(Long id);
 
     @EntityGraph(attributePaths = "images")
-    List<Product> findTop8ByOrderByUpdatedDateDesc();
+    List<Product> findTop8ByEnableTrueOrderByUpdatedDateDesc();
 
     @EntityGraph(attributePaths = "images")
-    List<Product> findAllByIdIn(Collection<Long> ids);
+    List<Product> findAllByIdInAndEnableTrue(Collection<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")

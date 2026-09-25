@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 
 @Controller
@@ -69,6 +70,45 @@ public class OrderController {
         return "order-success";
     }
 
+    @GetMapping("/orders/modal/lookup")
+    public String lookupModal() {
+        return "fragments/order-lookup-modal-content :: content";
+    }
+
+    @PostMapping("/orders/modal/lookup")
+    public String lookupModal(
+            @RequestParam String code,
+            @RequestParam String email,
+            Model model
+    ) {
+        try {
+            model.addAttribute("order", orderService.lookup(code, email));
+            model.addAttribute("lookupMode", true);
+            return "fragments/order-detail-modal-content :: content";
+        } catch (RuntimeException exception) {
+            model.addAttribute("lookupError", exception.getMessage());
+            model.addAttribute("lookupCode", code);
+            model.addAttribute("lookupEmail", email);
+            return "fragments/order-lookup-modal-content :: content";
+        }
+    }
+
+    @GetMapping("/orders/modal/my")
+    public String myOrdersModal(Authentication authentication, Model model) {
+        String email = requireCustomerEmail(authentication);
+        model.addAttribute("accountEmail", email);
+        model.addAttribute("orders", orderService.findMine(email));
+        return "fragments/my-orders-modal-content :: content";
+    }
+
+    @GetMapping("/orders/modal/my/{code}")
+    public String myOrderDetailModal(@PathVariable String code, Authentication authentication, Model model) {
+        String email = requireCustomerEmail(authentication);
+        model.addAttribute("order", orderService.findMineByCode(email, code));
+        model.addAttribute("lookupMode", false);
+        return "fragments/order-detail-modal-content :: content";
+    }
+
     @GetMapping("/orders/lookup")
     public String lookupForm() {
         return "order-lookup";
@@ -113,6 +153,18 @@ public class OrderController {
             return null;
         }
         return userRepository.findByEmailIgnoreCase(authentication.getName()).orElse(null);
+    }
+
+    private String requireCustomerEmail(Authentication authentication) {
+        if (isAdmin(authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return requireAuthenticatedEmail(authentication);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private String requireAuthenticatedEmail(Authentication authentication) {

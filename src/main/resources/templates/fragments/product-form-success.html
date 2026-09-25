@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="d-none"
+         data-product-form-success
+         th:attr="data-product-id=${savedProduct.id},data-message=${successMessage}"></div>
+</div>
+</body>
+</html>

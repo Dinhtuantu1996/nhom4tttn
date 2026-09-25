@@ -13,20 +13,41 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="container py-5"
+<main class="container py-5 checkout-single-column"
       data-checkout-page
       th:attr="data-authenticated=${currentUser != null},data-authenticated-email=${currentUser != null ? currentUser.email : ''}">
     <div class="commerce-page-head mb-4">
         <div>
             <span class="eyebrow">ĐẶT HÀNG</span>
-            <h1 class="display-6 fw-bold mt-2 mb-1">Thông tin nhận hàng</h1>
-            <p class="text-secondary mb-0">Sau khi gửi, đơn hàng sẽ được cửa hàng tiếp nhận và xác nhận.</p>
+            <h1 class="display-6 fw-bold mt-2 mb-1">Xác nhận đơn hàng</h1>
+            <p class="text-secondary mb-0">Kiểm tra sản phẩm trước, sau đó điền thông tin nhận hàng.</p>
         </div>
     </div>
 
-    <div class="row g-4 align-items-start">
-        <div class="col-lg-7">
-            <form class="commerce-card p-4 p-md-5" data-checkout-form novalidate>
+    <div class="d-grid gap-4">
+        <section class="commerce-card p-4 p-md-5 checkout-summary-card">
+            <div class="mb-3">
+                <span class="eyebrow">ĐƠN CỦA BẠN</span>
+                <h2 class="h5 fw-bold mt-1 mb-0">Tóm tắt sản phẩm</h2>
+            </div>
+            <div class="checkout-loading text-secondary py-4 text-center" data-checkout-loading>
+                <span class="spinner-border spinner-border-sm me-2"></span>Đang kiểm tra...
+            </div>
+            <div class="checkout-items d-grid gap-3" data-checkout-items></div>
+            <div class="checkout-total-row border-top pt-3 mt-3">
+                <span class="fw-semibold">Tổng cộng</span>
+                <strong class="cart-total" data-checkout-total>0 VNĐ</strong>
+            </div>
+        </section>
+
+        <section class="commerce-card p-4 p-md-5">
+            <div class="mb-4">
+                <span class="eyebrow">THÔNG TIN NHẬN HÀNG</span>
+                <h2 class="h4 fw-bold mt-2 mb-1">Người nhận</h2>
+                <p class="text-secondary mb-0 small">Sau khi gửi, đơn hàng sẽ được cửa hàng tiếp nhận và xác nhận.</p>
+            </div>
+
+            <form data-checkout-form novalidate>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold" for="checkoutName">Họ và tên <span class="text-danger">*</span></label>
@@ -60,27 +81,7 @@
                     <span class="spinner-border spinner-border-sm ms-2 d-none" data-checkout-submit-spinner aria-hidden="true"></span>
                 </button>
             </form>
-        </div>
-
-        <div class="col-lg-5">
-            <aside class="commerce-card p-4 sticky-lg-top checkout-summary-card">
-                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                    <div>
-                        <span class="eyebrow">ĐƠN CỦA BẠN</span>
-                        <h2 class="h5 fw-bold mt-1 mb-0">Tóm tắt sản phẩm</h2>
-                    </div>
-                    <button class="btn btn-link btn-sm p-0 text-decoration-none" type="button" data-open-cart>Sửa giỏ</button>
-                </div>
-                <div class="checkout-loading text-secondary py-4 text-center" data-checkout-loading>
-                    <span class="spinner-border spinner-border-sm me-2"></span>Đang kiểm tra...
-                </div>
-                <div class="checkout-items d-grid gap-3" data-checkout-items></div>
-                <div class="d-flex justify-content-between align-items-end gap-3 border-top pt-3 mt-3">
-                    <span class="fw-semibold">Tổng cộng</span>
-                    <strong class="cart-total" data-checkout-total>0 VNĐ</strong>
-                </div>
-            </aside>
-        </div>
+        </section>
     </div>
 </main>
 

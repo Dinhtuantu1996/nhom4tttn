@@ -45,29 +45,29 @@
         }
     }
 
-    function initDeleteConfirmation() {
+    function initActionConfirmation() {
         document.addEventListener('submit', async (event) => {
-            const form = event.target.closest('form[data-confirm-delete]');
+            const form = event.target.closest('form[data-confirm-action]');
             if (!form) return;
 
-            if (form.dataset.confirmedDelete === 'true') {
-                delete form.dataset.confirmedDelete;
+            if (form.dataset.confirmedAction === 'true') {
+                delete form.dataset.confirmedAction;
                 return;
             }
 
             event.preventDefault();
             const submitter = event.submitter;
             const confirmed = await askConfirmation({
-                type: 'error',
-                title: form.dataset.confirmTitle || 'Xác nhận xóa',
-                message: form.dataset.confirmDelete || 'Bạn có chắc muốn xóa?',
-                confirmText: form.dataset.confirmButton || 'Xóa',
+                type: 'warning',
+                title: form.dataset.confirmTitle || 'Xác nhận thao tác',
+                message: form.dataset.confirmAction || 'Bạn có chắc muốn tiếp tục?',
+                confirmText: form.dataset.confirmButton || 'Đồng ý',
                 cancelText: 'Hủy'
             });
 
             if (!confirmed) return;
 
-            form.dataset.confirmedDelete = 'true';
+            form.dataset.confirmedAction = 'true';
             if (typeof form.requestSubmit === 'function') {
                 form.requestSubmit(submitter || undefined);
             } else {
@@ -648,8 +648,19 @@
 
                         const html = await response.text();
                         setProductModalContent(modalContent, html);
-                        initProductFormControls(modalContent);
 
+                        const success = modalContent.querySelector('[data-product-form-success]');
+                        if (success) {
+                            const modalElement = modalContent.closest('#productFormModal');
+                            if (modalElement) modalElement.dataset.productSaved = 'true';
+                            showNotification(success.dataset.message || 'Lưu sản phẩm thành công.', 'success');
+                            if (modalElement && typeof bootstrap !== 'undefined') {
+                                bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+                            }
+                            return;
+                        }
+
+                        initProductFormControls(modalContent);
                         const message = modalContent.querySelector('[data-product-form-error]')?.textContent?.trim();
                         const hasValidationError = Array.from(modalContent.querySelectorAll('.text-danger')).some((node) => node.textContent.trim());
                         showNotification(message || (hasValidationError ? 'Vui lòng kiểm tra lại thông tin sản phẩm.' : 'Không thể lưu sản phẩm.'), 'error');
@@ -685,6 +696,8 @@
 
         moveModalToBody(modal);
         const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+        let sourceModalId = null;
+        let sourceRemoteUrl = null;
 
         document.addEventListener('click', async (event) => {
             const trigger = event.target.closest('[data-product-form-url]');
@@ -694,12 +707,20 @@
             const formUrl = trigger.dataset.productFormUrl;
             if (!formUrl) return;
 
-            const detailElement = document.getElementById('productDetailModal');
-            const detailInstance = detailElement ? bootstrap.Modal.getInstance(detailElement) : null;
+            delete modal.dataset.productSaved;
+            sourceModalId = null;
+            sourceRemoteUrl = null;
 
-            if (detailElement?.classList.contains('show') && detailInstance) {
-                const hidden = waitForModalHidden(detailElement);
-                detailInstance.hide();
+            const sourceModal = trigger.closest('.modal.show');
+            if (sourceModal && sourceModal !== modal) {
+                if (sourceModal.id === 'adminOrderDetailModal') {
+                    sourceModalId = sourceModal.id;
+                    sourceRemoteUrl = sourceModal.dataset.adminOrderDetailCurrentUrl || '';
+                }
+
+                const sourceInstance = bootstrap.Modal.getInstance(sourceModal) || bootstrap.Modal.getOrCreateInstance(sourceModal);
+                const hidden = waitForModalHidden(sourceModal);
+                sourceInstance.hide();
                 await hidden;
             }
 
@@ -720,8 +741,29 @@
                 content.innerHTML = '<div class="modal-body py-5 text-center"><p class="text-danger mb-3">Không thể tải biểu mẫu sản phẩm.</p><button type="button" class="btn btn-outline-dark rounded-pill" data-bs-dismiss="modal">Đóng</button></div>';
             }
         });
-    }
 
+        modal.addEventListener('hidden.bs.modal', async () => {
+            const saved = modal.dataset.productSaved === 'true';
+            delete modal.dataset.productSaved;
+
+            if (sourceModalId) {
+                const returnModal = document.getElementById(sourceModalId);
+                const returnUrl = sourceRemoteUrl;
+                sourceModalId = null;
+                sourceRemoteUrl = null;
+
+                if (returnModal) {
+                    if (saved && returnUrl) {
+                        await loadAdminOrderDetailModal(returnModal, returnUrl);
+                    }
+                    bootstrap.Modal.getOrCreateInstance(returnModal).show();
+                }
+                return;
+            }
+
+            if (saved) window.location.reload();
+        });
+    }
 
 
 
@@ -1235,10 +1277,12 @@
     }
 
     function updateCartBadges(items = readCartItems()) {
-        const count = items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+        const distinctProductCount = new Set(
+            items.map((item) => Number.parseInt(item?.productId, 10)).filter(Boolean)
+        ).size;
         document.querySelectorAll('[data-cart-count]').forEach((badge) => {
-            badge.textContent = String(count);
-            badge.classList.toggle('is-empty', count === 0);
+            badge.textContent = String(distinctProductCount);
+            badge.classList.toggle('is-empty', distinctProductCount === 0);
         });
     }
 
@@ -1506,9 +1550,9 @@
                 ));
             });
 
-            const totalQuantity = currentItems.reduce((sum, item) => sum + item.quantity, 0);
+            const distinctProductCount = currentItems.length;
             const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
-            if (count) count.textContent = String(totalQuantity);
+            if (count) count.textContent = String(distinctProductCount);
             if (total) total.textContent = formatMoney(totalAmount);
             if (checkout) {
                 const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
@@ -1551,13 +1595,6 @@
             if (event.key === CART_STORAGE_KEY && dropdown.classList.contains('show')) {
                 void validate();
             }
-        });
-
-        document.addEventListener('click', (event) => {
-            const openButton = event.target.closest('[data-open-cart]');
-            if (!openButton) return;
-            event.preventDefault();
-            dropdownInstance.show();
         });
 
         document.addEventListener('visibilitychange', () => {
@@ -1733,9 +1770,9 @@
                 ));
             });
 
-            const totalQuantity = currentItems.reduce((sum, item) => sum + item.quantity, 0);
+            const distinctProductCount = currentItems.length;
             const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
-            if (count) count.textContent = String(totalQuantity);
+            if (count) count.textContent = String(distinctProductCount);
             if (total) total.textContent = formatMoney(totalAmount);
             if (checkout) {
                 const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
@@ -1782,9 +1819,9 @@
         const row = document.createElement('div');
         row.className = 'checkout-line';
         const copy = document.createElement('div');
-        copy.className = 'min-w-0';
+        copy.className = 'checkout-line-main';
         const name = document.createElement('div');
-        name.className = 'fw-semibold text-truncate';
+        name.className = 'checkout-line-name';
         name.textContent = item.productName || 'Sản phẩm';
         copy.appendChild(name);
         const meta = document.createElement('div');
@@ -1805,7 +1842,7 @@
         copy.appendChild(meta);
 
         const total = document.createElement('strong');
-        total.className = 'text-nowrap';
+        total.className = 'checkout-line-total-price';
         total.textContent = formatMoney(Number(item.unitPrice || 0) * item.quantity);
         row.append(copy, total);
         return row;
@@ -1941,6 +1978,217 @@
         });
     }
 
+    function renderRemoteModalContent(content, html) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html.trim();
+        const fragment = wrapper.firstElementChild;
+        content.innerHTML = fragment ? fragment.innerHTML : html;
+    }
+
+    async function loadOrderRemoteModal(modal, url, options = {}) {
+        const content = modal?.querySelector('[data-order-remote-content]');
+        if (!modal || !content || !url) return;
+
+        const requestId = Number(modal.dataset.orderRemoteRequestId || 0) + 1;
+        modal.dataset.orderRemoteRequestId = String(requestId);
+        modal.dataset.orderRemoteLoading = 'true';
+        content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải dữ liệu...</div>';
+
+        try {
+            const response = await fetch(url, {
+                method: options.method || 'GET',
+                body: options.body || undefined,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(options.headers || {})
+                }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const html = await response.text();
+            if (Number(modal.dataset.orderRemoteRequestId) !== requestId) return;
+
+            renderRemoteModalContent(content, html);
+            modal.dataset.orderRemoteCurrentUrl = url;
+
+            const firstField = content.querySelector('input:not([type="hidden"]), select, textarea');
+            if (firstField && modal.id === 'orderLookupModal') {
+                window.setTimeout(() => firstField.focus({preventScroll: true}), 120);
+            }
+        } catch (error) {
+            if (Number(modal.dataset.orderRemoteRequestId) !== requestId) return;
+            console.error(error);
+            content.innerHTML = '<div class="modal-header border-0"><h2 class="modal-title h5 fw-bold">Không thể tải dữ liệu</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div><div class="modal-body pt-2 pb-5 text-center text-secondary">Vui lòng đóng cửa sổ và thử lại.</div>';
+        } finally {
+            if (Number(modal.dataset.orderRemoteRequestId) === requestId) {
+                delete modal.dataset.orderRemoteLoading;
+            }
+        }
+    }
+
+    function initCustomerOrderModals() {
+        document.querySelectorAll('[data-order-remote-modal]').forEach((modal) => {
+            const defaultUrl = modal.dataset.orderRemoteUrl;
+            if (!defaultUrl || typeof bootstrap === 'undefined') return;
+
+            moveModalToBody(modal);
+
+            modal.addEventListener('show.bs.modal', () => {
+                if (modal.dataset.orderRemoteLoading === 'true') return;
+                loadOrderRemoteModal(modal, defaultUrl);
+            });
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                modal.dataset.orderRemoteRequestId = String(Number(modal.dataset.orderRemoteRequestId || 0) + 1);
+                delete modal.dataset.orderRemoteLoading;
+            });
+
+            modal.addEventListener('click', (event) => {
+                const link = event.target.closest('[data-order-remote-link]');
+                if (!link || !modal.contains(link)) return;
+                event.preventDefault();
+                loadOrderRemoteModal(modal, link.href);
+            });
+
+            modal.addEventListener('submit', (event) => {
+                const form = event.target.closest('form[data-order-remote-form]');
+                if (!form || !modal.contains(form)) return;
+                event.preventDefault();
+                if (!form.reportValidity()) return;
+
+                const method = (form.method || 'GET').toUpperCase();
+                const formData = new FormData(form);
+
+                if (method === 'GET') {
+                    const url = new URL(form.action, window.location.origin);
+                    url.search = new URLSearchParams(formData).toString();
+                    loadOrderRemoteModal(modal, url.toString());
+                    return;
+                }
+
+                loadOrderRemoteModal(modal, form.action, {
+                    method,
+                    body: new URLSearchParams(formData)
+                });
+            });
+        });
+    }
+
+    async function loadAdminOrderDetailModal(modal, url, options = {}) {
+        const content = modal?.querySelector('[data-admin-order-detail-content]');
+        if (!modal || !content || !url) return;
+
+        const requestId = Number(modal.dataset.adminOrderDetailRequestId || 0) + 1;
+        modal.dataset.adminOrderDetailRequestId = String(requestId);
+        modal.dataset.adminOrderDetailLoading = 'true';
+        content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải chi tiết đơn hàng...</div>';
+
+        try {
+            const response = await fetch(url, {
+                method: options.method || 'GET',
+                body: options.body || undefined,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(options.headers || {})
+                }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const html = await response.text();
+            if (Number(modal.dataset.adminOrderDetailRequestId) !== requestId) return;
+
+            renderRemoteModalContent(content, html);
+            const detailUrl = options.detailUrl || (options.method ? modal.dataset.adminOrderDetailCurrentUrl : url);
+            if (detailUrl) modal.dataset.adminOrderDetailCurrentUrl = detailUrl;
+            if (options.method && options.method !== 'GET') modal.dataset.adminOrderDetailChanged = 'true';
+        } catch (error) {
+            if (Number(modal.dataset.adminOrderDetailRequestId) !== requestId) return;
+            console.error(error);
+            content.innerHTML = '<div class="modal-header border-0"><h2 class="modal-title h5 fw-bold">Không thể tải chi tiết đơn</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div><div class="modal-body pt-2 pb-5 text-center text-secondary">Vui lòng đóng cửa sổ và thử lại.</div>';
+        } finally {
+            if (Number(modal.dataset.adminOrderDetailRequestId) === requestId) {
+                delete modal.dataset.adminOrderDetailLoading;
+            }
+        }
+    }
+
+    function initAdminOrderDetailModal() {
+        const modal = document.getElementById('adminOrderDetailModal');
+        const content = modal?.querySelector('[data-admin-order-detail-content]');
+        if (!modal || !content || typeof bootstrap === 'undefined') return;
+
+        moveModalToBody(modal);
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+
+        document.addEventListener('click', async (event) => {
+            const trigger = event.target.closest('[data-admin-order-detail-url]');
+            if (!trigger) return;
+
+            event.preventDefault();
+            const url = trigger.dataset.adminOrderDetailUrl;
+            if (!url) return;
+
+            delete modal.dataset.adminOrderDetailChanged;
+            modalInstance.show();
+            await loadAdminOrderDetailModal(modal, url);
+        });
+
+        modal.addEventListener('submit', async (event) => {
+            const form = event.target.closest('form[data-admin-order-action-form]');
+            if (!form || !modal.contains(form)) return;
+
+            event.preventDefault();
+            if (!form.reportValidity()) return;
+
+            const confirmed = await askConfirmation({
+                title: 'Xác nhận xử lý đơn',
+                message: form.dataset.confirmMessage || 'Bạn có chắc muốn tiếp tục?',
+                confirmText: 'Đồng ý',
+                cancelText: 'Quay lại',
+                type: 'warning'
+            });
+            if (!confirmed) return;
+
+            const detailUrl = modal.dataset.adminOrderDetailCurrentUrl;
+            await loadAdminOrderDetailModal(modal, form.action, {
+                method: (form.method || 'POST').toUpperCase(),
+                body: new FormData(form),
+                detailUrl
+            });
+        });
+
+        modal.addEventListener('hidden.bs.modal', () => {
+            modal.dataset.adminOrderDetailRequestId = String(Number(modal.dataset.adminOrderDetailRequestId || 0) + 1);
+            delete modal.dataset.adminOrderDetailLoading;
+            if (modal.dataset.adminOrderDetailChanged === 'true') {
+                delete modal.dataset.adminOrderDetailChanged;
+                window.location.reload();
+            }
+        });
+    }
+
+    function initAdminManagementModalFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const manage = params.get('manage');
+        const modalSelector = manage === 'categories'
+            ? '#categoryModal'
+            : manage === 'attributes'
+                ? '#attributeModal'
+                : null;
+
+        if (!modalSelector) return;
+
+        const modalElement = document.querySelector(modalSelector);
+        if (!modalElement || typeof bootstrap === 'undefined') return;
+
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+
+        params.delete('manage');
+        const query = params.toString();
+        const cleanUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, '', cleanUrl);
+    }
+
     function initOrderActionConfirmation() {
         document.addEventListener('submit', async (event) => {
             const form = event.target.closest('form[data-order-action-confirm]');
@@ -1959,8 +2207,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initModalCleanup();
-        initDeleteConfirmation();
+        initActionConfirmation();
         initHierarchyManagers();
+        initCustomerOrderModals();
+        initAdminOrderDetailModal();
+        initAdminManagementModalFromQuery();
         initProductDetailModal();
         initProductModal();
         initProductFormControls();

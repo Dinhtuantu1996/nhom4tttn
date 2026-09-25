@@ -142,28 +142,97 @@
                             </div>
                         </div>
                     </li>
-                    <li class="nav-item" th:if="${currentUser == null}">
-                        <a class="nav-link" th:href="@{/orders/lookup}">Tra cứu đơn</a>
-                    </li>
-                    <li class="nav-item ms-lg-2" th:if="${currentUser == null}">
-                        <a class="btn btn-dark rounded-pill px-4" th:href="@{/login}">Đăng nhập</a>
-                    </li>
-                    <li class="nav-item dropdown ms-lg-2" th:if="${currentUser != null}">
-                        <a class="btn btn-outline-dark rounded-pill dropdown-toggle px-4" href="#" role="button" data-bs-toggle="dropdown" th:text="${currentUser.name}"></a>
+                    <li class="nav-item dropdown ms-lg-2">
+                        <button class="btn btn-outline-dark rounded-pill dropdown-toggle px-4"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                            <span th:if="${currentUser == null}">Tài khoản</span>
+                            <span th:if="${currentUser != null}" th:text="${currentUser.name}">Tài khoản</span>
+                        </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 p-2">
-                            <li><span class="dropdown-item-text small text-secondary" th:text="${currentUser.email}"></span></li>
+                            <li th:if="${currentUser == null}">
+                                <a class="dropdown-item rounded-3 fw-semibold" th:href="@{/login}">Đăng nhập</a>
+                            </li>
+                            <li th:if="${currentUser != null}">
+                                <span class="dropdown-item-text small text-secondary" th:text="${currentUser.email}"></span>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li th:if="${!isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/orders/my}">Đơn hàng của tôi</a></li>
+
+                            <li th:if="${currentUser == null}">
+                                <button class="dropdown-item rounded-3"
+                                        type="button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderLookupModal">Tra cứu đơn hàng</button>
+                            </li>
+                            <li th:if="${currentUser != null and !isAdmin}">
+                                <button class="dropdown-item rounded-3"
+                                        type="button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#myOrdersModal">Đơn hàng của tôi</button>
+                            </li>
+
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='categories')}">Quản lý danh mục</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='attributes')}">Quản lý thuộc tính</a></li>
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/statistics}">Thống kê</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><form th:action="@{/logout}" method="post"><button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button></form></li>
+
+                            <li th:if="${currentUser != null}"><hr class="dropdown-divider"></li>
+                            <li th:if="${currentUser != null}">
+                                <form th:action="@{/logout}" method="post">
+                                    <button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered product-detail-dialog">
+            <div class="modal-content border-0 rounded-4 shadow" data-product-detail-content>
+                <div class="modal-body py-5 text-center text-secondary">Đang tải chi tiết...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="productFormModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+        <div class="modal-dialog modal-dialog-centered product-form-dialog">
+            <div class="modal-content border-0 rounded-4 shadow" data-product-modal-content>
+                <div class="modal-body py-5 text-center text-secondary">Đang tải biểu mẫu...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade"
+         id="orderLookupModal"
+         tabindex="-1"
+         aria-hidden="true"
+         th:if="${currentUser == null}"
+         data-order-remote-modal
+         th:attr="data-order-remote-url=@{/orders/modal/lookup}">
+        <div class="modal-dialog customer-order-dialog modal-dialog-centered">
+            <div class="modal-content" data-order-remote-content>
+                <div class="modal-body py-5 text-center text-secondary">Đang tải tra cứu đơn hàng...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade"
+         id="myOrdersModal"
+         tabindex="-1"
+         aria-hidden="true"
+         th:if="${currentUser != null and !isAdmin}"
+         data-order-remote-modal
+         th:attr="data-order-remote-url=@{/orders/modal/my}">
+        <div class="modal-dialog customer-order-dialog customer-order-dialog-wide modal-dialog-centered">
+            <div class="modal-content" data-order-remote-content>
+                <div class="modal-body py-5 text-center text-secondary">Đang tải đơn hàng của bạn...</div>
+            </div>
+        </div>
+    </div>
 </header>
 </body>
 </html>
