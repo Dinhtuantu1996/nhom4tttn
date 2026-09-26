@@ -41,13 +41,10 @@
             detail.textContent = message;
             copy.append(title, detail);
 
-            const closeButton = document.createElement('button');
-            closeButton.type = 'button';
-            closeButton.className = 'base-toast-close';
-            closeButton.setAttribute('aria-label', 'Đóng thông báo');
-            closeButton.textContent = '×';
+            toast.tabIndex = 0;
+            toast.setAttribute('aria-label', `${options.title || config.title}: ${message}. Nhấn để đóng thông báo.`);
 
-            toast.append(icon, copy, closeButton);
+            toast.append(icon, copy);
             toastContainer.appendChild(toast);
 
             while (toastContainer.children.length > 4) {
@@ -66,7 +63,12 @@
                 window.setTimeout(() => toast.remove(), 220);
             }
 
-            closeButton.addEventListener('click', closeToast);
+            toast.addEventListener('click', closeToast);
+            toast.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                closeToast();
+            });
             window.requestAnimationFrame(() => toast.classList.add('is-visible'));
             timerId = window.setTimeout(closeToast, options.duration || config.duration);
             return toast;

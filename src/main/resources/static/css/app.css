@@ -614,10 +614,9 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
 }
 #categoryModal,
 #attributeModal,
-#adminOrderDetailModal,
+#orderManagementDetailModal,
 #productFormModal,
-#orderLookupModal,
-#myOrdersModal {
+#orderLookupModal {
     z-index: 1060;
 }
 
@@ -625,10 +624,6 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
     width: min(760px, calc(100% - 2rem));
     max-width: 760px;
     margin: 2rem auto;
-}
-.customer-order-dialog-wide {
-    width: min(1040px, calc(100% - 2rem));
-    max-width: 1040px;
 }
 .customer-order-dialog .modal-content {
     max-height: calc(100vh - 4rem);
@@ -640,21 +635,12 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
     scrollbar-gutter: stable;
 }
 
-.admin-management-dialog {
-    width: min(1180px, calc(100% - 2rem));
-    max-width: 1180px;
-    margin: 2rem auto;
-}
 .admin-order-detail-dialog {
-    width: min(980px, calc(100% - 2rem));
-    max-width: 980px;
+    width: min(1040px, calc(100% - 2rem));
+    max-width: 1040px;
     margin: 2rem auto;
 }
 .admin-order-detail-dialog .modal-content {
-    max-height: calc(100vh - 4rem);
-    overflow: hidden;
-}
-.admin-management-dialog .modal-content {
     max-height: calc(100vh - 4rem);
     overflow: hidden;
 }
@@ -663,27 +649,15 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
 }
-.admin-order-table-wrap {
-    max-height: 56vh;
-}
-.admin-order-table-wrap thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: #fff;
-}
 
 @media (max-width: 767.98px) {
     .hierarchy-manager-dialog,
-    .admin-management-dialog,
     .admin-order-detail-dialog,
-    .customer-order-dialog,
-    .customer-order-dialog-wide {
+    .customer-order-dialog {
         width: calc(100% - 1rem);
         margin: 1rem auto;
     }
     .hierarchy-manager-dialog .modal-content,
-    .admin-management-dialog .modal-content,
     .admin-order-detail-dialog .modal-content,
     .customer-order-dialog .modal-content {
         max-height: calc(100vh - 2rem);
@@ -1801,8 +1775,25 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
     display: flex;
     gap: .55rem;
 }
-.admin-product-visibility-filter { min-width: 170px; }
-.admin-product-visibility-filter .form-select { height: 42px; border-radius: 999px; padding-left: 1rem; font-size: .88rem; font-weight: 600; background-color: #fff; }
+.admin-product-visibility-filter { min-width: 190px; }
+.admin-product-visibility-filter .filter-combobox { width: 100%; }
+.admin-product-visibility-filter .filter-combobox-trigger {
+    width: 100%;
+    height: var(--gn-control-height);
+    min-height: var(--gn-control-height);
+}
+.admin-product-visibility-filter .filter-combobox-menu {
+    left: 0;
+    right: auto;
+    width: 100%;
+    min-width: 100%;
+    z-index: 40;
+}
+.admin-product-visibility-filter .filter-combobox-value {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
 
 @media (max-width: 1199.98px) {
     .filter-toolbar {
@@ -1841,9 +1832,6 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
         flex-wrap: wrap;
     }
     .admin-product-visibility-filter {
-        width: 100%;
-    }
-    .admin-product-visibility-filter .form-select {
         width: 100%;
     }
     .filter-actions .btn {
@@ -3836,11 +3824,6 @@ textarea.form-control {
 }
 
 /* Final alignment for the few custom controls that sit beside standard controls. */
-.admin-product-visibility-filter .form-select {
-    height: var(--gn-control-height);
-    border-radius: var(--gn-radius-md);
-}
-
 .navbar-toggler {
     width: 44px;
     height: 44px;
@@ -3856,4 +3839,123 @@ textarea.form-control {
     align-items: center;
     justify-content: center;
     line-height: 1;
+}
+
+
+/* Admin order list: filters, sorting and pagination share the product catalog design language. */
+.admin-order-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 300px) 194px;
+    align-items: end;
+    gap: 1rem;
+}
+.admin-order-filter-field,
+.admin-order-filter-action {
+    min-width: 0;
+}
+.admin-order-filter-action .btn {
+    height: var(--gn-control-height);
+}
+.admin-order-status-combo .filter-combobox-trigger {
+    height: var(--gn-control-height);
+    min-height: var(--gn-control-height);
+}
+.admin-order-status-combo .filter-combobox-menu {
+    left: 0;
+    right: auto;
+    width: 100%;
+    min-width: 100%;
+    z-index: 40;
+}
+.admin-order-status-combo .filter-combobox-value {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+.admin-order-table {
+    min-width: 980px;
+}
+.admin-order-table thead th {
+    white-space: nowrap;
+}
+.order-sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    color: inherit;
+    text-decoration: none;
+    line-height: 1;
+    transition: color .16s ease;
+}
+.order-sort-link:hover,
+.order-sort-link:focus-visible,
+.order-sort-link.is-active {
+    color: var(--gn-teal);
+}
+.order-sort-indicator {
+    width: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0abb7;
+    font-size: .82rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.order-sort-link.is-active .order-sort-indicator {
+    color: var(--gn-teal);
+}
+.admin-order-action-column {
+    width: 88px;
+}
+.admin-order-table-footer {
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1rem;
+    border-top: 1px solid var(--gn-border);
+    background: #fff;
+}
+.admin-order-result-count,
+.admin-order-page-count {
+    color: var(--gn-muted);
+    font-size: .84rem;
+}
+.admin-order-result-count strong {
+    color: var(--gn-ink);
+    font-weight: 800;
+}
+.admin-order-page-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .85rem;
+}
+
+@media (max-width: 991.98px) {
+    .admin-order-filter-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(220px, .65fr);
+    }
+    .admin-order-filter-action {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-order-filter-grid {
+        grid-template-columns: 1fr;
+    }
+    .admin-order-filter-action {
+        grid-column: auto;
+    }
+    .admin-order-table-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .admin-order-page-controls {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
 }

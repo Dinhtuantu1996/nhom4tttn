@@ -713,9 +713,9 @@
 
             const sourceModal = trigger.closest('.modal.show');
             if (sourceModal && sourceModal !== modal) {
-                if (sourceModal.id === 'adminOrderDetailModal') {
+                if (sourceModal.id === 'orderManagementDetailModal') {
                     sourceModalId = sourceModal.id;
-                    sourceRemoteUrl = sourceModal.dataset.adminOrderDetailCurrentUrl || '';
+                    sourceRemoteUrl = sourceModal.dataset.orderManagementDetailCurrentUrl || '';
                 }
 
                 const sourceInstance = bootstrap.Modal.getInstance(sourceModal) || bootstrap.Modal.getOrCreateInstance(sourceModal);
@@ -754,7 +754,7 @@
 
                 if (returnModal) {
                     if (saved && returnUrl) {
-                        await loadAdminOrderDetailModal(returnModal, returnUrl);
+                        await loadOrderManagementDetailModal(returnModal, returnUrl);
                     }
                     bootstrap.Modal.getOrCreateInstance(returnModal).show();
                 }
@@ -825,6 +825,73 @@
         nav.addEventListener('focusin', showOnHover);
         nav.addEventListener('focusout', (event) => {
             if (!nav.contains(event.relatedTarget)) hideOnLeave();
+        });
+    }
+
+    function initSingleSelectComboboxes(scope = document) {
+        const comboBoxes = Array.from(scope.querySelectorAll('[data-single-combobox]'));
+        if (!comboBoxes.length) return;
+
+        function closeCombo(combo) {
+            combo.classList.remove('is-open');
+            combo.querySelector('[data-single-combobox-trigger]')?.setAttribute('aria-expanded', 'false');
+        }
+
+        function closeAll(except = null) {
+            comboBoxes.forEach((combo) => {
+                if (combo !== except) closeCombo(combo);
+            });
+        }
+
+        comboBoxes.forEach((combo) => {
+            if (combo.dataset.singleComboboxReady === 'true') return;
+            combo.dataset.singleComboboxReady = 'true';
+
+            const trigger = combo.querySelector('[data-single-combobox-trigger]');
+            const menu = combo.querySelector('[data-single-combobox-menu]');
+            const input = combo.querySelector('[data-single-combobox-input]');
+            const value = combo.querySelector('[data-single-combobox-value]');
+            const options = Array.from(combo.querySelectorAll('[data-single-combobox-option]'));
+            if (!trigger || !menu || !input || !value) return;
+
+            function syncSelected() {
+                const current = String(input.value || '');
+                const selected = options.find((option) => String(option.dataset.value || '') === current) || options[0] || null;
+                options.forEach((option) => option.classList.toggle('is-selected', option === selected));
+                value.textContent = selected?.dataset.label || '';
+            }
+
+            trigger.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const willOpen = !combo.classList.contains('is-open');
+                closeAll(combo);
+                combo.classList.toggle('is-open', willOpen);
+                trigger.setAttribute('aria-expanded', String(willOpen));
+            });
+
+            menu.addEventListener('click', (event) => event.stopPropagation());
+
+            options.forEach((option) => {
+                option.addEventListener('click', () => {
+                    input.value = option.dataset.value || '';
+                    syncSelected();
+                    closeCombo(combo);
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            });
+
+            syncSelected();
+        });
+
+        document.addEventListener('click', (event) => {
+            comboBoxes.forEach((combo) => {
+                if (!combo.contains(event.target)) closeCombo(combo);
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeAll();
         });
     }
 
@@ -2010,6 +2077,7 @@
 
             renderRemoteModalContent(content, html);
             modal.dataset.orderRemoteCurrentUrl = url;
+            initSingleSelectComboboxes(content);
 
             const firstField = content.querySelector('input:not([type="hidden"]), select, textarea');
             if (firstField && modal.id === 'orderLookupModal') {
@@ -2074,13 +2142,13 @@
         });
     }
 
-    async function loadAdminOrderDetailModal(modal, url, options = {}) {
-        const content = modal?.querySelector('[data-admin-order-detail-content]');
+    async function loadOrderManagementDetailModal(modal, url, options = {}) {
+        const content = modal?.querySelector('[data-order-management-detail-content]');
         if (!modal || !content || !url) return;
 
-        const requestId = Number(modal.dataset.adminOrderDetailRequestId || 0) + 1;
-        modal.dataset.adminOrderDetailRequestId = String(requestId);
-        modal.dataset.adminOrderDetailLoading = 'true';
+        const requestId = Number(modal.dataset.orderManagementDetailRequestId || 0) + 1;
+        modal.dataset.orderManagementDetailRequestId = String(requestId);
+        modal.dataset.orderManagementDetailLoading = 'true';
         content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải chi tiết đơn hàng...</div>';
 
         try {
@@ -2095,42 +2163,42 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const html = await response.text();
-            if (Number(modal.dataset.adminOrderDetailRequestId) !== requestId) return;
+            if (Number(modal.dataset.orderManagementDetailRequestId) !== requestId) return;
 
             renderRemoteModalContent(content, html);
-            const detailUrl = options.detailUrl || (options.method ? modal.dataset.adminOrderDetailCurrentUrl : url);
-            if (detailUrl) modal.dataset.adminOrderDetailCurrentUrl = detailUrl;
-            if (options.method && options.method !== 'GET') modal.dataset.adminOrderDetailChanged = 'true';
+            const detailUrl = options.detailUrl || (options.method ? modal.dataset.orderManagementDetailCurrentUrl : url);
+            if (detailUrl) modal.dataset.orderManagementDetailCurrentUrl = detailUrl;
+            if (options.method && options.method !== 'GET') modal.dataset.orderManagementDetailChanged = 'true';
         } catch (error) {
-            if (Number(modal.dataset.adminOrderDetailRequestId) !== requestId) return;
+            if (Number(modal.dataset.orderManagementDetailRequestId) !== requestId) return;
             console.error(error);
             content.innerHTML = '<div class="modal-header border-0"><h2 class="modal-title h5 fw-bold">Không thể tải chi tiết đơn</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div><div class="modal-body pt-2 pb-5 text-center text-secondary">Vui lòng đóng cửa sổ và thử lại.</div>';
         } finally {
-            if (Number(modal.dataset.adminOrderDetailRequestId) === requestId) {
-                delete modal.dataset.adminOrderDetailLoading;
+            if (Number(modal.dataset.orderManagementDetailRequestId) === requestId) {
+                delete modal.dataset.orderManagementDetailLoading;
             }
         }
     }
 
-    function initAdminOrderDetailModal() {
-        const modal = document.getElementById('adminOrderDetailModal');
-        const content = modal?.querySelector('[data-admin-order-detail-content]');
+    function initOrderManagementDetailModal() {
+        const modal = document.getElementById('orderManagementDetailModal');
+        const content = modal?.querySelector('[data-order-management-detail-content]');
         if (!modal || !content || typeof bootstrap === 'undefined') return;
 
         moveModalToBody(modal);
         const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
 
         document.addEventListener('click', async (event) => {
-            const trigger = event.target.closest('[data-admin-order-detail-url]');
+            const trigger = event.target.closest('[data-order-management-detail-url]');
             if (!trigger) return;
 
             event.preventDefault();
-            const url = trigger.dataset.adminOrderDetailUrl;
+            const url = trigger.dataset.orderManagementDetailUrl;
             if (!url) return;
 
-            delete modal.dataset.adminOrderDetailChanged;
+            delete modal.dataset.orderManagementDetailChanged;
             modalInstance.show();
-            await loadAdminOrderDetailModal(modal, url);
+            await loadOrderManagementDetailModal(modal, url);
         });
 
         modal.addEventListener('submit', async (event) => {
@@ -2149,8 +2217,8 @@
             });
             if (!confirmed) return;
 
-            const detailUrl = modal.dataset.adminOrderDetailCurrentUrl;
-            await loadAdminOrderDetailModal(modal, form.action, {
+            const detailUrl = modal.dataset.orderManagementDetailCurrentUrl;
+            await loadOrderManagementDetailModal(modal, form.action, {
                 method: (form.method || 'POST').toUpperCase(),
                 body: new FormData(form),
                 detailUrl
@@ -2158,10 +2226,10 @@
         });
 
         modal.addEventListener('hidden.bs.modal', () => {
-            modal.dataset.adminOrderDetailRequestId = String(Number(modal.dataset.adminOrderDetailRequestId || 0) + 1);
-            delete modal.dataset.adminOrderDetailLoading;
-            if (modal.dataset.adminOrderDetailChanged === 'true') {
-                delete modal.dataset.adminOrderDetailChanged;
+            modal.dataset.orderManagementDetailRequestId = String(Number(modal.dataset.orderManagementDetailRequestId || 0) + 1);
+            delete modal.dataset.orderManagementDetailLoading;
+            if (modal.dataset.orderManagementDetailChanged === 'true') {
+                delete modal.dataset.orderManagementDetailChanged;
                 window.location.reload();
             }
         });
@@ -2210,7 +2278,7 @@
         initActionConfirmation();
         initHierarchyManagers();
         initCustomerOrderModals();
-        initAdminOrderDetailModal();
+        initOrderManagementDetailModal();
         initAdminManagementModalFromQuery();
         initProductDetailModal();
         initProductModal();
@@ -2219,6 +2287,7 @@
         initCategoryNavigationMenu();
         initRevealAnimations();
         initCatalogFilterControls();
+        initSingleSelectComboboxes();
         initCartSystem();
         initCartDropdown();
         initCartPage();

@@ -2,11 +2,14 @@ package com.nhom4.tttn.controllers;
 
 import com.nhom4.tttn.dto.CreateOrderRequest;
 import com.nhom4.tttn.dto.CreateOrderResponse;
+import com.nhom4.tttn.dto.OrderSummaryView;
 import com.nhom4.tttn.entity.CustomerOrder;
 import com.nhom4.tttn.entity.User;
+import com.nhom4.tttn.enums.OrderStatus;
 import com.nhom4.tttn.repository.UserRepository;
 import com.nhom4.tttn.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -93,20 +96,12 @@ public class OrderController {
         }
     }
 
-    @GetMapping("/orders/modal/my")
-    public String myOrdersModal(Authentication authentication, Model model) {
-        String email = requireCustomerEmail(authentication);
-        model.addAttribute("accountEmail", email);
-        model.addAttribute("orders", orderService.findMine(email));
-        return "fragments/my-orders-modal-content :: content";
-    }
-
-    @GetMapping("/orders/modal/my/{code}")
+    @GetMapping("/orders/my/{code}/modal")
     public String myOrderDetailModal(@PathVariable String code, Authentication authentication, Model model) {
         String email = requireCustomerEmail(authentication);
-        model.addAttribute("order", orderService.findMineByCode(email, code));
-        model.addAttribute("lookupMode", false);
-        return "fragments/order-detail-modal-content :: content";
+        model.addAttribute("review", orderService.reviewMine(email, code));
+        model.addAttribute("adminMode", false);
+        return "fragments/order-management-detail-modal-content :: content";
     }
 
     @GetMapping("/orders/lookup")
@@ -133,19 +128,60 @@ public class OrderController {
     }
 
     @GetMapping("/orders/my")
-    public String myOrders(Authentication authentication, Model model) {
-        String email = requireAuthenticatedEmail(authentication);
-        model.addAttribute("accountEmail", email);
-        model.addAttribute("orders", orderService.findMine(email));
+    public String myOrders(
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "created") String sort,
+            @RequestParam(defaultValue = "desc") String direction,
+            Authentication authentication,
+            Model model
+    ) {
+        String email = requireCustomerEmail(authentication);
+        prepareMyOrdersModel(email, status, keyword, page, sort, direction, model);
         return "my-orders";
     }
 
     @GetMapping("/orders/my/{code}")
     public String myOrderDetail(@PathVariable String code, Authentication authentication, Model model) {
-        String email = requireAuthenticatedEmail(authentication);
-        model.addAttribute("order", orderService.findMineByCode(email, code));
-        model.addAttribute("lookupMode", false);
-        return "order-detail";
+        String email = requireCustomerEmail(authentication);
+        model.addAttribute("review", orderService.reviewMine(email, code));
+        model.addAttribute("adminMode", false);
+        return "order-management-detail";
+    }
+
+    private void prepareMyOrdersModel(
+            String email,
+            OrderStatus status,
+            String keyword,
+            int page,
+            String sort,
+            String direction,
+            Model model
+    ) {
+        String safeSort = OrderService.normalizeOrderSort(sort);
+        String safeDirection = OrderService.normalizeSortDirection(direction);
+        Page<OrderSummaryView> orders = orderService.searchMine(
+                email, status, keyword, page, 10, safeSort, safeDirection
+        );
+
+        int totalPages = orders.getTotalPages();
+        int pageStart = 0;
+        int pageEnd = -1;
+        if (totalPages > 0) {
+            pageStart = Math.max(0, orders.getNumber() - 2);
+            pageEnd = Math.min(totalPages - 1, pageStart + 4);
+            pageStart = Math.max(0, pageEnd - 4);
+        }
+
+        model.addAttribute("orders", orders);
+        model.addAttribute("statuses", OrderStatus.values());
+        model.addAttribute("status", status);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("sort", safeSort);
+        model.addAttribute("direction", safeDirection);
+        model.addAttribute("pageStart", pageStart);
+        model.addAttribute("pageEnd", pageEnd);
     }
 
     private User currentUser(Authentication authentication) {

@@ -56,7 +56,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/visibility", "/categories/**", "/attributes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup", "/orders/modal/lookup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/modal/lookup", "/orders/success").permitAll()
-                        .requestMatchers("/orders/my/**", "/orders/modal/my/**").authenticated()
+                        .requestMatchers("/orders/my/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

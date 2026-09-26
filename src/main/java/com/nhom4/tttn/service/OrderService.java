@@ -79,20 +79,6 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderSummaryView> findMine(String email) {
-        return orderRepository.findByCustomerEmailIgnoreCaseOrderByCreatedDateDesc(normalizeEmail(email)).stream()
-                .map(this::toSummaryView)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public OrderDetailView findMineByCode(String email, String code) {
-        CustomerOrder order = orderRepository.findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng phù hợp."));
-        return toDetailView(order);
-    }
-
-    @Transactional(readOnly = true)
     public OrderDetailView lookup(String code, String email) {
         CustomerOrder order = orderRepository.findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã và email đã nhập."));
@@ -106,14 +92,67 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderSummaryView> searchAdmin(OrderStatus status, String keyword, int page, int size) {
+    public Page<OrderSummaryView> searchAdmin(
+            OrderStatus status,
+            String keyword,
+            int page,
+            int size,
+            String sort,
+            String direction
+    ) {
+        return searchOrders(null, status, keyword, page, size, sort, direction);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryView> searchMine(
+            String email,
+            OrderStatus status,
+            String keyword,
+            int page,
+            int size,
+            String sort,
+            String direction
+    ) {
+        return searchOrders(normalizeEmail(email), status, keyword, page, size, sort, direction);
+    }
+
+    private Page<OrderSummaryView> searchOrders(
+            String customerEmail,
+            OrderStatus status,
+            String keyword,
+            int page,
+            int size,
+            String sort,
+            String direction
+    ) {
+        String safeSort = normalizeOrderSort(sort);
+        String safeDirection = normalizeSortDirection(direction);
+        Sort.Direction sortDirection = "asc".equals(safeDirection)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        String property = switch (safeSort) {
+            case "code" -> "code";
+            case "customer" -> "customerName";
+            case "contact" -> "phone";
+            case "total" -> "totalAmount";
+            case "status" -> "status";
+            default -> "createdDate";
+        };
+
+        Sort orderSort = Sort.by(sortDirection, property)
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+
         Pageable pageable = PageRequest.of(
                 Math.max(page, 0),
                 Math.min(Math.max(size, 10), 100),
-                Sort.by(Sort.Direction.DESC, "createdDate").and(Sort.by(Sort.Direction.DESC, "id"))
+                orderSort
         );
 
         Specification<CustomerOrder> spec = Specification.unrestricted();
+        if (customerEmail != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.lower(root.get("customerEmail")), customerEmail));
+        }
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
@@ -129,10 +168,46 @@ public class OrderService {
         return orderRepository.findAll(spec, pageable).map(this::toSummaryView);
     }
 
+    public static String normalizeOrderSort(String value) {
+        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "code", "customer", "contact", "total", "status", "created" -> normalized;
+            default -> "created";
+        };
+    }
+
+    public static String normalizeSortDirection(String value) {
+        return value != null && value.trim().equalsIgnoreCase("asc") ? "asc" : "desc";
+    }
+
     @Transactional(readOnly = true)
     public OrderReview review(Long id) {
-        CustomerOrder order = getDetailed(id);
+        return buildReview(getDetailed(id), true);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderReview reviewMine(String email, String code) {
+        CustomerOrder order = orderRepository
+                .findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng phù hợp."));
+        return buildReview(order, false);
+    }
+
+    private OrderReview buildReview(CustomerOrder order, boolean includeStockReview) {
         List<OrderItemReview> reviews = new ArrayList<>();
+
+        if (!includeStockReview) {
+            for (OrderItem item : order.getItems()) {
+                reviews.add(new OrderItemReview(
+                        toLineView(item),
+                        null,
+                        true,
+                        List.of()
+                ));
+            }
+            return new OrderReview(toDetailView(order), List.copyOf(reviews));
+        }
+
         Map<Long, Long> requestedByProduct = new TreeMap<>();
         for (OrderItem item : order.getItems()) {
             if (item.getProductId() != null && item.getQuantity() > 0) {

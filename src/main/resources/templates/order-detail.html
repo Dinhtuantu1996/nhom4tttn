@@ -12,7 +12,7 @@
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container py-5">
     <div class="mb-4">
-        <a class="text-decoration-none text-secondary" th:if="${!lookupMode}" th:href="@{/orders/my}">← Đơn hàng của tôi</a>
+        <a class="text-decoration-none text-secondary" th:if="${!lookupMode}" th:href="@{/orders/my}">← Quản lý đơn hàng</a>
         <a class="text-decoration-none text-secondary" th:if="${lookupMode}" th:href="@{/orders/lookup}">← Tra cứu đơn khác</a>
     </div>
 

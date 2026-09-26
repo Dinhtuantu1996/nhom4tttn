@@ -8,7 +8,7 @@
     </div>
 
     <div class="modal-body admin-management-scroll pt-4">
-        <div th:replace="~{fragments/order-management-detail-body :: content(adminMode=true, adminModal=true)}"></div>
+        <div th:replace="~{fragments/order-management-detail-body :: content(adminMode=${adminMode}, adminModal=${adminMode})}"></div>
     </div>
 </div>
 </body>

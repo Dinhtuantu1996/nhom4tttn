@@ -188,11 +188,51 @@
             <div class="filter-actions">
                 <div class="admin-product-visibility-filter" th:if="${isAdmin}">
                     <label class="visually-hidden" for="productVisibility">Trạng thái sản phẩm</label>
-                    <select id="productVisibility" name="visibility" class="form-select" aria-label="Trạng thái sản phẩm">
-                        <option value="VISIBLE" th:selected="${visibility.name() == 'VISIBLE'}">Đang hiển thị</option>
-                        <option value="HIDDEN" th:selected="${visibility.name() == 'HIDDEN'}">Đã ẩn</option>
-                        <option value="ALL" th:selected="${visibility.name() == 'ALL'}">Tất cả trạng thái</option>
-                    </select>
+                    <div class="filter-combobox" data-single-combobox>
+                        <input id="productVisibility"
+                               type="hidden"
+                               name="visibility"
+                               th:value="${visibility.name()}"
+                               data-single-combobox-input>
+                        <button type="button"
+                                class="filter-combobox-trigger"
+                                aria-expanded="false"
+                                aria-label="Trạng thái sản phẩm"
+                                data-single-combobox-trigger>
+                            <span class="filter-combobox-value"
+                                  data-single-combobox-value
+                                  th:text="${visibility.name() == 'HIDDEN' ? 'Đã ẩn' : (visibility.name() == 'ALL' ? 'Tất cả trạng thái' : 'Đang hiển thị')}">Đang hiển thị</span>
+                            <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-combobox-menu" data-single-combobox-menu>
+                            <div class="filter-combobox-options">
+                                <button type="button"
+                                        class="filter-combobox-option"
+                                        data-single-combobox-option
+                                        data-value="VISIBLE"
+                                        data-label="Đang hiển thị"
+                                        th:classappend="${visibility.name() == 'VISIBLE' ? ' is-selected' : ''}">
+                                    <span>Đang hiển thị</span><span class="filter-option-check">✓</span>
+                                </button>
+                                <button type="button"
+                                        class="filter-combobox-option"
+                                        data-single-combobox-option
+                                        data-value="HIDDEN"
+                                        data-label="Đã ẩn"
+                                        th:classappend="${visibility.name() == 'HIDDEN' ? ' is-selected' : ''}">
+                                    <span>Đã ẩn</span><span class="filter-option-check">✓</span>
+                                </button>
+                                <button type="button"
+                                        class="filter-combobox-option"
+                                        data-single-combobox-option
+                                        data-value="ALL"
+                                        data-label="Tất cả trạng thái"
+                                        th:classappend="${visibility.name() == 'ALL' ? ' is-selected' : ''}">
+                                    <span>Tất cả trạng thái</span><span class="filter-option-check">✓</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <a th:href="@{/products}" class="btn btn-outline-secondary rounded-pill px-4">Đặt lại</a>
                 <button class="btn btn-dark rounded-pill px-4" type="submit">Lọc sản phẩm</button>
@@ -244,7 +284,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <span class="eyebrow">QUẢN LÝ DANH MỤC</span>
+                <h2 class="eyebrow mb-0">QUẢN LÝ DANH MỤC</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body pt-3 hierarchy-manager-scroll">
@@ -367,7 +407,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <span class="eyebrow">QUẢN LÝ THUỘC TÍNH</span>
+                <h2 class="eyebrow mb-0">QUẢN LÝ THUỘC TÍNH</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body pt-3 hierarchy-manager-scroll">

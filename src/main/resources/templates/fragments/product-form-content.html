@@ -3,10 +3,7 @@
 <body>
 <div th:fragment="content">
     <div class="modal-header border-0 pb-0">
-        <div>
-            <span class="eyebrow">QUẢN LÝ SẢN PHẨM</span>
-            <h2 class="modal-title h4 fw-bold mt-2 mb-0" th:text="${form.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}"></h2>
-        </div>
+        <h2 class="eyebrow mb-0" th:text="${form.id == null ? 'THÊM SẢN PHẨM' : 'SỬA SẢN PHẨM'}"></h2>
         <button th:if="${modalMode == true}" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
     </div>
 

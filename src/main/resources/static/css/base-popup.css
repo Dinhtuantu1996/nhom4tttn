@@ -91,7 +91,7 @@
 .base-toast {
     --base-toast-accent: var(--gn-teal, #0f766e);
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 28px;
+    grid-template-columns: 38px minmax(0, 1fr);
     align-items: start;
     gap: 11px;
     width: 100%;
@@ -105,6 +105,12 @@
     transform: translateY(-8px) scale(.985);
     transition: opacity .18s ease, transform .18s ease;
     pointer-events: auto;
+    cursor: pointer;
+}
+
+.base-toast:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--base-toast-accent) 55%, white);
+    outline-offset: 2px;
 }
 
 .base-toast.is-visible {
@@ -147,22 +153,6 @@
     font-size: .84rem;
     line-height: 1.5;
     overflow-wrap: anywhere;
-}
-
-.base-toast-close {
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--gn-subtle, #98a2b3);
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.base-toast-close:hover {
-    background: var(--gn-surface-soft, #f9fbfa);
-    color: var(--gn-ink, #111827);
 }
 
 @media (max-width: 575.98px) {

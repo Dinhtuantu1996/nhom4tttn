@@ -14,72 +14,9 @@
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                     <li class="nav-item"><a class="nav-link" th:href="@{/}">Trang chủ</a></li>
-                    <li class="nav-item dropdown category-nav-item" data-category-nav>
-                        <button class="nav-link dropdown-toggle category-trigger"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                data-bs-auto-close="outside"
-                                aria-expanded="false">
-                            <span>Danh mục</span>
-                        </button>
-
-                        <div class="dropdown-menu category-menu border-0" data-category-menu>
-                            <div class="category-menu-header">
-                                <div class="category-menu-heading">Danh mục sản phẩm</div>
-                            </div>
-
-                            <div class="category-menu-scroll">
-                                <a class="category-menu-all" th:href="@{/products}">
-                                    <span class="category-menu-all-icon">
-                                        <img th:src="@{/img/goc-nha-logo.svg}" src="/img/goc-nha-logo.svg" alt="">
-                                    </span>
-                                    <span class="category-menu-all-text">Tất cả sản phẩm</span>
-                                    <span class="category-menu-chevron" aria-hidden="true">›</span>
-                                </a>
-
-                                <div class="category-tree"
-                                     th:if="${navCategories != null and !#lists.isEmpty(navCategories)}">
-                                    <div class="category-tree-item"
-                                         th:each="root : ${navCategories}"
-                                         data-category-root>
-                                        <div class="category-root-row">
-                                            <a class="category-root-link"
-                                               th:href="@{/products(categoryId=${root.id})}"
-                                               th:text="${root.name}"></a>
-
-                                            <button class="category-root-toggle"
-                                                    type="button"
-                                                    data-category-toggle
-                                                    th:if="${root.children != null and !#lists.isEmpty(root.children)}"
-                                                    th:attr="aria-label=${'Mở danh mục con của ' + root.name}"
-                                                    aria-expanded="false">
-                                                <span class="category-root-toggle-icon" aria-hidden="true">›</span>
-                                            </button>
-                                        </div>
-
-                                        <div class="category-child-collapse"
-                                             data-category-children
-                                             th:if="${root.children != null and !#lists.isEmpty(root.children)}">
-                                            <div class="category-child-tree">
-                                                <a class="category-child-link"
-                                                   th:each="child, childStat : ${root.children}"
-                                                   th:href="@{/products(categoryId=${child.id})}">
-                                                    <span class="category-child-branch" th:classappend="${childStat.last ? ' is-last' : ''}" aria-hidden="true"></span>
-                                                    <span class="category-child-name" th:text="${child.name}"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="category-menu-empty"
-                                     th:if="${navCategories == null or #lists.isEmpty(navCategories)}">
-                                    Chưa có danh mục sản phẩm.
-                                </div>
-                            </div>
-                        </div>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/products}">Sản phẩm</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
+                    <li class="nav-item" th:if="${isAdmin}"><a class="nav-link" th:href="@{/admin/statistics}">Thống kê</a></li>
                     <li class="nav-item dropdown cart-nav-item ms-lg-1">
                         <button class="cart-trigger"
                                 type="button"
@@ -103,8 +40,6 @@
                                 <div class="cart-mini-header">
                                     <div>
                                         <div class="cart-mini-eyebrow">Giỏ hàng của bạn</div>
-                                        <h3 class="cart-mini-title">Xem nhanh sản phẩm đã chọn</h3>
-                                        <p class="cart-mini-subtitle mb-0">Bạn có thể chỉnh số lượng ngay tại đây trước khi đặt hàng.</p>
                                     </div>
                                 </div>
 
@@ -166,16 +101,12 @@
                                         data-bs-target="#orderLookupModal">Tra cứu đơn hàng</button>
                             </li>
                             <li th:if="${currentUser != null and !isAdmin}">
-                                <button class="dropdown-item rounded-3"
-                                        type="button"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#myOrdersModal">Đơn hàng của tôi</button>
+                                <a class="dropdown-item rounded-3" th:href="@{/orders/my}">Quản lý đơn hàng</a>
                             </li>
 
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='categories')}">Quản lý danh mục</a></li>
                             <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='attributes')}">Quản lý thuộc tính</a></li>
-                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/statistics}">Thống kê</a></li>
 
                             <li th:if="${currentUser != null}"><hr class="dropdown-divider"></li>
                             <li th:if="${currentUser != null}">
@@ -220,19 +151,7 @@
         </div>
     </div>
 
-    <div class="modal fade"
-         id="myOrdersModal"
-         tabindex="-1"
-         aria-hidden="true"
-         th:if="${currentUser != null and !isAdmin}"
-         data-order-remote-modal
-         th:attr="data-order-remote-url=@{/orders/modal/my}">
-        <div class="modal-dialog customer-order-dialog customer-order-dialog-wide modal-dialog-centered">
-            <div class="modal-content" data-order-remote-content>
-                <div class="modal-body py-5 text-center text-secondary">Đang tải đơn hàng của bạn...</div>
-            </div>
-        </div>
-    </div>
+
 </header>
 </body>
 </html>
