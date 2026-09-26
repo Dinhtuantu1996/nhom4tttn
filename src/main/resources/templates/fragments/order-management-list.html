@@ -1,24 +1,46 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content(adminView)">
+<div th:fragment="content"
+     th:with="guestView=${orderMode == 'GUEST'},adminView=${orderMode == 'ADMIN'},userView=${orderMode == 'USER'}">
     <form class="commerce-card admin-order-filter-card p-3 p-md-4 mb-4"
           method="get"
-          th:action="${adminView} ? @{/admin/orders} : @{/orders/my}">
+          th:action="@{${orderListPath}}">
         <input type="hidden" name="sort" th:value="${sort}">
         <input type="hidden" name="direction" th:value="${direction}">
 
         <div class="admin-order-filter-grid">
-            <div class="admin-order-filter-field">
+            <div class="admin-order-filter-field" th:if="${!guestView}">
                 <label class="form-label fw-semibold" for="orderKeyword">Tìm kiếm</label>
                 <input class="form-control"
                        id="orderKeyword"
                        name="keyword"
                        th:value="${keyword}"
-                       placeholder="Mã đơn, tên, email hoặc số điện thoại">
+                       th:placeholder="${adminView ? 'Mã đơn, tên, email hoặc số điện thoại' : 'Mã đơn hoặc số điện thoại'}">
             </div>
 
-            <div class="admin-order-filter-field">
+            <div class="admin-order-filter-field" th:if="${guestView}">
+                <label class="form-label fw-semibold" for="guestOrderCode">Mã đơn hàng</label>
+                <input class="form-control"
+                       id="guestOrderCode"
+                       name="code"
+                       th:value="${code}"
+                       placeholder="GN-20260926-ABC123"
+                       autocomplete="off">
+            </div>
+
+            <div class="admin-order-filter-field" th:if="${guestView}">
+                <label class="form-label fw-semibold" for="guestOrderEmail">Email đặt hàng</label>
+                <input class="form-control"
+                       id="guestOrderEmail"
+                       name="email"
+                       type="email"
+                       th:value="${email}"
+                       placeholder="ban@email.com"
+                       autocomplete="email">
+            </div>
+
+            <div class="admin-order-filter-field" th:if="${!guestView}">
                 <span class="form-label fw-semibold d-block">Trạng thái</span>
                 <div class="filter-combobox admin-order-status-combo" data-single-combobox>
                     <input type="hidden"
@@ -60,10 +82,12 @@
             </div>
 
             <div class="admin-order-filter-action">
-                <button class="btn btn-dark w-100" type="submit">Lọc đơn</button>
+                <button class="btn btn-dark w-100" type="submit" th:text="${guestView ? 'Tìm đơn' : 'Lọc đơn'}">Lọc đơn</button>
             </div>
         </div>
     </form>
+
+    <div class="alert alert-danger" th:if="${orderSearchError != null}" th:text="${orderSearchError}"></div>
 
     <div class="commerce-card overflow-hidden admin-order-table-card">
         <div class="table-responsive">
@@ -73,7 +97,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'code' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='code',direction=${sort == 'code' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='code',direction=${sort == 'code' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='code',direction=${sort == 'code' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='code',direction=${sort == 'code' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Mã đơn</span>
                             <span class="order-sort-indicator" th:text="${sort == 'code' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
                         </a>
@@ -81,7 +105,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'customer' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='customer',direction=${sort == 'customer' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='customer',direction=${sort == 'customer' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='customer',direction=${sort == 'customer' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='customer',direction=${sort == 'customer' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Khách hàng</span>
                             <span class="order-sort-indicator" th:text="${sort == 'customer' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
                         </a>
@@ -89,7 +113,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'contact' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='contact',direction=${sort == 'contact' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='contact',direction=${sort == 'contact' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='contact',direction=${sort == 'contact' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='contact',direction=${sort == 'contact' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Liên hệ</span>
                             <span class="order-sort-indicator" th:text="${sort == 'contact' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
                         </a>
@@ -97,7 +121,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'total' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='total',direction=${sort == 'total' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='total',direction=${sort == 'total' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='total',direction=${sort == 'total' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='total',direction=${sort == 'total' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Tổng tiền</span>
                             <span class="order-sort-indicator" th:text="${sort == 'total' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
                         </a>
@@ -105,7 +129,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'status' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='status',direction=${sort == 'status' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='status',direction=${sort == 'status' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='status',direction=${sort == 'status' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='status',direction=${sort == 'status' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Trạng thái</span>
                             <span class="order-sort-indicator" th:text="${sort == 'status' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
                         </a>
@@ -113,7 +137,7 @@
                     <th>
                         <a class="order-sort-link"
                            th:classappend="${sort == 'created' ? ' is-active' : ''}"
-                           th:href="${adminView} ? @{/admin/orders(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='created',direction=${sort == 'created' and direction == 'asc' ? 'desc' : 'asc'})} : @{/orders/my(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='created',direction=${sort == 'created' and direction == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="${guestView} ? @{${orderListPath}(page=0,code=${code},email=${email},sort='created',direction=${sort == 'created' and direction == 'asc' ? 'desc' : 'asc'})} : @{${orderListPath}(page=0,keyword=${keyword},status=${status != null ? status.name() : null},sort='created',direction=${sort == 'created' and direction == 'asc' ? 'desc' : 'asc'})}">
                             <span>Ngày đặt</span>
                             <span class="order-sort-indicator" th:text="${sort == 'created' ? (direction == 'asc' ? '↑' : '↓') : '↕'}">↓</span>
                         </a>
@@ -142,13 +166,18 @@
                            th:href="@{/admin/orders/{id}(id=${order.id})}"
                            th:attr="data-order-management-detail-url=@{/admin/orders/{id}/modal(id=${order.id})}">Xem</a>
                         <a class="btn btn-sm btn-outline-dark px-3"
-                           th:if="${!adminView}"
+                           th:if="${userView}"
                            th:href="@{/orders/my/{code}(code=${order.code})}"
                            th:attr="data-order-management-detail-url=@{/orders/my/{code}/modal(code=${order.code})}">Xem</a>
+                        <a class="btn btn-sm btn-outline-dark px-3"
+                           th:if="${guestView}"
+                           th:href="@{/orders/{code}(code=${order.code},email=${email})}"
+                           th:attr="data-order-management-detail-url=@{/orders/{code}/modal(code=${order.code},email=${email})}">Xem</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(orders.content)}">
-                    <td colspan="7" class="py-5 text-center text-secondary">Không có đơn hàng phù hợp.</td>
+                    <td colspan="7" class="py-5 text-center text-secondary"
+                        th:text="${guestView and (code == null or #strings.isEmpty(code)) and (email == null or #strings.isEmpty(email)) ? 'Nhập mã đơn hàng và email để xem đơn hàng.' : 'Không có đơn hàng phù hợp.'}">Không có đơn hàng phù hợp.</td>
                 </tr>
                 </tbody>
             </table>
@@ -168,19 +197,19 @@
                         <li class="page-item" th:classappend="${orders.first ? 'disabled' : ''}">
                             <a class="page-link"
                                aria-label="Trang trước"
-                               th:href="${adminView} ? @{/admin/orders(page=${orders.number - 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})} : @{/orders/my(page=${orders.number - 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}">‹</a>
+                               th:href="${guestView} ? @{${orderListPath}(page=${orders.number - 1},code=${code},email=${email},sort=${sort},direction=${direction})} : @{${orderListPath}(page=${orders.number - 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}">‹</a>
                         </li>
                         <li class="page-item"
                             th:each="index : ${#numbers.sequence(pageStart, pageEnd)}"
                             th:classappend="${index == orders.number ? 'active' : ''}">
                             <a class="page-link"
-                               th:href="${adminView} ? @{/admin/orders(page=${index},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})} : @{/orders/my(page=${index},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}"
+                               th:href="${guestView} ? @{${orderListPath}(page=${index},code=${code},email=${email},sort=${sort},direction=${direction})} : @{${orderListPath}(page=${index},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}"
                                th:text="${index + 1}"></a>
                         </li>
                         <li class="page-item" th:classappend="${orders.last ? 'disabled' : ''}">
                             <a class="page-link"
                                aria-label="Trang sau"
-                               th:href="${adminView} ? @{/admin/orders(page=${orders.number + 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})} : @{/orders/my(page=${orders.number + 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}">›</a>
+                               th:href="${guestView} ? @{${orderListPath}(page=${orders.number + 1},code=${code},email=${email},sort=${sort},direction=${direction})} : @{${orderListPath}(page=${orders.number + 1},keyword=${keyword},status=${status != null ? status.name() : null},sort=${sort},direction=${direction})}">›</a>
                         </li>
                     </ul>
                 </nav>

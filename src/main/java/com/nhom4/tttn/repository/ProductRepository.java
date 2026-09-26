@@ -25,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findTop8ByEnableTrueOrderByUpdatedDateDesc();
 
     @EntityGraph(attributePaths = "images")
-    List<Product> findAllByIdInAndEnableTrue(Collection<Long> ids);
+    List<Product> findAllByIdIn(Collection<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")

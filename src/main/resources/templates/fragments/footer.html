@@ -22,7 +22,7 @@
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products}">Quản lý sản phẩm</a>
                 <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products/new}">Thêm sản phẩm</a>
-                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/orders/lookup}" data-bs-toggle="modal" data-bs-target="#orderLookupModal">Tra cứu đơn hàng</a>
+                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/orders}">Quản lý đơn hàng</a>
                 <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/login}">Đăng nhập</a>
                 <a class="footer-link d-block" th:if="${!isAdmin && currentUser != null}" th:href="@{/orders/my}">Quản lý đơn hàng</a>
                 <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}" th:text="${currentUser.name}"></span>

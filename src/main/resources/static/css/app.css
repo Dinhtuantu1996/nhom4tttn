@@ -615,25 +615,10 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
 #categoryModal,
 #attributeModal,
 #orderManagementDetailModal,
-#productFormModal,
-#orderLookupModal {
+#productFormModal {
     z-index: 1060;
 }
 
-.customer-order-dialog {
-    width: min(760px, calc(100% - 2rem));
-    max-width: 760px;
-    margin: 2rem auto;
-}
-.customer-order-dialog .modal-content {
-    max-height: calc(100vh - 4rem);
-    overflow: hidden;
-}
-.customer-order-scroll {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-}
 
 .admin-order-detail-dialog {
     width: min(1040px, calc(100% - 2rem));
@@ -652,14 +637,12 @@ body { background: var(--gn-bg); color: var(--gn-ink); font-family: var(--gn-fon
 
 @media (max-width: 767.98px) {
     .hierarchy-manager-dialog,
-    .admin-order-detail-dialog,
-    .customer-order-dialog {
+    .admin-order-detail-dialog {
         width: calc(100% - 1rem);
         margin: 1rem auto;
     }
     .hierarchy-manager-dialog .modal-content,
-    .admin-order-detail-dialog .modal-content,
-    .customer-order-dialog .modal-content {
+    .admin-order-detail-dialog .modal-content {
         max-height: calc(100vh - 2rem);
     }
     .hierarchy-manager-list-header,
@@ -3032,6 +3015,38 @@ p { line-height: 1.65; }
     white-space: nowrap;
     text-align: right;
 }
+.checkout-line-actions {
+    display: grid;
+    justify-items: end;
+    gap: .55rem;
+}
+.checkout-line-controls {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .45rem;
+}
+.checkout-quantity-control {
+    flex: 0 0 auto;
+}
+.checkout-remove-button {
+    border: 0;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: .2rem;
+    transition: color .18s ease, transform .18s ease;
+}
+.checkout-remove-button:hover {
+    color: var(--gn-danger);
+    transform: scale(1.05);
+}
+.checkout-empty-state {
+    border: 1px dashed #d7dfdc;
+    border-radius: 16px;
+    background: #fbfcfc;
+}
 .checkout-total-row {
     display: flex;
     flex-wrap: wrap;
@@ -3043,8 +3058,7 @@ p { line-height: 1.65; }
     white-space: nowrap;
 }
 
-.order-success-card,
-.order-lookup-card { max-width: 720px; }
+.order-success-card { max-width: 720px; }
 .order-success-mark {
     width: 74px;
     height: 74px;
@@ -3187,6 +3201,9 @@ p { line-height: 1.65; }
     }
     .checkout-line-total-price {
         text-align: left;
+    }
+    .checkout-line-actions {
+        justify-items: start;
     }
     .checkout-total-row {
         align-items: flex-start;

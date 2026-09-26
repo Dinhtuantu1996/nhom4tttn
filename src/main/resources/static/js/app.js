@@ -1287,6 +1287,7 @@
 
 
     const CART_STORAGE_KEY = 'gocnha.cart.v1';
+    const CHECKOUT_STORAGE_KEY = 'gocnha.checkout.v1';
     const MAX_CART_DISTINCT_ITEMS = 10;
 
     function normalizeLocalCartItems(items) {
@@ -1343,6 +1344,47 @@
         updateCartBadges([]);
     }
 
+    function readCheckoutItems() {
+        try {
+            const raw = window.sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.items) ? parsed.items : []);
+            return normalizeLocalCartItems(items);
+        } catch (error) {
+            console.warn('Không đọc được phiên xác nhận đơn hàng.', error);
+            return [];
+        }
+    }
+
+    function writeCheckoutItems(items) {
+        const normalized = normalizeLocalCartItems(items);
+        try {
+            window.sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify({
+                version: 1,
+                updatedAt: new Date().toISOString(),
+                items: normalized
+            }));
+        } catch (error) {
+            console.warn('Không thể lưu phiên xác nhận đơn hàng.', error);
+        }
+        return normalized;
+    }
+
+    function clearCheckoutItems() {
+        try {
+            window.sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
+        } catch (error) {
+            console.warn('Không thể xóa phiên xác nhận đơn hàng.', error);
+        }
+    }
+
+    function initCheckoutDraftLifecycle() {
+        if (document.querySelector('[data-checkout-page]')) return;
+        clearCheckoutItems();
+        window.addEventListener('pageshow', clearCheckoutItems);
+    }
+
     function updateCartBadges(items = readCartItems()) {
         const distinctProductCount = new Set(
             items.map((item) => Number.parseInt(item?.productId, 10)).filter(Boolean)
@@ -1359,7 +1401,7 @@
         return token && headerName ? {[headerName]: token} : {};
     }
 
-    async function validateCartRemote(items = readCartItems()) {
+    async function validateCartRemote(items = readCartItems(), {persistCart = true} = {}) {
         const response = await fetch('/api/cart/validate', {
             method: 'POST',
             headers: {
@@ -1374,11 +1416,55 @@
         }
         const payload = await response.json();
         const normalizedItems = Array.isArray(payload?.items) ? payload.items : [];
-        writeCartItems(normalizedItems.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity
-        })));
+        if (persistCart) {
+            writeCartItems(normalizedItems.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity
+            })));
+        }
         return {...payload, items: normalizedItems};
+    }
+
+    async function beginCheckout(link, refreshCartView = null) {
+        if (!link || link.classList.contains('disabled')) return;
+
+        const confirmed = await askConfirmation({
+            type: 'warning',
+            title: 'Xác nhận đặt hàng',
+            message: 'Bạn có muốn chuyển các sản phẩm trong giỏ sang bước Xác nhận đơn hàng không? Sau khi tiếp tục, giỏ hàng hiện tại sẽ được làm trống.',
+            confirmText: 'Tiếp tục',
+            cancelText: 'Quay lại'
+        });
+        if (!confirmed) return;
+
+        try {
+            const result = await validateCartRemote();
+            if (!result.items?.length) {
+                if (typeof refreshCartView === 'function') await refreshCartView();
+                showNotification('Giỏ hàng không còn sản phẩm để xác nhận.', 'warning');
+                return;
+            }
+            if (result.changed) {
+                if (typeof refreshCartView === 'function') await refreshCartView();
+                showNotification('Giỏ hàng vừa được cập nhật. Vui lòng kiểm tra lại trước khi tiếp tục.', 'warning');
+                return;
+            }
+            if (!result.checkoutAllowed) {
+                if (typeof refreshCartView === 'function') await refreshCartView();
+                showNotification('Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Hãy giảm số lượng hoặc bỏ sản phẩm đó khỏi giỏ.', 'warning');
+                return;
+            }
+
+            writeCheckoutItems(result.items.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity
+            })));
+            clearCart();
+            window.location.assign(link.getAttribute('href') || '/checkout');
+        } catch (error) {
+            console.error(error);
+            showNotification('Không thể kiểm tra giỏ hàng lúc này. Vui lòng thử lại.', 'error');
+        }
     }
 
     function formatMoney(value) {
@@ -1680,7 +1766,9 @@
         }
 
         checkout?.addEventListener('click', (event) => {
-            if (checkout.classList.contains('disabled')) event.preventDefault();
+            event.preventDefault();
+            if (checkout.classList.contains('disabled')) return;
+            void beginCheckout(checkout, validate);
         });
 
         closeButton?.addEventListener('click', () => {
@@ -1873,7 +1961,9 @@
         }
 
         checkout?.addEventListener('click', (event) => {
-            if (checkout.classList.contains('disabled')) event.preventDefault();
+            event.preventDefault();
+            if (checkout.classList.contains('disabled')) return;
+            void beginCheckout(checkout, validate);
         });
 
         document.addEventListener('visibilitychange', () => {
@@ -1882,15 +1972,17 @@
         void validate();
     }
 
-    function createCheckoutLine(item) {
+    function createCheckoutLine(item, onChange, onRemove) {
         const row = document.createElement('div');
         row.className = 'checkout-line';
+
         const copy = document.createElement('div');
         copy.className = 'checkout-line-main';
         const name = document.createElement('div');
         name.className = 'checkout-line-name';
         name.textContent = item.productName || 'Sản phẩm';
         copy.appendChild(name);
+
         const meta = document.createElement('div');
         meta.className = 'small text-secondary d-flex flex-wrap align-items-center gap-1';
         const price = document.createElement('span');
@@ -1908,10 +2000,69 @@
         meta.append(price, multiply, requested, slash, available);
         copy.appendChild(meta);
 
+        const actions = document.createElement('div');
+        actions.className = 'checkout-line-actions';
         const total = document.createElement('strong');
         total.className = 'checkout-line-total-price';
         total.textContent = formatMoney(Number(item.unitPrice || 0) * item.quantity);
-        row.append(copy, total);
+
+        const controls = document.createElement('div');
+        controls.className = 'checkout-line-controls';
+
+        const quantityWrap = document.createElement('div');
+        quantityWrap.className = 'cart-quantity-control checkout-quantity-control';
+
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', `Giảm số lượng ${item.productName || 'sản phẩm'}`);
+
+        const quantity = document.createElement('span');
+        quantity.className = 'cart-quantity-value';
+        quantity.setAttribute('aria-label', `Đang chọn ${item.quantity}, kho hiện còn ${item.availableQuantity}`);
+
+        const requestedQuantity = document.createElement('span');
+        requestedQuantity.className = `cart-quantity-requested${hasStockIssue ? ' is-over' : ''}`;
+        requestedQuantity.textContent = String(item.quantity);
+
+        const quantitySeparator = document.createElement('span');
+        quantitySeparator.className = 'cart-quantity-separator';
+        quantitySeparator.textContent = '/';
+
+        const availableQuantity = document.createElement('span');
+        availableQuantity.className = 'cart-quantity-available';
+        availableQuantity.textContent = String(item.availableQuantity);
+        quantity.append(requestedQuantity, quantitySeparator, availableQuantity);
+
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', `Tăng số lượng ${item.productName || 'sản phẩm'}`);
+        plus.disabled = item.quantity >= item.availableQuantity;
+
+        minus.addEventListener('click', () => {
+            if (item.quantity <= 1) {
+                void onRemove(item);
+                return;
+            }
+            onChange(item, item.quantity - 1);
+        });
+        plus.addEventListener('click', () => {
+            if (item.quantity >= item.availableQuantity) return;
+            onChange(item, item.quantity + 1);
+        });
+        quantityWrap.append(minus, quantity, plus);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'checkout-remove-button';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', `Bỏ ${item.productName || 'sản phẩm'} khỏi đơn`);
+        remove.addEventListener('click', () => void onRemove(item));
+
+        controls.append(quantityWrap, remove);
+        actions.append(total, controls);
+        row.append(copy, actions);
         return row;
     }
 
@@ -1929,11 +2080,58 @@
         const submitSpinner = page.querySelector('[data-checkout-submit-spinner]');
         let currentItems = [];
         let submitting = false;
+        let refreshing = false;
+
+        function persistCurrentItems() {
+            writeCheckoutItems(currentItems.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity
+            })));
+        }
 
         function render(result = null) {
             loading?.classList.add('d-none');
             itemsHost.innerHTML = '';
-            currentItems.forEach((item) => itemsHost.appendChild(createCheckoutLine(item)));
+
+            currentItems.forEach((item) => itemsHost.appendChild(createCheckoutLine(
+                item,
+                (target, nextQuantity) => {
+                    target.quantity = Math.max(nextQuantity, 1);
+                    persistCurrentItems();
+                    render(result);
+                },
+                async (target) => {
+                    const removingLastItem = currentItems.length === 1;
+                    if (removingLastItem) {
+                        const continueCheckout = await askConfirmation({
+                            type: 'warning',
+                            title: 'Sản phẩm cuối cùng',
+                            message: 'Đây là sản phẩm cuối cùng trong Đơn của bạn. Bạn có muốn tiếp tục ở màn Xác nhận đơn hàng không?',
+                            confirmText: 'Tiếp tục',
+                            cancelText: 'Về sản phẩm'
+                        });
+                        if (continueCheckout) return;
+
+                        currentItems = [];
+                        clearCheckoutItems();
+                        render(result);
+                        window.location.assign('/products');
+                        return;
+                    }
+
+                    currentItems = currentItems.filter((entry) => cartItemKey(entry) !== cartItemKey(target));
+                    persistCurrentItems();
+                    render(result);
+                }
+            )));
+
+            if (!currentItems.length) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'checkout-empty-state text-center text-secondary py-4';
+                emptyState.textContent = 'Đơn của bạn hiện không còn sản phẩm.';
+                itemsHost.appendChild(emptyState);
+            }
+
             const totalAmount = currentItems.reduce((sum, item) => sum + Number(item.unitPrice || 0) * item.quantity, 0);
             const hasStockIssue = currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
             const hasItemLimitIssue = currentItems.length > MAX_CART_DISTINCT_ITEMS;
@@ -1945,7 +2143,7 @@
                 messages.push(`Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`);
             }
             if (hasStockIssue) {
-                messages.push('Có sản phẩm đang chọn số lượng lớn hơn tồn kho hiện tại. Hãy quay lại giỏ hàng và giảm số lượng trước khi đặt hàng.');
+                messages.push('Có sản phẩm đang chọn số lượng lớn hơn tồn kho hiện tại. Hãy dùng dấu “−” để giảm về mức shop đang có hoặc “×” để bỏ sản phẩm khỏi đơn.');
             }
             if (warning) {
                 warning.textContent = messages.join(' ');
@@ -1953,11 +2151,25 @@
             }
         }
 
-        async function refreshCart() {
-            const result = await validateCartRemote();
-            currentItems = result.items || [];
-            render(result);
-            return result;
+        async function refreshCheckout() {
+            if (refreshing) return null;
+            refreshing = true;
+            try {
+                const draftItems = readCheckoutItems();
+                if (!draftItems.length) {
+                    currentItems = [];
+                    render({messages: []});
+                    return {items: [], messages: [], changed: false, checkoutAllowed: false};
+                }
+
+                const result = await validateCartRemote(draftItems, {persistCart: false});
+                currentItems = result.items || [];
+                persistCurrentItems();
+                render(result);
+                return result;
+            } finally {
+                refreshing = false;
+            }
         }
 
         form?.addEventListener('submit', async (event) => {
@@ -1970,17 +2182,17 @@
             submitSpinner?.classList.remove('d-none');
 
             try {
-                const latest = await refreshCart();
+                const latest = await refreshCheckout();
+                if (!latest || !currentItems.length) {
+                    showNotification('Đơn của bạn không còn sản phẩm để đặt hàng.', 'warning');
+                    return;
+                }
                 if (latest.changed) {
-                    showNotification('Giỏ hàng vừa thay đổi. Hãy kiểm tra lại trước khi đặt hàng.', 'warning');
+                    showNotification('Thông tin sản phẩm vừa thay đổi. Hãy kiểm tra lại trước khi đặt hàng.', 'warning');
                     return;
                 }
                 if (!latest.checkoutAllowed) {
-                    showNotification('Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Hãy quay lại giỏ hàng và giảm số lượng.', 'warning');
-                    return;
-                }
-                if (!currentItems.length) {
-                    showNotification('Giỏ hàng không còn sản phẩm hợp lệ.', 'warning');
+                    showNotification('Có sản phẩm đang chọn số lượng lớn hơn tồn kho. Hãy giảm số lượng hoặc bỏ sản phẩm đó khỏi đơn.', 'warning');
                     return;
                 }
 
@@ -1991,7 +2203,7 @@
                     phone: String(data.get('phone') || ''),
                     address: String(data.get('address') || ''),
                     note: String(data.get('note') || ''),
-                    items: readCartItems()
+                    items: readCheckoutItems()
                 };
 
                 submitLabel.textContent = 'Đang gửi đơn...';
@@ -2008,22 +2220,19 @@
 
                 if (response.status === 409 && result.cart) {
                     currentItems = result.cart.items || [];
-                    writeCartItems(currentItems.map((item) => ({
-                        productId: item.productId,
-                        quantity: item.quantity
-                    })));
+                    persistCurrentItems();
                     render(result.cart);
-                    showNotification(result.message || 'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại.', 'warning');
+                    showNotification(result.message || 'Thông tin sản phẩm vừa thay đổi. Vui lòng kiểm tra lại.', 'warning');
                     return;
                 }
                 if (!response.ok || !result.success) {
                     throw new Error(result.message || 'Không thể tạo đơn hàng.');
                 }
 
-                clearCart();
+                clearCheckoutItems();
                 showNotification(result.message || 'Đặt hàng thành công.', 'success');
                 window.setTimeout(() => {
-                    window.location.assign(result.redirectUrl || '/orders/lookup');
+                    window.location.assign(result.redirectUrl || '/orders');
                 }, 250);
             } catch (error) {
                 console.error(error);
@@ -2031,17 +2240,24 @@
             } finally {
                 submitting = false;
                 submitSpinner?.classList.add('d-none');
-                submitLabel.textContent = 'Gửi đơn hàng';
+                submitLabel.textContent = 'Đặt hàng';
                 submit.disabled = currentItems.length === 0
                     || currentItems.length > MAX_CART_DISTINCT_ITEMS
                     || currentItems.some((item) => Number(item.quantity || 0) > Number(item.availableQuantity || 0));
             }
         });
 
-        refreshCart().catch((error) => {
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                clearCheckoutItems();
+                void refreshCheckout();
+            }
+        });
+
+        refreshCheckout().catch((error) => {
             console.error(error);
             loading?.classList.add('d-none');
-            showNotification('Không thể kiểm tra giỏ hàng. Hãy quay lại giỏ và thử lại.', 'error');
+            showNotification('Không thể kiểm tra sản phẩm của đơn. Hãy quay lại trang sản phẩm và thử lại.', 'error');
         });
     }
 
@@ -2050,96 +2266,6 @@
         wrapper.innerHTML = html.trim();
         const fragment = wrapper.firstElementChild;
         content.innerHTML = fragment ? fragment.innerHTML : html;
-    }
-
-    async function loadOrderRemoteModal(modal, url, options = {}) {
-        const content = modal?.querySelector('[data-order-remote-content]');
-        if (!modal || !content || !url) return;
-
-        const requestId = Number(modal.dataset.orderRemoteRequestId || 0) + 1;
-        modal.dataset.orderRemoteRequestId = String(requestId);
-        modal.dataset.orderRemoteLoading = 'true';
-        content.innerHTML = '<div class="modal-body py-5 text-center text-secondary"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải dữ liệu...</div>';
-
-        try {
-            const response = await fetch(url, {
-                method: options.method || 'GET',
-                body: options.body || undefined,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    ...(options.headers || {})
-                }
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const html = await response.text();
-            if (Number(modal.dataset.orderRemoteRequestId) !== requestId) return;
-
-            renderRemoteModalContent(content, html);
-            modal.dataset.orderRemoteCurrentUrl = url;
-            initSingleSelectComboboxes(content);
-
-            const firstField = content.querySelector('input:not([type="hidden"]), select, textarea');
-            if (firstField && modal.id === 'orderLookupModal') {
-                window.setTimeout(() => firstField.focus({preventScroll: true}), 120);
-            }
-        } catch (error) {
-            if (Number(modal.dataset.orderRemoteRequestId) !== requestId) return;
-            console.error(error);
-            content.innerHTML = '<div class="modal-header border-0"><h2 class="modal-title h5 fw-bold">Không thể tải dữ liệu</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div><div class="modal-body pt-2 pb-5 text-center text-secondary">Vui lòng đóng cửa sổ và thử lại.</div>';
-        } finally {
-            if (Number(modal.dataset.orderRemoteRequestId) === requestId) {
-                delete modal.dataset.orderRemoteLoading;
-            }
-        }
-    }
-
-    function initCustomerOrderModals() {
-        document.querySelectorAll('[data-order-remote-modal]').forEach((modal) => {
-            const defaultUrl = modal.dataset.orderRemoteUrl;
-            if (!defaultUrl || typeof bootstrap === 'undefined') return;
-
-            moveModalToBody(modal);
-
-            modal.addEventListener('show.bs.modal', () => {
-                if (modal.dataset.orderRemoteLoading === 'true') return;
-                loadOrderRemoteModal(modal, defaultUrl);
-            });
-
-            modal.addEventListener('hidden.bs.modal', () => {
-                modal.dataset.orderRemoteRequestId = String(Number(modal.dataset.orderRemoteRequestId || 0) + 1);
-                delete modal.dataset.orderRemoteLoading;
-            });
-
-            modal.addEventListener('click', (event) => {
-                const link = event.target.closest('[data-order-remote-link]');
-                if (!link || !modal.contains(link)) return;
-                event.preventDefault();
-                loadOrderRemoteModal(modal, link.href);
-            });
-
-            modal.addEventListener('submit', (event) => {
-                const form = event.target.closest('form[data-order-remote-form]');
-                if (!form || !modal.contains(form)) return;
-                event.preventDefault();
-                if (!form.reportValidity()) return;
-
-                const method = (form.method || 'GET').toUpperCase();
-                const formData = new FormData(form);
-
-                if (method === 'GET') {
-                    const url = new URL(form.action, window.location.origin);
-                    url.search = new URLSearchParams(formData).toString();
-                    loadOrderRemoteModal(modal, url.toString());
-                    return;
-                }
-
-                loadOrderRemoteModal(modal, form.action, {
-                    method,
-                    body: new URLSearchParams(formData)
-                });
-            });
-        });
     }
 
     async function loadOrderManagementDetailModal(modal, url, options = {}) {
@@ -2277,7 +2403,6 @@
         initModalCleanup();
         initActionConfirmation();
         initHierarchyManagers();
-        initCustomerOrderModals();
         initOrderManagementDetailModal();
         initAdminManagementModalFromQuery();
         initProductDetailModal();
@@ -2288,6 +2413,7 @@
         initRevealAnimations();
         initCatalogFilterControls();
         initSingleSelectComboboxes();
+        initCheckoutDraftLifecycle();
         initCartSystem();
         initCartDropdown();
         initCartPage();

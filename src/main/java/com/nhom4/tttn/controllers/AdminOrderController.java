@@ -28,7 +28,7 @@ public class AdminOrderController {
             Model model
     ) {
         prepareListModel(status, keyword, page, sort, direction, model);
-        return "admin-orders";
+        return "order-management";
     }
 
     @GetMapping("/{id}")
@@ -117,6 +117,8 @@ public class AdminOrderController {
         }
 
         model.addAttribute("orders", orders);
+        model.addAttribute("orderMode", "ADMIN");
+        model.addAttribute("orderListPath", "/admin/orders");
         model.addAttribute("statuses", OrderStatus.values());
         model.addAttribute("status", status);
         model.addAttribute("keyword", keyword);

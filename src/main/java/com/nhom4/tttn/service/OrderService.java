@@ -11,6 +11,7 @@ import com.nhom4.tttn.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -79,13 +80,6 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderDetailView lookup(String code, String email) {
-        CustomerOrder order = orderRepository.findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã và email đã nhập."));
-        return toDetailView(order);
-    }
-
-    @Transactional(readOnly = true)
     public CustomerOrder getDetailed(Long id) {
         return orderRepository.findDetailedById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
@@ -100,7 +94,7 @@ public class OrderService {
             String sort,
             String direction
     ) {
-        return searchOrders(null, status, keyword, page, size, sort, direction);
+        return searchOrders(null, status, keyword, false, page, size, sort, direction);
     }
 
     @Transactional(readOnly = true)
@@ -113,13 +107,13 @@ public class OrderService {
             String sort,
             String direction
     ) {
-        return searchOrders(normalizeEmail(email), status, keyword, page, size, sort, direction);
+        return searchOrders(normalizeEmail(email), status, keyword, true, page, size, sort, direction);
     }
 
-    private Page<OrderSummaryView> searchOrders(
-            String customerEmail,
-            OrderStatus status,
-            String keyword,
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryView> searchGuest(
+            String code,
+            String email,
             int page,
             int size,
             String sort,
@@ -127,26 +121,34 @@ public class OrderService {
     ) {
         String safeSort = normalizeOrderSort(sort);
         String safeDirection = normalizeSortDirection(direction);
-        Sort.Direction sortDirection = "asc".equals(safeDirection)
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-        String property = switch (safeSort) {
-            case "code" -> "code";
-            case "customer" -> "customerName";
-            case "contact" -> "phone";
-            case "total" -> "totalAmount";
-            case "status" -> "status";
-            default -> "createdDate";
-        };
+        Pageable pageable = orderPageable(page, size, safeSort, safeDirection);
 
-        Sort orderSort = Sort.by(sortDirection, property)
-                .and(Sort.by(Sort.Direction.DESC, "id"));
+        if (code == null || code.isBlank() || email == null || email.isBlank()) {
+            return Page.empty(pageable);
+        }
 
-        Pageable pageable = PageRequest.of(
-                Math.max(page, 0),
-                Math.min(Math.max(size, 10), 100),
-                orderSort
-        );
+        CustomerOrder order = orderRepository
+                .findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
+                .orElse(null);
+        if (order == null) {
+            return Page.empty(pageable);
+        }
+        return new PageImpl<>(List.of(toSummaryView(order)), pageable, 1);
+    }
+
+    private Page<OrderSummaryView> searchOrders(
+            String customerEmail,
+            OrderStatus status,
+            String keyword,
+            boolean customerKeywordOnly,
+            int page,
+            int size,
+            String sort,
+            String direction
+    ) {
+        String safeSort = normalizeOrderSort(sort);
+        String safeDirection = normalizeSortDirection(direction);
+        Pageable pageable = orderPageable(page, size, safeSort, safeDirection);
 
         Specification<CustomerOrder> spec = Specification.unrestricted();
         if (customerEmail != null) {
@@ -158,14 +160,42 @@ public class OrderService {
         }
         if (keyword != null && !keyword.isBlank()) {
             String value = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
-            spec = spec.and((root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("code")), value),
-                    cb.like(cb.lower(root.get("customerName")), value),
-                    cb.like(cb.lower(root.get("customerEmail")), value),
-                    cb.like(cb.lower(root.get("phone")), value)
-            ));
+            if (customerKeywordOnly) {
+                spec = spec.and((root, query, cb) -> cb.or(
+                        cb.like(cb.lower(root.get("code")), value),
+                        cb.like(cb.lower(root.get("phone")), value)
+                ));
+            } else {
+                spec = spec.and((root, query, cb) -> cb.or(
+                        cb.like(cb.lower(root.get("code")), value),
+                        cb.like(cb.lower(root.get("customerName")), value),
+                        cb.like(cb.lower(root.get("customerEmail")), value),
+                        cb.like(cb.lower(root.get("phone")), value)
+                ));
+            }
         }
         return orderRepository.findAll(spec, pageable).map(this::toSummaryView);
+    }
+
+    private Pageable orderPageable(int page, int size, String sort, String direction) {
+        Sort.Direction sortDirection = "asc".equals(direction)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        String property = switch (sort) {
+            case "code" -> "code";
+            case "customer" -> "customerName";
+            case "contact" -> "phone";
+            case "total" -> "totalAmount";
+            case "status" -> "status";
+            default -> "createdDate";
+        };
+        Sort orderSort = Sort.by(sortDirection, property)
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+        return PageRequest.of(
+                Math.max(page, 0),
+                Math.min(Math.max(size, 10), 100),
+                orderSort
+        );
     }
 
     public static String normalizeOrderSort(String value) {
@@ -187,6 +217,15 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderReview reviewMine(String email, String code) {
+        return reviewCustomerOrder(code, email);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderReview reviewGuest(String code, String email) {
+        return reviewCustomerOrder(code, email);
+    }
+
+    private OrderReview reviewCustomerOrder(String code, String email) {
         CustomerOrder order = orderRepository
                 .findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng phù hợp."));
@@ -200,6 +239,7 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 reviews.add(new OrderItemReview(
                         toLineView(item),
+                        null,
                         null,
                         true,
                         List.of()
@@ -218,6 +258,7 @@ public class OrderService {
         for (OrderItem item : order.getItems()) {
             List<String> warnings = new ArrayList<>();
             Integer available = null;
+            Boolean productEnabled = null;
             boolean stockSufficient = true;
 
             Product product = item.getProductId() == null
@@ -225,6 +266,7 @@ public class OrderService {
                     : productRepository.findById(item.getProductId()).orElse(null);
             if (product != null) {
                 available = Math.max(product.getQuantity(), 0);
+                productEnabled = product.isEnable();
             }
 
             if (order.getStatus() == OrderStatus.PENDING) {
@@ -247,6 +289,7 @@ public class OrderService {
             reviews.add(new OrderItemReview(
                     toLineView(item),
                     available,
+                    productEnabled,
                     stockSufficient,
                     List.copyOf(warnings)
             ));

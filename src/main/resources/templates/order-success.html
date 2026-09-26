@@ -17,9 +17,9 @@
         <h1 class="display-6 fw-bold mt-2">Đơn hàng của bạn đang chờ xác nhận</h1>
         <p class="text-secondary mt-3 mb-1">Mã đơn hàng</p>
         <div class="order-code" th:text="${orderCode}"></div>
-        <p class="text-secondary mt-4">Hãy lưu mã đơn hàng. Bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để tra cứu bất cứ lúc nào.</p>
+        <p class="text-secondary mt-4">Hãy lưu mã đơn hàng. Bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để xem lại đơn bất cứ lúc nào.</p>
         <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
-            <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders/lookup}" data-bs-toggle="modal" data-bs-target="#orderLookupModal">Tra cứu đơn</a>
+            <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders(code=${orderCode})}">Quản lý đơn hàng</a>
             <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/products}">Tiếp tục mua sắm</a>
         </div>
     </section>

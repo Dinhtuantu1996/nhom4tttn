@@ -16,8 +16,11 @@
            th:if="${adminMode}"
            th:href="@{/admin/orders}">← Quản lý đơn hàng</a>
         <a class="text-decoration-none text-secondary"
-           th:if="${!adminMode}"
+           th:if="${!adminMode and (guestMode == null or !guestMode)}"
            th:href="@{/orders/my}">← Quản lý đơn hàng</a>
+        <a class="text-decoration-none text-secondary"
+           th:if="${!adminMode and guestMode}"
+           th:href="@{/orders(code=${review.order.code},email=${guestEmail})}">← Quản lý đơn hàng</a>
     </div>
 
     <div class="commerce-page-head mb-4">

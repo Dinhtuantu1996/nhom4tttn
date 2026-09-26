@@ -44,7 +44,7 @@ public class SecurityConfig {
     ) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/cart/validate", "/orders/lookup", "/orders/modal/lookup")
+                        .ignoringRequestMatchers("/api/cart/validate")
                 )
                 .authenticationProvider(authenticationProvider)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
@@ -54,9 +54,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
                         .requestMatchers("/admin/orders/**", "/admin/statistics/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/products/save", "/products/*/visibility", "/categories/**", "/attributes/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders", "/orders/lookup", "/orders/modal/lookup").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders/lookup", "/orders/modal/lookup", "/orders/success").permitAll()
-                        .requestMatchers("/orders/my/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/cart/validate", "/api/orders").permitAll()
+                        .requestMatchers("/orders/my", "/orders/my/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/", "/products/**", "/contact", "/login", "/forgot-password", "/register", "/cart", "/checkout", "/orders", "/orders/*", "/orders/*/modal", "/orders/success").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

@@ -95,10 +95,7 @@
                             <li><hr class="dropdown-divider"></li>
 
                             <li th:if="${currentUser == null}">
-                                <button class="dropdown-item rounded-3"
-                                        type="button"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#orderLookupModal">Tra cứu đơn hàng</button>
+                                <a class="dropdown-item rounded-3" th:href="@{/orders}">Quản lý đơn hàng</a>
                             </li>
                             <li th:if="${currentUser != null and !isAdmin}">
                                 <a class="dropdown-item rounded-3" th:href="@{/orders/my}">Quản lý đơn hàng</a>
@@ -133,20 +130,6 @@
         <div class="modal-dialog modal-dialog-centered product-form-dialog">
             <div class="modal-content border-0 rounded-4 shadow" data-product-modal-content>
                 <div class="modal-body py-5 text-center text-secondary">Đang tải biểu mẫu...</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade"
-         id="orderLookupModal"
-         tabindex="-1"
-         aria-hidden="true"
-         th:if="${currentUser == null}"
-         data-order-remote-modal
-         th:attr="data-order-remote-url=@{/orders/modal/lookup}">
-        <div class="modal-dialog customer-order-dialog modal-dialog-centered">
-            <div class="modal-content" data-order-remote-content>
-                <div class="modal-body py-5 text-center text-secondary">Đang tải tra cứu đơn hàng...</div>
             </div>
         </div>
     </div>

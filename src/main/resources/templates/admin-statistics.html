@@ -21,7 +21,6 @@
                 <span> · Đơn hàng theo ngày đặt, doanh thu theo ngày hoàn thành.</span>
             </p>
         </div>
-        <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
     </div>
 
     <div class="statistics-filter-card mb-4">
@@ -61,49 +60,37 @@
         </div>
     </div>
 
-    <section class="row g-3 mb-4">
-        <div class="col-12 col-md-6 col-xl-4">
-            <article class="statistics-summary-card is-primary">
-                <span class="statistics-summary-label">Doanh thu</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.revenueText}"></h2>
-                <span class="statistics-summary-note">Chỉ tính đơn đã hoàn thành</span>
-            </article>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <article class="statistics-summary-card">
-                <span class="statistics-summary-label">Đơn hàng</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.totalOrdersText}"></h2>
-                <span class="statistics-summary-note">Đơn phát sinh</span>
-            </article>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <article class="statistics-summary-card">
-                <span class="statistics-summary-label">Hoàn thành</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.completedOrdersText}"></h2>
-                <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
-            </article>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <article class="statistics-summary-card">
-                <span class="statistics-summary-label">Chờ xử lý</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.pendingOrdersText}"></h2>
-                <span class="statistics-summary-note">Cần xác nhận</span>
-            </article>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <article class="statistics-summary-card">
-                <span class="statistics-summary-label">Đã hủy</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.cancelledOrdersText}"></h2>
-                <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
-            </article>
-        </div>
-        <div class="col-12 col-md-6 col-xl-4">
-            <article class="statistics-summary-card">
-                <span class="statistics-summary-label">Sản phẩm đã bán</span>
-                <h2 class="statistics-summary-value" th:text="${statistics.overview.soldQuantityText}"></h2>
-                <span class="statistics-summary-note">Tổng số lượng trong đơn hoàn thành</span>
-            </article>
-        </div>
+    <section class="statistics-summary-grid mb-4">
+        <article class="statistics-summary-card is-primary">
+            <span class="statistics-summary-label">Doanh thu</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.revenueText}"></h2>
+            <span class="statistics-summary-note">Chỉ tính đơn đã hoàn thành</span>
+        </article>
+        <article class="statistics-summary-card">
+            <span class="statistics-summary-label">Đơn hàng</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.totalOrdersText}"></h2>
+            <span class="statistics-summary-note">Đơn phát sinh</span>
+        </article>
+        <article class="statistics-summary-card">
+            <span class="statistics-summary-label">Hoàn thành</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.completedOrdersText}"></h2>
+            <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
+        </article>
+        <article class="statistics-summary-card">
+            <span class="statistics-summary-label">Chờ xử lý</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.pendingOrdersText}"></h2>
+            <span class="statistics-summary-note">Cần xác nhận</span>
+        </article>
+        <article class="statistics-summary-card">
+            <span class="statistics-summary-label">Đã hủy</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.cancelledOrdersText}"></h2>
+            <span class="statistics-summary-note">Theo trạng thái hiện tại</span>
+        </article>
+        <article class="statistics-summary-card">
+            <span class="statistics-summary-label">Sản phẩm đã bán</span>
+            <h2 class="statistics-summary-value" th:text="${statistics.overview.soldQuantityText}"></h2>
+            <span class="statistics-summary-note">Trong đơn hoàn thành</span>
+        </article>
     </section>
 
     <section class="row g-4 mb-4">
@@ -154,8 +141,10 @@
                         <tr th:each="product, stat : ${statistics.topSellingProducts}">
                             <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
                             <td>
-                                <span class="statistics-product-name d-block fw-semibold text-dark"
-                                      th:text="${product.productName}"></span>
+                                <a class="statistics-product-name statistics-product-link d-block fw-semibold"
+                                   th:href="@{/products}"
+                                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
                             </td>
                             <td class="text-end fw-semibold" th:text="${product.soldQuantityText}"></td>
                             <td class="text-end text-nowrap" th:text="${product.revenueText}"></td>
@@ -199,8 +188,10 @@
                         <tbody>
                         <tr th:each="product : ${statistics.lowStockProducts}">
                             <td>
-                                <span class="statistics-product-name d-block fw-semibold text-dark"
-                                      th:text="${product.productName}"></span>
+                                <a class="statistics-product-name statistics-product-link d-block fw-semibold"
+                                   th:href="@{/products}"
+                                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
                                 <small class="text-secondary" th:text="${product.priceText}"></small>
                             </td>
                             <td class="text-end">
@@ -236,8 +227,10 @@
                         <tr th:each="product, stat : ${statistics.topViewedProducts}">
                             <td><span class="statistics-rank" th:text="${stat.count}"></span></td>
                             <td>
-                                <span class="statistics-product-name d-block fw-semibold text-dark"
-                                      th:text="${product.productName}"></span>
+                                <a class="statistics-product-name statistics-product-link d-block fw-semibold"
+                                   th:href="@{/products}"
+                                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.productId})}"
+                                   th:text="${product.productName}"></a>
                             </td>
                             <td class="text-end fw-semibold" th:text="${product.viewCountText}"></td>
                             <td class="text-end" th:text="${product.quantity}"></td>

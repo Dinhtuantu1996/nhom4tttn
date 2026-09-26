@@ -71,7 +71,7 @@ public class CartService {
         }
 
         Set<Long> productIds = new LinkedHashSet<>(requestedByProduct.keySet());
-        Map<Long, Product> products = productRepository.findAllByIdInAndEnableTrue(productIds).stream()
+        Map<Long, Product> products = productRepository.findAllByIdIn(productIds).stream()
                 .collect(Collectors.toMap(Product::getId, product -> product, (left, right) -> left));
 
         List<CartItemView> normalizedItems = new ArrayList<>();
@@ -90,12 +90,6 @@ public class CartService {
             }
 
             int available = Math.max(product.getQuantity(), 0);
-            if (available <= 0) {
-                changed = true;
-                messages.add("Đã bỏ \"" + product.getName() + "\" khỏi giỏ vì hiện đã hết hàng.");
-                continue;
-            }
-
             if (requestedQuantity > available) {
                 checkoutAllowed = false;
             }

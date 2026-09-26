@@ -48,6 +48,11 @@
                         <strong th:text="${reviewItem.availableQuantity != null ? reviewItem.availableQuantity : 'Không xác định'}"></strong>
                         <span>· Hóa đơn cần:</span>
                         <strong th:text="${reviewItem.item.quantity}"></strong>
+                        <span>· Trạng thái:</span>
+                        <strong th:if="${reviewItem.productEnabled != null}"
+                                th:classappend="${reviewItem.productEnabled ? ' text-success' : ' text-danger'}"
+                                th:text="${reviewItem.productEnabled ? 'Hoạt động' : 'Không hoạt động'}"></strong>
+                        <strong th:if="${reviewItem.productEnabled == null}" class="text-secondary">Không xác định</strong>
                     </div>
 
                     <ul class="admin-order-warnings mt-2 mb-0"

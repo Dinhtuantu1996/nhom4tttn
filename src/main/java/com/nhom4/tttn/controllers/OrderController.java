@@ -20,7 +20,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
@@ -73,27 +72,53 @@ public class OrderController {
         return "order-success";
     }
 
-    @GetMapping("/orders/modal/lookup")
-    public String lookupModal() {
-        return "fragments/order-lookup-modal-content :: content";
+    @GetMapping("/orders")
+    public String guestOrders(
+            @RequestParam(defaultValue = "") String code,
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "created") String sort,
+            @RequestParam(defaultValue = "desc") String direction,
+            Authentication authentication,
+            Model model
+    ) {
+        if (currentUser(authentication) != null) {
+            return isAdmin(authentication) ? "redirect:/admin/orders" : "redirect:/orders/my";
+        }
+        prepareGuestOrdersModel(code, email, page, sort, direction, model);
+        return "order-management";
     }
 
-    @PostMapping("/orders/modal/lookup")
-    public String lookupModal(
-            @RequestParam String code,
+    @GetMapping("/orders/{code}/modal")
+    public String guestOrderDetailModal(
+            @PathVariable String code,
             @RequestParam String email,
             Model model
     ) {
         try {
-            model.addAttribute("order", orderService.lookup(code, email));
-            model.addAttribute("lookupMode", true);
-            return "fragments/order-detail-modal-content :: content";
-        } catch (RuntimeException exception) {
-            model.addAttribute("lookupError", exception.getMessage());
-            model.addAttribute("lookupCode", code);
-            model.addAttribute("lookupEmail", email);
-            return "fragments/order-lookup-modal-content :: content";
+            model.addAttribute("review", orderService.reviewGuest(code, email));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         }
+        model.addAttribute("adminMode", false);
+        return "fragments/order-management-detail-modal-content :: content";
+    }
+
+    @GetMapping("/orders/{code}")
+    public String guestOrderDetail(
+            @PathVariable String code,
+            @RequestParam String email,
+            Model model
+    ) {
+        try {
+            model.addAttribute("review", orderService.reviewGuest(code, email));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        }
+        model.addAttribute("adminMode", false);
+        model.addAttribute("guestMode", true);
+        model.addAttribute("guestEmail", email == null ? "" : email.trim());
+        return "order-management-detail";
     }
 
     @GetMapping("/orders/my/{code}/modal")
@@ -102,29 +127,6 @@ public class OrderController {
         model.addAttribute("review", orderService.reviewMine(email, code));
         model.addAttribute("adminMode", false);
         return "fragments/order-management-detail-modal-content :: content";
-    }
-
-    @GetMapping("/orders/lookup")
-    public String lookupForm() {
-        return "order-lookup";
-    }
-
-    @PostMapping("/orders/lookup")
-    public String lookup(
-            @RequestParam String code,
-            @RequestParam String email,
-            Model model
-    ) {
-        try {
-            model.addAttribute("order", orderService.lookup(code, email));
-            model.addAttribute("lookupMode", true);
-            return "order-detail";
-        } catch (RuntimeException exception) {
-            model.addAttribute("lookupError", exception.getMessage());
-            model.addAttribute("lookupCode", code);
-            model.addAttribute("lookupEmail", email);
-            return "order-lookup";
-        }
     }
 
     @GetMapping("/orders/my")
@@ -139,7 +141,7 @@ public class OrderController {
     ) {
         String email = requireCustomerEmail(authentication);
         prepareMyOrdersModel(email, status, keyword, page, sort, direction, model);
-        return "my-orders";
+        return "order-management";
     }
 
     @GetMapping("/orders/my/{code}")
@@ -147,7 +149,48 @@ public class OrderController {
         String email = requireCustomerEmail(authentication);
         model.addAttribute("review", orderService.reviewMine(email, code));
         model.addAttribute("adminMode", false);
+        model.addAttribute("guestMode", false);
         return "order-management-detail";
+    }
+
+    private void prepareGuestOrdersModel(
+            String code,
+            String email,
+            int page,
+            String sort,
+            String direction,
+            Model model
+    ) {
+        String safeCode = code == null ? "" : code.trim().toUpperCase();
+        String safeEmail = email == null ? "" : email.trim();
+        String safeSort = OrderService.normalizeOrderSort(sort);
+        String safeDirection = OrderService.normalizeSortDirection(direction);
+
+        Page<OrderSummaryView> orders;
+        String searchError = null;
+        if (safeCode.isBlank() && safeEmail.isBlank()) {
+            orders = orderService.searchGuest("", "", page, 10, safeSort, safeDirection);
+        } else if (safeCode.isBlank() || safeEmail.isBlank()) {
+            orders = orderService.searchGuest("", "", page, 10, safeSort, safeDirection);
+            searchError = "Vui lòng nhập đầy đủ mã đơn hàng và email đặt hàng.";
+        } else {
+            try {
+                orders = orderService.searchGuest(safeCode, safeEmail, page, 10, safeSort, safeDirection);
+                if (orders.isEmpty()) {
+                    searchError = "Không tìm thấy đơn hàng với mã và email đã nhập.";
+                }
+            } catch (IllegalArgumentException exception) {
+                orders = orderService.searchGuest("", "", page, 10, safeSort, safeDirection);
+                searchError = exception.getMessage();
+            }
+        }
+
+        preparePageModel(orders, safeSort, safeDirection, model);
+        model.addAttribute("orderMode", "GUEST");
+        model.addAttribute("orderListPath", "/orders");
+        model.addAttribute("code", safeCode);
+        model.addAttribute("email", safeEmail);
+        model.addAttribute("orderSearchError", searchError);
     }
 
     private void prepareMyOrdersModel(
@@ -165,6 +208,20 @@ public class OrderController {
                 email, status, keyword, page, 10, safeSort, safeDirection
         );
 
+        preparePageModel(orders, safeSort, safeDirection, model);
+        model.addAttribute("orderMode", "USER");
+        model.addAttribute("orderListPath", "/orders/my");
+        model.addAttribute("statuses", OrderStatus.values());
+        model.addAttribute("status", status);
+        model.addAttribute("keyword", keyword == null ? "" : keyword);
+    }
+
+    private void preparePageModel(
+            Page<OrderSummaryView> orders,
+            String sort,
+            String direction,
+            Model model
+    ) {
         int totalPages = orders.getTotalPages();
         int pageStart = 0;
         int pageEnd = -1;
@@ -175,11 +232,8 @@ public class OrderController {
         }
 
         model.addAttribute("orders", orders);
-        model.addAttribute("statuses", OrderStatus.values());
-        model.addAttribute("status", status);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("sort", safeSort);
-        model.addAttribute("direction", safeDirection);
+        model.addAttribute("sort", sort);
+        model.addAttribute("direction", direction);
         model.addAttribute("pageStart", pageStart);
         model.addAttribute("pageEnd", pageEnd);
     }
