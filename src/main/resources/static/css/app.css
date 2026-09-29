@@ -3536,8 +3536,6 @@ p { line-height: 1.65; }
 }
 
 
-/* ===== Góc Nhà: shared UI consistency layer ===== */
-/* Keep typography, controls and action alignment predictable across every page/modal. */
 button,
 input,
 select,
@@ -3591,7 +3589,6 @@ textarea {
     transform: none !important;
 }
 
-/* Remove the remaining Bootstrap-blue actions from the visual language. */
 .btn-primary {
     --bs-btn-color: #fff;
     --bs-btn-bg: var(--gn-teal);
@@ -3628,7 +3625,6 @@ textarea {
     --bs-btn-font-weight: 700;
 }
 
-/* Bootstrap input groups and standalone fields now share the same vertical rhythm. */
 .form-control,
 .form-select,
 .input-group-text {
@@ -3665,7 +3661,6 @@ textarea.form-control {
     font-weight: 600;
 }
 
-/* Header controls use one shared baseline/height on desktop. */
 @media (min-width: 992px) {
     .site-header .navbar-nav > .nav-item {
         display: flex;
@@ -3701,7 +3696,6 @@ textarea.form-control {
     padding-inline: .34rem;
 }
 
-/* Dropdown rows align text/buttons identically, including forms inside the menu. */
 .dropdown-menu {
     padding: .45rem;
 }
@@ -3731,7 +3725,6 @@ textarea.form-control {
     border-color: var(--gn-border);
 }
 
-/* Modal heading/close alignment is shared by product/admin/customer modals. */
 .modal-header {
     align-items: flex-start;
     gap: 1rem;
@@ -3750,14 +3743,12 @@ textarea.form-control {
     line-height: 1.25;
 }
 
-/* Common chip/badge typography. */
 .badge {
     font-size: .76rem;
     font-weight: 700;
     line-height: 1.2;
 }
 
-/* Tables and pagination use the same control dimensions as the rest of the app. */
 .table > :not(caption) > * > * {
     vertical-align: middle;
 }
@@ -3782,7 +3773,6 @@ textarea.form-control {
     line-height: 1;
 }
 
-/* Small custom controls that intentionally do not use .btn still share font/alignment. */
 .filter-search-clear,
 .attribute-tree-clear,
 .login-password-toggle,
@@ -3803,7 +3793,6 @@ textarea.form-control {
     min-height: var(--gn-control-height);
 }
 
-/* Icon-only admin actions deliberately stay compact. */
 .product-admin-actions .btn {
     min-height: 34px;
 }
@@ -3812,7 +3801,6 @@ textarea.form-control {
     min-height: auto;
 }
 
-/* Action rows should align rather than visually jump when labels differ in length. */
 .product-form-actions,
 .hierarchy-root-form-actions,
 .hierarchy-child-editor-actions,
@@ -3840,7 +3828,6 @@ textarea.form-control {
     }
 }
 
-/* Final alignment for the few custom controls that sit beside standard controls. */
 .navbar-toggler {
     width: 44px;
     height: 44px;
@@ -3859,7 +3846,6 @@ textarea.form-control {
 }
 
 
-/* Admin order list: filters, sorting and pagination share the product catalog design language. */
 .admin-order-filter-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(230px, 300px) 194px;
