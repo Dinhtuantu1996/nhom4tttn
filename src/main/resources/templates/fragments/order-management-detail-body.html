@@ -32,8 +32,8 @@
             <h3 class="h5 fw-bold mb-3">Sản phẩm trong đơn hàng</h3>
             <div class="admin-order-lines">
                 <article class="admin-order-line"
-                         th:each="reviewItem : ${review.items}"
-                         th:classappend="${adminMode and !reviewItem.stockSufficient ? ' has-stock-error' : ''}">
+                         th:classappend="${adminMode and !reviewItem.stockSufficient ? ' has-stock-error' : ''}"
+                         th:each="reviewItem : ${review.items}">
                     <div class="d-flex justify-content-between gap-3 align-items-start">
                         <div class="min-w-0">
                             <div class="fw-bold" th:text="${reviewItem.item.productName}"></div>
@@ -43,16 +43,18 @@
                         <strong class="text-nowrap" th:text="${reviewItem.item.lineTotalText}"></strong>
                     </div>
 
-                    <div class="admin-order-stock mt-3" th:if="${adminMode and review.order.status.name() == 'PENDING'}">
+                    <div class="admin-order-stock mt-3"
+                         th:if="${adminMode and review.order.status.name() == 'PENDING'}">
                         <span>Kho hiện tại:</span>
                         <strong th:text="${reviewItem.availableQuantity != null ? reviewItem.availableQuantity : 'Không xác định'}"></strong>
                         <span>· Hóa đơn cần:</span>
                         <strong th:text="${reviewItem.item.quantity}"></strong>
                         <span>· Trạng thái:</span>
-                        <strong th:if="${reviewItem.productEnabled != null}"
-                                th:classappend="${reviewItem.productEnabled ? ' text-success' : ' text-danger'}"
+                        <strong th:classappend="${reviewItem.productEnabled ? ' text-success' : ' text-danger'}"
+                                th:if="${reviewItem.productEnabled != null}"
                                 th:text="${reviewItem.productEnabled ? 'Hoạt động' : 'Không hoạt động'}"></strong>
-                        <strong th:if="${reviewItem.productEnabled == null}" class="text-secondary">Không xác định</strong>
+                        <strong class="text-secondary" th:if="${reviewItem.productEnabled == null}">Không xác
+                            định</strong>
                     </div>
 
                     <ul class="admin-order-warnings mt-2 mb-0"
@@ -61,9 +63,9 @@
                     </ul>
 
                     <button class="btn btn-sm btn-outline-danger rounded-pill mt-2"
-                            type="button"
+                            th:attr="data-product-form-url=@{/products/{id}/form(id=${reviewItem.item.productId})}"
                             th:if="${adminMode and review.order.status.name() == 'PENDING' and !reviewItem.stockSufficient and reviewItem.availableQuantity != null}"
-                            th:attr="data-product-form-url=@{/products/{id}/form(id=${reviewItem.item.productId})}">
+                            type="button">
                         Cập nhật tồn kho sản phẩm
                     </button>
                 </article>
@@ -78,12 +80,25 @@
         <section class="commerce-card p-4">
             <span class="eyebrow">KHÁCH HÀNG</span>
             <dl class="order-info-list mt-3 mb-0">
-                <div><dt>Họ tên</dt><dd th:text="${review.order.customerName}"></dd></div>
-                <div><dt>Email</dt><dd th:text="${review.order.customerEmail}"></dd></div>
-                <div><dt>Số điện thoại</dt><dd th:text="${review.order.phone}"></dd></div>
-                <div><dt>Địa chỉ</dt><dd th:text="${review.order.address}"></dd></div>
+                <div>
+                    <dt>Họ tên</dt>
+                    <dd th:text="${review.order.customerName}"></dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd th:text="${review.order.customerEmail}"></dd>
+                </div>
+                <div>
+                    <dt>Số điện thoại</dt>
+                    <dd th:text="${review.order.phone}"></dd>
+                </div>
+                <div>
+                    <dt>Địa chỉ</dt>
+                    <dd th:text="${review.order.address}"></dd>
+                </div>
                 <div th:if="${review.order.note != null and !#strings.isEmpty(review.order.note)}">
-                    <dt>Ghi chú</dt><dd th:text="${review.order.note}"></dd>
+                    <dt>Ghi chú</dt>
+                    <dd th:text="${review.order.note}"></dd>
                 </div>
             </dl>
         </section>
@@ -92,15 +107,15 @@
                  th:if="${adminMode and review.order.status.name() == 'PENDING'}">
             <span class="eyebrow">XỬ LÝ ĐƠN</span>
             <div class="d-grid gap-2 mt-3">
-                <form th:action="@{/admin/orders/{id}/complete(id=${review.order.id})}"
-                      method="post"
+                <form method="post"
+                      th:action="@{/admin/orders/{id}/complete(id=${review.order.id})}"
                       th:attr="data-admin-order-action-form=${adminModal ? '' : null},
                                data-confirm-message=${adminModal ? 'Xác nhận hoàn thành đơn? Số lượng sản phẩm trong đơn sẽ được trừ khỏi tồn kho.' : null},
                                data-order-action-confirm=${!adminModal ? 'Xác nhận hoàn thành đơn? Số lượng sản phẩm trong đơn sẽ được trừ khỏi tồn kho.' : null}">
                     <button class="btn btn-dark w-100 rounded-pill admin-order-complete-button"
-                            type="submit"
                             th:disabled="${!review.canComplete()}"
-                            th:title="${review.canComplete() ? 'Hoàn thành đơn' : 'Chưa đủ tồn kho để hoàn thành đơn'}">
+                            th:title="${review.canComplete() ? 'Hoàn thành đơn' : 'Chưa đủ tồn kho để hoàn thành đơn'}"
+                            type="submit">
                         Hoàn thành đơn
                     </button>
                     <div class="small text-danger text-center mt-2" th:if="${!review.canComplete()}">
@@ -108,8 +123,8 @@
                     </div>
                 </form>
 
-                <form th:action="@{/admin/orders/{id}/cancel(id=${review.order.id})}"
-                      method="post"
+                <form method="post"
+                      th:action="@{/admin/orders/{id}/cancel(id=${review.order.id})}"
                       th:attr="data-admin-order-action-form=${adminModal ? '' : null},
                                data-confirm-message=${adminModal ? 'Xác nhận hủy đơn hàng này?' : null},
                                data-order-action-confirm=${!adminModal ? 'Xác nhận hủy đơn hàng này?' : null}">

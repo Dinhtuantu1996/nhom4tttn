@@ -2,11 +2,11 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>Đặt hàng thành công - Góc Nhà</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
-    <link th:href="@{/css/app.css}" rel="stylesheet">
+    <link rel="icon" th:href="@{/img/goc-nha-logo.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -17,7 +17,8 @@
         <h1 class="display-6 fw-bold mt-2">Đơn hàng của bạn đang chờ xác nhận</h1>
         <p class="text-secondary mt-3 mb-1">Mã đơn hàng</p>
         <div class="order-code" th:text="${orderCode}"></div>
-        <p class="text-secondary mt-4">Hãy lưu mã đơn hàng. Bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để xem lại đơn bất cứ lúc nào.</p>
+        <p class="text-secondary mt-4">Hãy lưu mã đơn hàng. Bạn có thể dùng <strong>mã đơn + email đặt hàng</strong> để
+            xem lại đơn bất cứ lúc nào.</p>
         <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
             <a class="btn btn-dark rounded-pill px-4" th:href="@{/orders(code=${orderCode})}">Quản lý đơn hàng</a>
             <a class="btn btn-outline-dark rounded-pill px-4" th:href="@{/products}">Tiếp tục mua sắm</a>

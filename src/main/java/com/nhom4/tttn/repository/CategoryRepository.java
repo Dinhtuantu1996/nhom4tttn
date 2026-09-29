@@ -11,7 +11,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentIsNullOrderByNameAsc();
 
     List<Category> findAllByOrderByNameAsc();
+
     boolean existsByParent_Id(Long parentId);
+
     boolean existsByNameIgnoreCaseAndParentIsNull(String name);
+
     boolean existsByNameIgnoreCaseAndParent_Id(String name, Long parentId);
 }

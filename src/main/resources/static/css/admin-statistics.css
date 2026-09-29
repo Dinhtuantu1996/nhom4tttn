@@ -186,9 +186,17 @@
     font-weight: 700;
 }
 
-.statistics-stock-item.is-empty strong { color: var(--gn-danger); }
-.statistics-stock-item.is-low strong { color: var(--gn-warning); }
-.statistics-stock-item.is-ok strong { color: var(--gn-teal); }
+.statistics-stock-item.is-empty strong {
+    color: var(--gn-danger);
+}
+
+.statistics-stock-item.is-low strong {
+    color: var(--gn-warning);
+}
+
+.statistics-stock-item.is-ok strong {
+    color: var(--gn-teal);
+}
 
 .statistics-empty {
     padding: 2.25rem 1rem;
@@ -255,6 +263,7 @@
         min-height: 250px;
     }
 }
+
 @media (max-width: 575.98px) {
     .statistics-summary-grid {
         grid-template-columns: 1fr;

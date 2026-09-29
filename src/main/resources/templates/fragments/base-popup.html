@@ -2,37 +2,40 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="popup">
-    <div class="d-none" aria-hidden="true">
-        <span th:if="${success}"
-              data-base-flash
+    <div aria-hidden="true" class="d-none">
+        <span data-base-flash
               data-popup-type="success"
+              th:if="${success}"
               th:text="${success}"></span>
-        <span th:if="${error}"
-              data-base-flash
+        <span data-base-flash
               data-popup-type="error"
+              th:if="${error}"
               th:text="${error}"></span>
-        <span th:if="${warning}"
-              data-base-flash
+        <span data-base-flash
               data-popup-type="warning"
+              th:if="${warning}"
               th:text="${warning}"></span>
     </div>
 
-    <dialog class="base-confirm-dialog" data-base-confirm-dialog aria-labelledby="baseConfirmTitle" aria-describedby="baseConfirmMessage">
+    <dialog aria-describedby="baseConfirmMessage" aria-labelledby="baseConfirmTitle" class="base-confirm-dialog"
+            data-base-confirm-dialog>
         <div class="base-confirm-card">
-            <div class="base-confirm-icon" data-base-confirm-icon aria-hidden="true">!</div>
+            <div aria-hidden="true" class="base-confirm-icon" data-base-confirm-icon>!</div>
             <div class="base-confirm-copy">
                 <div class="base-confirm-eyebrow">XÁC NHẬN</div>
-                <h2 class="base-confirm-title" id="baseConfirmTitle" data-base-confirm-title>Xác nhận thao tác</h2>
-                <p class="base-confirm-message" id="baseConfirmMessage" data-base-confirm-message>Bạn có chắc muốn tiếp tục?</p>
+                <h2 class="base-confirm-title" data-base-confirm-title id="baseConfirmTitle">Xác nhận thao tác</h2>
+                <p class="base-confirm-message" data-base-confirm-message id="baseConfirmMessage">Bạn có chắc muốn tiếp
+                    tục?</p>
             </div>
             <div class="base-confirm-actions">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-base-confirm-cancel>Hủy</button>
-                <button type="button" class="btn btn-danger rounded-pill px-4" data-base-confirm-submit>Xóa</button>
+                <button class="btn btn-outline-secondary rounded-pill px-4" data-base-confirm-cancel type="button">Hủy
+                </button>
+                <button class="btn btn-danger rounded-pill px-4" data-base-confirm-submit type="button">Xóa</button>
             </div>
         </div>
     </dialog>
 
-    <div class="base-toast-container" data-base-toast-container aria-live="polite" aria-relevant="additions"></div>
+    <div aria-live="polite" aria-relevant="additions" class="base-toast-container" data-base-toast-container></div>
 </div>
 </body>
 </html>

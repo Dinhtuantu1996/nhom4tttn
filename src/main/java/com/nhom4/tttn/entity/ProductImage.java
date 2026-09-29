@@ -23,5 +23,7 @@ public class ProductImage {
     @Column(nullable = false)
     private int displayOrder;
 
-    public String getUrl() { return "/uploads/products/" + product.getId() + "/" + filename; }
+    public String getUrl() {
+        return "/uploads/products/" + product.getId() + "/" + filename;
+    }
 }

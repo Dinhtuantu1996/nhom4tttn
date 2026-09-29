@@ -10,6 +10,11 @@ public record OrderLineView(
         BigDecimal unitPrice,
         int quantity
 ) {
+    private static String formatMoney(BigDecimal value) {
+        BigDecimal safe = value == null ? BigDecimal.ZERO : value;
+        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safe) + " VNĐ";
+    }
+
     public BigDecimal getLineTotal() {
         BigDecimal safePrice = unitPrice == null ? BigDecimal.ZERO : unitPrice;
         return safePrice.multiply(BigDecimal.valueOf(Math.max(quantity, 0)));
@@ -21,10 +26,5 @@ public record OrderLineView(
 
     public String getLineTotalText() {
         return formatMoney(getLineTotal());
-    }
-
-    private static String formatMoney(BigDecimal value) {
-        BigDecimal safe = value == null ? BigDecimal.ZERO : value;
-        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safe) + " VNĐ";
     }
 }

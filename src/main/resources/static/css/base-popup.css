@@ -123,10 +123,21 @@
     transform: translateY(-6px) scale(.985);
 }
 
-.base-toast[data-popup-type="success"] { --base-toast-accent: var(--gn-teal, #0f766e); }
-.base-toast[data-popup-type="error"] { --base-toast-accent: var(--gn-danger, #dc2626); }
-.base-toast[data-popup-type="warning"] { --base-toast-accent: var(--gn-warning, #d97706); }
-.base-toast[data-popup-type="info"] { --base-toast-accent: var(--gn-info, #2563eb); }
+.base-toast[data-popup-type="success"] {
+    --base-toast-accent: var(--gn-teal, #0f766e);
+}
+
+.base-toast[data-popup-type="error"] {
+    --base-toast-accent: var(--gn-danger, #dc2626);
+}
+
+.base-toast[data-popup-type="warning"] {
+    --base-toast-accent: var(--gn-warning, #d97706);
+}
+
+.base-toast[data-popup-type="info"] {
+    --base-toast-accent: var(--gn-info, #2563eb);
+}
 
 .base-toast-icon {
     width: 38px;

@@ -1,10 +1,10 @@
 package com.nhom4.tttn.service;
 
 import com.nhom4.tttn.dto.ProductForm;
-import com.nhom4.tttn.entity.ProductImage;
 import com.nhom4.tttn.entity.Attribute;
 import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.entity.Product;
+import com.nhom4.tttn.entity.ProductImage;
 import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.repository.AttributeRepository;
 import com.nhom4.tttn.repository.CategoryRepository;
@@ -21,13 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor

@@ -1,46 +1,47 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="product-detail-modal-content">
+<div class="product-detail-modal-content" th:fragment="content">
     <div class="modal-header border-0 pb-0">
         <h2 class="eyebrow mb-0">CHI TIẾT SẢN PHẨM</h2>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        <button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
     </div>
 
     <div class="modal-body pt-3">
         <div class="product-detail-single">
             <div class="product-detail-media-wrap">
-                <div id="productDetailGallery"
-                     class="carousel slide product-detail-gallery"
+                <div class="carousel slide product-detail-gallery"
+                     id="productDetailGallery"
                      th:if="${!#lists.isEmpty(product.images)}">
                     <div class="carousel-inner rounded-4 overflow-hidden bg-light border">
                         <div class="carousel-item"
-                             th:each="image, state : ${product.images}"
-                             th:classappend="${state.first} ? 'active'">
+                             th:classappend="${state.first} ? 'active'"
+                             th:each="image, state : ${product.images}">
                             <img class="d-block w-100"
-                                 th:src="${image.url}"
-                                 th:alt="${product.name}">
+                                 th:alt="${product.name}"
+                                 th:src="${image.url}">
                         </div>
                     </div>
                     <button class="carousel-control-prev"
-                            type="button"
-                            data-bs-target="#productDetailGallery"
                             data-bs-slide="prev"
-                            th:if="${product.images.size() > 1}">
+                            data-bs-target="#productDetailGallery"
+                            th:if="${product.images.size() > 1}"
+                            type="button">
                         <span class="carousel-control-prev-icon"></span>
                         <span class="visually-hidden">Ảnh trước</span>
                     </button>
                     <button class="carousel-control-next"
-                            type="button"
-                            data-bs-target="#productDetailGallery"
                             data-bs-slide="next"
-                            th:if="${product.images.size() > 1}">
+                            data-bs-target="#productDetailGallery"
+                            th:if="${product.images.size() > 1}"
+                            type="button">
                         <span class="carousel-control-next-icon"></span>
                         <span class="visually-hidden">Ảnh sau</span>
                     </button>
                 </div>
                 <div class="product-detail-empty rounded-4"
-                     th:if="${#lists.isEmpty(product.images)}">Góc Nhà</div>
+                     th:if="${#lists.isEmpty(product.images)}">Góc Nhà
+                </div>
             </div>
 
             <div class="product-detail-info" data-product-detail-scope
@@ -54,7 +55,9 @@
 
                 <h3 class="h2 fw-bold mb-0" th:text="${product.name}"></h3>
 
-                <div class="alert alert-warning py-2 px-3 mt-3 mb-0" th:if="${isAdmin and !product.enable}">Sản phẩm này đang ẩn và khách hàng không thể xem hoặc đặt mua.</div>
+                <div class="alert alert-warning py-2 px-3 mt-3 mb-0" th:if="${isAdmin and !product.enable}">Sản phẩm này
+                    đang ẩn và khách hàng không thể xem hoặc đặt mua.
+                </div>
 
                 <div class="d-flex flex-wrap gap-3 text-secondary small mt-3">
                     <span th:text="${product.viewCount + ' lượt xem'}"></span>
@@ -79,15 +82,15 @@
                 <div class="product-description" th:text="${product.description}"></div>
 
                 <div class="d-grid gap-2 mt-4">
-                    <button type="button"
-                            class="btn btn-teal btn-lg rounded-pill"
+                    <button class="btn btn-teal btn-lg rounded-pill"
                             data-add-to-cart
-                            th:if="${product.enable and product.quantity > 0}">
+                            th:if="${product.enable and product.quantity > 0}"
+                            type="button">
                         Thêm vào giỏ hàng
                     </button>
-                    <a th:if="${product.quantity <= 0}"
+                    <a class="btn btn-outline-dark rounded-pill"
                        th:href="@{/contact}"
-                       class="btn btn-outline-dark rounded-pill">Liên hệ hỏi mua</a>
+                       th:if="${product.quantity <= 0}">Liên hệ hỏi mua</a>
                 </div>
             </div>
         </div>

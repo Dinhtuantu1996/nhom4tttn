@@ -2,8 +2,8 @@ package com.nhom4.tttn.service;
 
 import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
 import com.nhom4.tttn.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,25 +2,25 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title th:text="${review.order.code + ' - Góc Nhà'}"></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
-    <link th:href="@{/css/app.css}" rel="stylesheet">
+    <link rel="icon" th:href="@{/img/goc-nha-logo.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container py-5">
     <div class="mb-4">
         <a class="text-decoration-none text-secondary"
-           th:if="${adminMode}"
-           th:href="@{/admin/orders}">← Quản lý đơn hàng</a>
+           th:href="@{/admin/orders}"
+           th:if="${adminMode}">← Quản lý đơn hàng</a>
         <a class="text-decoration-none text-secondary"
-           th:if="${!adminMode and (guestMode == null or !guestMode)}"
-           th:href="@{/orders/my}">← Quản lý đơn hàng</a>
+           th:href="@{/orders/my}"
+           th:if="${!adminMode and (guestMode == null or !guestMode)}">← Quản lý đơn hàng</a>
         <a class="text-decoration-none text-secondary"
-           th:if="${!adminMode and guestMode}"
-           th:href="@{/orders(code=${review.order.code},email=${guestEmail})}">← Quản lý đơn hàng</a>
+           th:href="@{/orders(code=${review.order.code},email=${guestEmail})}"
+           th:if="${!adminMode and guestMode}">← Quản lý đơn hàng</a>
     </div>
 
     <div class="commerce-page-head mb-4">

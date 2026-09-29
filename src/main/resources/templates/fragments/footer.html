@@ -1,15 +1,17 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
-<footer th:fragment="footer" class="border-top bg-white mt-5">
+<footer class="border-top bg-white mt-5" th:fragment="footer">
     <div class="container py-5">
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <img class="brand-logo" th:src="@{/img/goc-nha-logo.svg}" src="/img/goc-nha-logo.svg" alt="Góc Nhà logo">
+                    <img alt="Góc Nhà logo" class="brand-logo" src="/img/goc-nha-logo.svg"
+                         th:src="@{/img/goc-nha-logo.svg}">
                     <strong class="brand-wordmark">Góc Nhà</strong>
                 </div>
-                <p class="text-secondary mb-0">Đồ gia dụng và tiện ích nhỏ giúp căn nhà gọn gàng, thuận tiện hơn mỗi ngày.</p>
+                <p class="text-secondary mb-0">Đồ gia dụng và tiện ích nhỏ giúp căn nhà gọn gàng, thuận tiện hơn mỗi
+                    ngày.</p>
             </div>
             <div class="col-6 col-md-3">
                 <h6>Mua sắm</h6>
@@ -19,13 +21,17 @@
             </div>
             <div class="col-6 col-md-3">
                 <h6 th:text="${isAdmin ? 'Quản trị' : 'Tài khoản'}"></h6>
-                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
-                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products}">Quản lý sản phẩm</a>
-                <a class="footer-link d-block" th:if="${isAdmin}" th:href="@{/products/new}">Thêm sản phẩm</a>
-                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/orders}">Quản lý đơn hàng</a>
-                <a class="footer-link d-block" th:if="${!isAdmin && currentUser == null}" th:href="@{/login}">Đăng nhập</a>
-                <a class="footer-link d-block" th:if="${!isAdmin && currentUser != null}" th:href="@{/orders/my}">Quản lý đơn hàng</a>
-                <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}" th:text="${currentUser.name}"></span>
+                <a class="footer-link d-block" th:href="@{/admin/orders}" th:if="${isAdmin}">Quản lý đơn hàng</a>
+                <a class="footer-link d-block" th:href="@{/products}" th:if="${isAdmin}">Quản lý sản phẩm</a>
+                <a class="footer-link d-block" th:href="@{/products/new}" th:if="${isAdmin}">Thêm sản phẩm</a>
+                <a class="footer-link d-block" th:href="@{/orders}" th:if="${!isAdmin && currentUser == null}">Quản lý
+                    đơn hàng</a>
+                <a class="footer-link d-block" th:href="@{/login}" th:if="${!isAdmin && currentUser == null}">Đăng
+                    nhập</a>
+                <a class="footer-link d-block" th:href="@{/orders/my}" th:if="${!isAdmin && currentUser != null}">Quản
+                    lý đơn hàng</a>
+                <span class="d-block text-secondary small mt-2" th:if="${!isAdmin && currentUser != null}"
+                      th:text="${currentUser.name}"></span>
             </div>
         </div>
         <div class="small text-secondary mt-4">© 2026 Góc Nhà · Đồ gia dụng & tiện ích</div>

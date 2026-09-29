@@ -2,11 +2,11 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>Góc Nhà - Đồ gia dụng tiện ích</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
-    <link th:href="@{/css/app.css}" rel="stylesheet">
+    <link rel="icon" th:href="@{/img/goc-nha-logo.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -22,11 +22,13 @@
                         <span class="eyebrow">ĐỒ GIA DỤNG & TIỆN ÍCH</span>
                         <h1 class="display-4 fw-bold mt-3 hero-title">Gọn nhà hơn, tiện mỗi ngày.</h1>
                         <p class="lead text-secondary mt-4 hero-copy">
-                            Khám phá những món đồ gia dụng thiết thực cho căn bếp, phòng khách, phòng tắm và từng góc nhỏ trong nhà.
+                            Khám phá những món đồ gia dụng thiết thực cho căn bếp, phòng khách, phòng tắm và từng góc
+                            nhỏ trong nhà.
                         </p>
                         <div class="d-flex flex-wrap gap-3 mt-4">
-                            <a th:href="@{/products}" class="btn btn-dark btn-lg rounded-pill px-4">Mua sắm ngay</a>
-                            <a th:href="@{/contact}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Tư vấn sản phẩm</a>
+                            <a class="btn btn-dark btn-lg rounded-pill px-4" th:href="@{/products}">Mua sắm ngay</a>
+                            <a class="btn btn-outline-dark btn-lg rounded-pill px-4" th:href="@{/contact}">Tư vấn sản
+                                phẩm</a>
                         </div>
                     </div>
 
@@ -50,46 +52,56 @@
                     <div class="hero-visual reveal-up reveal-delay-3">
                         <div class="hero-showcase-grid">
                             <a class="hero-showcase-card hero-showcase-card-lg text-decoration-none text-dark"
-                               th:if="${!#lists.isEmpty(newestProducts)}"
-                               th:with="featured=${newestProducts[0]}"
+                               th:attr="data-product-detail-url=@{/products/{id}/detail(id=${featured.id})}"
                                th:href="@{/products}"
-                               th:attr="data-product-detail-url=@{/products/{id}/detail(id=${featured.id})}">
+                               th:if="${!#lists.isEmpty(newestProducts)}"
+                               th:with="featured=${newestProducts[0]}">
                                 <div class="hero-showcase-media">
-                                    <img th:if="${featured.primaryImageUrl != null}" th:src="${featured.primaryImageUrl}" th:alt="${featured.name}">
-                                    <div th:if="${featured.primaryImageUrl == null}" class="product-placeholder">GN</div>
+                                    <img th:alt="${featured.name}"
+                                         th:if="${featured.primaryImageUrl != null}" th:src="${featured.primaryImageUrl}">
+                                    <div class="product-placeholder" th:if="${featured.primaryImageUrl == null}">GN
+                                    </div>
                                 </div>
                                 <div class="hero-showcase-body">
                                     <span class="eyebrow">NỔI BẬT</span>
                                     <h2 class="h5 fw-bold mb-1 mt-2" th:text="${featured.name}"></h2>
-                                    <p class="text-secondary small mb-0">Tiện dụng, dễ dùng và phù hợp với nhịp sống hằng ngày.</p>
+                                    <p class="text-secondary small mb-0">Tiện dụng, dễ dùng và phù hợp với nhịp sống
+                                        hằng ngày.</p>
                                 </div>
                             </a>
 
-                            <div class="hero-showcase-card hero-showcase-card-empty hero-showcase-card-lg" th:if="${#lists.isEmpty(newestProducts)}">
+                            <div class="hero-showcase-card hero-showcase-card-empty hero-showcase-card-lg"
+                                 th:if="${#lists.isEmpty(newestProducts)}">
                                 <div class="hero-showcase-media hero-showcase-media-empty">
                                     <div class="product-placeholder">GN</div>
                                 </div>
                                 <div class="hero-showcase-body">
                                     <span class="eyebrow">ĐỒ GIA DỤNG & TIỆN ÍCH</span>
                                     <h2 class="h5 fw-bold mb-1 mt-2">Tiện nghi bắt đầu từ những món nhỏ</h2>
-                                    <p class="text-secondary small mb-0">Chọn những món đồ vừa đủ để căn nhà gọn gàng và dễ chăm sóc hơn.</p>
+                                    <p class="text-secondary small mb-0">Chọn những món đồ vừa đủ để căn nhà gọn gàng và
+                                        dễ chăm sóc hơn.</p>
                                 </div>
                             </div>
 
                             <th:block th:if="${!#lists.isEmpty(newestProducts)}">
-                                <th:block th:each="product, stat : ${newestProducts}" th:if="${stat.index > 0 and stat.index < 3}">
+                                <th:block th:each="product, stat : ${newestProducts}"
+                                          th:if="${stat.index > 0 and stat.index < 3}">
                                     <a class="hero-showcase-card text-decoration-none text-dark"
-                                       th:href="@{/products}"
-                                       th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
+                                       th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}"
+                                       th:href="@{/products}">
                                         <div class="hero-showcase-media hero-showcase-media-sm">
-                                            <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
-                                            <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">GN</div>
+                                            <img th:alt="${product.name}"
+                                                 th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}">
+                                            <div class="product-placeholder" th:if="${product.primaryImageUrl == null}">
+                                                GN
+                                            </div>
                                         </div>
                                         <div class="hero-showcase-body">
-                                            <h3 class="h6 fw-bold mb-1 product-card-name" th:text="${product.name}"></h3>
+                                            <h3 class="h6 fw-bold mb-1 product-card-name"
+                                                th:text="${product.name}"></h3>
                                             <div class="product-mini-meta">
                                                 <span class="product-card-views">
-                                                    <span class="product-view-icon" aria-hidden="true"></span>
+                                                    <span aria-hidden="true" class="product-view-icon"></span>
                                                     <span th:text="${product.viewCount}"></span>
                                                 </span>
                                             </div>
@@ -145,18 +157,20 @@
                 <span class="eyebrow">DANH MỤC</span>
                 <h2 class="h1 fw-bold mt-2 mb-0">Chọn đồ cho từng góc nhà</h2>
             </div>
-            <a th:href="@{/products}" class="btn btn-link text-dark text-decoration-none fw-semibold">Xem toàn bộ →</a>
+            <a class="btn btn-link text-dark text-decoration-none fw-semibold" th:href="@{/products}">Xem toàn bộ →</a>
         </div>
         <div class="category-highlight-grid">
             <a class="category-highlight-card reveal-up text-decoration-none text-dark"
+               th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}"
                th:each="category, stat : ${navCategories}"
-               th:if="${stat.index < 4}"
                th:href="@{/products(categoryId=${category.id})}"
-               th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}">
-                <span class="category-highlight-icon" th:text="${stat.index == 0 ? '🛍️' : (stat.index == 1 ? '🌟' : (stat.index == 2 ? '🎯' : '🧵'))}"></span>
+               th:if="${stat.index < 4}">
+                <span class="category-highlight-icon"
+                      th:text="${stat.index == 0 ? '🛍️' : (stat.index == 1 ? '🌟' : (stat.index == 2 ? '🎯' : '🧵'))}"></span>
                 <div>
                     <h3 class="h5 fw-bold mb-1" th:text="${category.name}"></h3>
-                    <p class="text-secondary mb-2" th:text="${#lists.isEmpty(category.children) ? 'Những món đồ tiện ích cho nhu cầu sử dụng hằng ngày.' : 'Nhiều lựa chọn phù hợp với từng không gian trong nhà.'}"></p>
+                    <p class="text-secondary mb-2"
+                       th:text="${#lists.isEmpty(category.children) ? 'Những món đồ tiện ích cho nhu cầu sử dụng hằng ngày.' : 'Nhiều lựa chọn phù hợp với từng không gian trong nhà.'}"></p>
                     <span class="category-highlight-link">Xem sản phẩm →</span>
                 </div>
             </a>
@@ -170,7 +184,8 @@
                     <span class="eyebrow">SỐNG TIỆN HƠN</span>
                     <h2 class="h1 fw-bold mt-2">Những món nhỏ giúp việc nhà nhẹ nhàng hơn.</h2>
                     <p class="text-secondary mt-3 mb-4">
-                        Từ đồ dùng nhà bếp đến sản phẩm lưu trữ và vệ sinh, Góc Nhà tập trung vào những lựa chọn dễ dùng, gọn gàng và thiết thực.
+                        Từ đồ dùng nhà bếp đến sản phẩm lưu trữ và vệ sinh, Góc Nhà tập trung vào những lựa chọn dễ
+                        dùng, gọn gàng và thiết thực.
                     </p>
                     <div class="d-grid gap-3">
                         <div class="feature-line">
@@ -184,14 +199,16 @@
                             <span class="feature-line-icon">02</span>
                             <div>
                                 <strong>Chọn theo từng không gian</strong>
-                                <p class="mb-0 text-secondary">Dễ chọn đồ cho bếp, phòng tắm, phòng khách hoặc góc lưu trữ.</p>
+                                <p class="mb-0 text-secondary">Dễ chọn đồ cho bếp, phòng tắm, phòng khách hoặc góc lưu
+                                    trữ.</p>
                             </div>
                         </div>
                         <div class="feature-line">
                             <span class="feature-line-icon">03</span>
                             <div>
                                 <strong>Thông tin dễ theo dõi</strong>
-                                <p class="mb-0 text-secondary">Hình ảnh, giá bán, số lượng và đặc điểm sản phẩm được trình bày rõ ràng.</p>
+                                <p class="mb-0 text-secondary">Hình ảnh, giá bán, số lượng và đặc điểm sản phẩm được
+                                    trình bày rõ ràng.</p>
                             </div>
                         </div>
                     </div>
@@ -202,22 +219,26 @@
                     <div class="feature-card reveal-up reveal-delay-1">
                         <span class="feature-card-icon">⚡</span>
                         <h3 class="h5 fw-bold mt-3">Bếp tiện hơn</h3>
-                        <p class="text-secondary mb-0">Những món đồ nhỏ giúp chuẩn bị, sắp xếp và dọn dẹp gian bếp thuận tiện hơn.</p>
+                        <p class="text-secondary mb-0">Những món đồ nhỏ giúp chuẩn bị, sắp xếp và dọn dẹp gian bếp thuận
+                            tiện hơn.</p>
                     </div>
                     <div class="feature-card reveal-up reveal-delay-2">
                         <span class="feature-card-icon">🎨</span>
                         <h3 class="h5 fw-bold mt-3">Nhà cửa gọn hơn</h3>
-                        <p class="text-secondary mb-0">Kệ, hộp và dụng cụ lưu trữ giúp không gian ngăn nắp mà vẫn dễ lấy khi cần.</p>
+                        <p class="text-secondary mb-0">Kệ, hộp và dụng cụ lưu trữ giúp không gian ngăn nắp mà vẫn dễ lấy
+                            khi cần.</p>
                     </div>
                     <div class="feature-card reveal-up reveal-delay-3">
                         <span class="feature-card-icon">🧩</span>
                         <h3 class="h5 fw-bold mt-3">Dễ dùng mỗi ngày</h3>
-                        <p class="text-secondary mb-0">Ưu tiên các sản phẩm đơn giản, tiện dụng và phù hợp với nhu cầu gia đình.</p>
+                        <p class="text-secondary mb-0">Ưu tiên các sản phẩm đơn giản, tiện dụng và phù hợp với nhu cầu
+                            gia đình.</p>
                     </div>
                     <div class="feature-card reveal-up reveal-delay-4">
                         <span class="feature-card-icon">🤝</span>
                         <h3 class="h5 fw-bold mt-3">Hỗ trợ tận tâm</h3>
-                        <p class="text-secondary mb-0">Góc Nhà luôn sẵn sàng tư vấn thông tin sản phẩm trước khi bạn đặt hàng.</p>
+                        <p class="text-secondary mb-0">Góc Nhà luôn sẵn sàng tư vấn thông tin sản phẩm trước khi bạn đặt
+                            hàng.</p>
                     </div>
                 </div>
             </div>
@@ -230,25 +251,28 @@
                 <span class="eyebrow">HÀNG MỚI VỀ</span>
                 <h2 class="h1 fw-bold mt-2 mb-0">Sản phẩm mới tại Góc Nhà</h2>
             </div>
-            <a th:href="@{/products}" class="btn btn-link text-dark text-decoration-none fw-semibold">Xem tất cả →</a>
+            <a class="btn btn-link text-dark text-decoration-none fw-semibold" th:href="@{/products}">Xem tất cả →</a>
         </div>
         <div class="product-highlight-grid">
-            <div th:each="product, stat : ${newestProducts}" class="reveal-up" th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}">
+            <div class="reveal-up" th:classappend="${stat.index == 0 ? ' reveal-delay-1' : (stat.index == 1 ? ' reveal-delay-2' : (stat.index == 2 ? ' reveal-delay-3' : ' reveal-delay-4'))}"
+                 th:each="product, stat : ${newestProducts}">
                 <a class="product-card text-decoration-none text-dark d-block h-100"
-                   th:href="@{/products}"
-                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}">
+                   th:attr="data-product-detail-url=@{/products/{id}/detail(id=${product.id})}"
+                   th:href="@{/products}">
                     <div class="product-media">
-                        <img th:if="${product.primaryImageUrl != null}" th:src="${product.primaryImageUrl}" th:alt="${product.name}">
-                        <div th:if="${product.primaryImageUrl == null}" class="product-placeholder">GN</div>
+                        <img th:alt="${product.name}" th:if="${product.primaryImageUrl != null}"
+                             th:src="${product.primaryImageUrl}">
+                        <div class="product-placeholder" th:if="${product.primaryImageUrl == null}">GN</div>
                     </div>
                     <div class="p-3 p-lg-4 pb-3">
                         <h3 class="h6 fw-bold product-card-name mb-0" th:text="${product.name}"></h3>
                     </div>
                     <div class="product-card-footer">
-                        <span th:if="${product.quantity <= 0}" class="product-card-contact">Liên hệ</span>
-                        <span th:if="${product.quantity > 0}" class="product-card-price" th:text="${product.priceText}"></span>
+                        <span class="product-card-contact" th:if="${product.quantity <= 0}">Liên hệ</span>
+                        <span class="product-card-price" th:if="${product.quantity > 0}"
+                              th:text="${product.priceText}"></span>
                         <span class="product-card-views">
-                            <span class="product-view-icon" aria-hidden="true"></span>
+                            <span aria-hidden="true" class="product-view-icon"></span>
                             <span th:text="${product.viewCount}"></span>
                         </span>
                     </div>
@@ -261,7 +285,7 @@
         <div class="empty-state text-center p-5 reveal-up">
             <h2 class="h4">Chưa có sản phẩm</h2>
             <p class="text-secondary">Những món đồ gia dụng mới sẽ sớm được cập nhật.</p>
-            <a th:href="@{/products}" class="btn btn-dark rounded-pill px-4">Mua sắm ngay</a>
+            <a class="btn btn-dark rounded-pill px-4" th:href="@{/products}">Mua sắm ngay</a>
         </div>
     </section>
 </main>

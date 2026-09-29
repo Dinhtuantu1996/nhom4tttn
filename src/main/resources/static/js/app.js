@@ -766,7 +766,6 @@
     }
 
 
-
     function initCategoryNavigationMenu() {
         const nav = document.querySelector('[data-category-nav]');
         const trigger = nav?.querySelector('.category-trigger');
@@ -877,7 +876,7 @@
                     input.value = option.dataset.value || '';
                     syncSelected();
                     closeCombo(combo);
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', {bubbles: true}));
                 });
             });
 
@@ -1541,7 +1540,6 @@
     }
 
 
-
     function createMiniCartItemElement(item, onChange, onRemove) {
         const article = document.createElement('article');
         article.className = 'cart-mini-line';
@@ -1717,8 +1715,8 @@
                 checkout.title = hasItemLimitIssue
                     ? `Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`
                     : (hasStockIssue
-                    ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
-                    : '');
+                        ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
+                        : '');
             }
         }
 
@@ -1939,8 +1937,8 @@
                 checkout.title = hasItemLimitIssue
                     ? `Mỗi đơn hàng chỉ được tối đa ${MAX_CART_DISTINCT_ITEMS} mặt hàng khác nhau.`
                     : (hasStockIssue
-                    ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
-                    : '');
+                        ? 'Hãy giảm số lượng các sản phẩm màu đỏ về mức tồn kho hiện tại trước khi đặt hàng.'
+                        : '');
             }
         }
 
@@ -2216,7 +2214,10 @@
                     },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json().catch(() => ({success: false, message: 'Không thể đọc phản hồi từ hệ thống.'}));
+                const result = await response.json().catch(() => ({
+                    success: false,
+                    message: 'Không thể đọc phản hồi từ hệ thống.'
+                }));
 
                 if (response.status === 409 && result.cart) {
                     currentItems = result.cart.items || [];

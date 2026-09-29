@@ -21,9 +21,9 @@ public class GoogleIdentityVerifier {
         this.verifier = this.clientId.isBlank()
                 ? null
                 : new GoogleIdTokenVerifier.Builder(
-                        GoogleNetHttpTransport.newTrustedTransport(),
-                        GsonFactory.getDefaultInstance()
-                ).setAudience(Collections.singletonList(this.clientId)).build();
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance()
+        ).setAudience(Collections.singletonList(this.clientId)).build();
     }
 
     public GoogleUserInfo verify(String credential) {

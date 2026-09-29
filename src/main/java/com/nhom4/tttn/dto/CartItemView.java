@@ -13,16 +13,16 @@ public record CartItemView(
         int availableQuantity,
         BigDecimal lineTotal
 ) {
+    private static String formatMoney(BigDecimal value) {
+        BigDecimal safe = value == null ? BigDecimal.ZERO : value;
+        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safe) + " VNĐ";
+    }
+
     public String unitPriceText() {
         return formatMoney(unitPrice);
     }
 
     public String lineTotalText() {
         return formatMoney(lineTotal);
-    }
-
-    private static String formatMoney(BigDecimal value) {
-        BigDecimal safe = value == null ? BigDecimal.ZERO : value;
-        return NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(safe) + " VNĐ";
     }
 }

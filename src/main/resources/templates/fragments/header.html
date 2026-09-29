@@ -1,14 +1,16 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
-<header th:fragment="header" class="site-header sticky-top border-bottom bg-white">
+<header class="site-header sticky-top border-bottom bg-white" th:fragment="header">
     <nav class="navbar navbar-expand-lg py-3">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" th:href="@{/}">
-                <img class="brand-logo" th:src="@{/img/goc-nha-logo.svg}" src="/img/goc-nha-logo.svg" alt="Góc Nhà logo">
+                <img alt="Góc Nhà logo" class="brand-logo" src="/img/goc-nha-logo.svg"
+                     th:src="@{/img/goc-nha-logo.svg}">
                 <span class="brand-wordmark">Góc Nhà</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở menu">
+            <button aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở menu" class="navbar-toggler"
+                    data-bs-target="#mainNavbar" data-bs-toggle="collapse" type="button">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNavbar">
@@ -16,17 +18,19 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/}">Trang chủ</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/products}">Sản phẩm</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Liên hệ</a></li>
-                    <li class="nav-item" th:if="${isAdmin}"><a class="nav-link" th:href="@{/admin/statistics}">Thống kê</a></li>
+                    <li class="nav-item" th:if="${isAdmin}"><a class="nav-link" th:href="@{/admin/statistics}">Thống
+                        kê</a></li>
                     <li class="nav-item dropdown cart-nav-item ms-lg-1">
-                        <button class="cart-trigger"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                data-bs-auto-close="outside"
-                                aria-expanded="false"
+                        <button aria-expanded="false"
                                 aria-label="Mở giỏ hàng"
-                                data-cart-dropdown-trigger>
-                            <span class="cart-trigger-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                                class="cart-trigger"
+                                data-bs-auto-close="outside"
+                                data-bs-toggle="dropdown"
+                                data-cart-dropdown-trigger
+                                type="button">
+                            <span aria-hidden="true" class="cart-trigger-icon">
+                                <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                     stroke-width="1.9" viewBox="0 0 24 24">
                                     <circle cx="9" cy="20" r="1.35"></circle>
                                     <circle cx="18" cy="20" r="1.35"></circle>
                                     <path d="M3 4h2.2l2.1 9.3a1 1 0 0 0 1 .77h8.73a1 1 0 0 0 .98-.8L19.7 7.5H6.1"></path>
@@ -46,7 +50,8 @@
                                 <div class="cart-sync-messages d-none mb-0 px-3 pt-2" data-cart-dropdown-messages></div>
 
                                 <div class="cart-mini-body">
-                                    <div class="cart-loading py-4 text-center text-secondary" data-cart-dropdown-loading>
+                                    <div class="cart-loading py-4 text-center text-secondary"
+                                         data-cart-dropdown-loading>
                                         Đang tải giỏ hàng...
                                     </div>
                                     <div class="d-grid gap-2" data-cart-dropdown-items></div>
@@ -54,7 +59,8 @@
                                         <div class="cart-mini-empty-icon">GN</div>
                                         <h4>Giỏ hàng đang trống</h4>
                                         <p>Hãy chọn vài sản phẩm bạn yêu thích để bắt đầu tạo đơn hàng.</p>
-                                        <a class="btn btn-teal rounded-pill px-4" th:href="@{/products}">Khám phá sản phẩm</a>
+                                        <a class="btn btn-teal rounded-pill px-4" th:href="@{/products}">Khám phá sản
+                                            phẩm</a>
                                     </div>
                                 </div>
 
@@ -70,18 +76,21 @@
                                         </div>
                                     </div>
                                     <div class="cart-mini-actions">
-                                        <button class="btn btn-outline-dark rounded-pill" type="button" data-cart-dropdown-close>Tiếp tục mua sắm</button>
-                                        <a class="btn btn-teal rounded-pill disabled" href="/checkout" data-cart-dropdown-checkout aria-disabled="true">Tiến hành đặt hàng</a>
+                                        <button class="btn btn-outline-dark rounded-pill" data-cart-dropdown-close
+                                                type="button">Tiếp tục mua sắm
+                                        </button>
+                                        <a aria-disabled="true" class="btn btn-teal rounded-pill disabled"
+                                           data-cart-dropdown-checkout href="/checkout">Tiến hành đặt hàng</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </li>
                     <li class="nav-item dropdown ms-lg-2">
-                        <button class="btn btn-outline-dark rounded-pill dropdown-toggle px-4"
-                                type="button"
+                        <button aria-expanded="false"
+                                class="btn btn-outline-dark rounded-pill dropdown-toggle px-4"
                                 data-bs-toggle="dropdown"
-                                aria-expanded="false">
+                                type="button">
                             <span th:if="${currentUser == null}">Tài khoản</span>
                             <span th:if="${currentUser != null}" th:text="${currentUser.name}">Tài khoản</span>
                         </button>
@@ -90,9 +99,12 @@
                                 <a class="dropdown-item rounded-3 fw-semibold" th:href="@{/login}">Đăng nhập</a>
                             </li>
                             <li th:if="${currentUser != null}">
-                                <span class="dropdown-item-text small text-secondary" th:text="${currentUser.email}"></span>
+                                <span class="dropdown-item-text small text-secondary"
+                                      th:text="${currentUser.email}"></span>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
 
                             <li th:if="${currentUser == null}">
                                 <a class="dropdown-item rounded-3" th:href="@{/orders}">Quản lý đơn hàng</a>
@@ -101,13 +113,20 @@
                                 <a class="dropdown-item rounded-3" th:href="@{/orders/my}">Quản lý đơn hàng</a>
                             </li>
 
-                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
-                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='categories')}">Quản lý danh mục</a></li>
-                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/products(manage='attributes')}">Quản lý thuộc tính</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3" th:href="@{/admin/orders}">Quản lý
+                                đơn hàng</a></li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3"
+                                                      th:href="@{/products(manage='categories')}">Quản lý danh mục</a>
+                            </li>
+                            <li th:if="${isAdmin}"><a class="dropdown-item rounded-3"
+                                                      th:href="@{/products(manage='attributes')}">Quản lý thuộc tính</a>
+                            </li>
 
-                            <li th:if="${currentUser != null}"><hr class="dropdown-divider"></li>
                             <li th:if="${currentUser != null}">
-                                <form th:action="@{/logout}" method="post">
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li th:if="${currentUser != null}">
+                                <form method="post" th:action="@{/logout}">
                                     <button class="dropdown-item rounded-3 text-danger" type="submit">Đăng xuất</button>
                                 </form>
                             </li>
@@ -118,7 +137,7 @@
         </div>
     </nav>
 
-    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div aria-hidden="true" class="modal fade" id="productDetailModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered product-detail-dialog">
             <div class="modal-content border-0 rounded-4 shadow" data-product-detail-content>
                 <div class="modal-body py-5 text-center text-secondary">Đang tải chi tiết...</div>
@@ -126,7 +145,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="productFormModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}">
+    <div aria-hidden="true" class="modal fade" id="productFormModal" tabindex="-1" th:if="${isAdmin}">
         <div class="modal-dialog modal-dialog-centered product-form-dialog">
             <div class="modal-content border-0 rounded-4 shadow" data-product-modal-content>
                 <div class="modal-body py-5 text-center text-secondary">Đang tải biểu mẫu...</div>

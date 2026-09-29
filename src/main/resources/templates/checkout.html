@@ -2,13 +2,13 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Đặt hàng - Góc Nhà</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
-    <link th:href="@{/css/app.css}" rel="stylesheet">
+    <link rel="icon" th:href="@{/img/goc-nha-logo.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -49,35 +49,48 @@
             <form data-checkout-form novalidate>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold" for="checkoutName">Họ và tên <span class="text-danger">*</span></label>
-                        <input class="form-control form-control-lg" id="checkoutName" name="customerName" maxlength="120" required
-                               th:value="${currentUser != null ? currentUser.name : ''}" placeholder="Nguyễn Văn A">
+                        <label class="form-label fw-semibold" for="checkoutName">Họ và tên <span
+                                class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutName" maxlength="120"
+                               name="customerName" placeholder="Nguyễn Văn A"
+                               required th:value="${currentUser != null ? currentUser.name : ''}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold" for="checkoutEmail">Email <span class="text-danger">*</span></label>
-                        <input class="form-control form-control-lg" id="checkoutEmail" name="customerEmail" type="email" maxlength="180" required
-                               th:value="${currentUser != null ? currentUser.email : ''}"
-                               th:readonly="${currentUser != null}" placeholder="ban@email.com">
-                        <div class="form-text" th:if="${currentUser != null}">Email lấy từ tài khoản đăng nhập và không thể sửa tại đây.</div>
+                        <label class="form-label fw-semibold" for="checkoutEmail">Email <span
+                                class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutEmail" maxlength="180" name="customerEmail"
+                               placeholder="ban@email.com" required
+                               th:readonly="${currentUser != null}"
+                               th:value="${currentUser != null ? currentUser.email : ''}" type="email">
+                        <div class="form-text" th:if="${currentUser != null}">Email lấy từ tài khoản đăng nhập và không
+                            thể sửa tại đây.
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold" for="checkoutPhone">Số điện thoại <span class="text-danger">*</span></label>
-                        <input class="form-control form-control-lg" id="checkoutPhone" name="phone" type="tel" maxlength="30" required placeholder="Số điện thoại nhận hàng">
+                        <label class="form-label fw-semibold" for="checkoutPhone">Số điện thoại <span
+                                class="text-danger">*</span></label>
+                        <input class="form-control form-control-lg" id="checkoutPhone" maxlength="30" name="phone"
+                               placeholder="Số điện thoại nhận hàng" required type="tel">
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-semibold" for="checkoutAddress">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="checkoutAddress" name="address" rows="3" maxlength="1000" required placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+                        <label class="form-label fw-semibold" for="checkoutAddress">Địa chỉ nhận hàng <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="checkoutAddress" maxlength="1000" name="address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                                  required
+                                  rows="3"></textarea>
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold" for="checkoutNote">Ghi chú</label>
-                        <textarea class="form-control" id="checkoutNote" name="note" rows="3" maxlength="2000" placeholder="Ghi chú cho cửa hàng nếu cần"></textarea>
+                        <textarea class="form-control" id="checkoutNote" maxlength="2000" name="note" placeholder="Ghi chú cho cửa hàng nếu cần"
+                                  rows="3"></textarea>
                     </div>
                 </div>
 
                 <div class="alert alert-warning d-none mt-4 mb-0" data-checkout-warning></div>
-                <button class="btn btn-dark btn-lg rounded-pill w-100 mt-4" type="submit" data-checkout-submit disabled>
+                <button class="btn btn-dark btn-lg rounded-pill w-100 mt-4" data-checkout-submit disabled type="submit">
                     <span data-checkout-submit-label>Đặt hàng</span>
-                    <span class="spinner-border spinner-border-sm ms-2 d-none" data-checkout-submit-spinner aria-hidden="true"></span>
+                    <span aria-hidden="true" class="spinner-border spinner-border-sm ms-2 d-none"
+                          data-checkout-submit-spinner></span>
                 </button>
             </form>
         </section>

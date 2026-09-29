@@ -9,11 +9,7 @@ import com.nhom4.tttn.enums.OrderStatus;
 import com.nhom4.tttn.repository.CustomerOrderRepository;
 import com.nhom4.tttn.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +29,18 @@ public class OrderService {
     private final CustomerOrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+
+    public static String normalizeOrderSort(String value) {
+        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "code", "customer", "contact", "total", "status", "created" -> normalized;
+            default -> "created";
+        };
+    }
+
+    public static String normalizeSortDirection(String value) {
+        return value != null && value.trim().equalsIgnoreCase("asc") ? "asc" : "desc";
+    }
 
     @Transactional
     public CreateResult create(CreateOrderRequest request, User authenticatedUser) {
@@ -196,18 +199,6 @@ public class OrderService {
                 Math.min(Math.max(size, 10), 100),
                 orderSort
         );
-    }
-
-    public static String normalizeOrderSort(String value) {
-        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "code", "customer", "contact", "total", "status", "created" -> normalized;
-            default -> "created";
-        };
-    }
-
-    public static String normalizeSortDirection(String value) {
-        return value != null && value.trim().equalsIgnoreCase("asc") ? "asc" : "desc";
     }
 
     @Transactional(readOnly = true)

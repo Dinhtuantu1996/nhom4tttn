@@ -44,8 +44,15 @@ public class Category {
     }
 
     @PreUpdate
-    void preUpdate() { updatedDate = LocalDateTime.now(); }
+    void preUpdate() {
+        updatedDate = LocalDateTime.now();
+    }
 
-    public String getUpdatedDateText() { return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT); }
-    public boolean isRoot() { return parent == null; }
+    public String getUpdatedDateText() {
+        return updatedDate == null ? "" : updatedDate.format(DATE_TIME_FORMAT);
+    }
+
+    public boolean isRoot() {
+        return parent == null;
+    }
 }

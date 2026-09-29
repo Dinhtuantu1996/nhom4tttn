@@ -2,12 +2,12 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>Sản phẩm - Góc Nhà</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" th:href="@{/img/goc-nha-logo.svg}">
-    <link th:href="@{/css/app.css}" rel="stylesheet">
-    <link th:if="${isAdmin}" th:href="@{/css/admin-statistics.css}" rel="stylesheet">
+    <link rel="icon" th:href="@{/img/goc-nha-logo.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-statistics.css}" th:if="${isAdmin}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -20,71 +20,77 @@
             <p class="text-secondary mb-0" th:text="${products.totalElements + ' sản phẩm phù hợp'}"></p>
         </div>
         <div class="d-flex flex-wrap gap-2" th:if="${isAdmin}">
-            <button type="button"
-                    class="btn btn-primary rounded-pill px-4"
-                    th:attr="data-product-form-url=@{/products/form}">
+            <button class="btn btn-primary rounded-pill px-4"
+                    th:attr="data-product-form-url=@{/products/form}"
+                    type="button">
                 + Thêm sản phẩm
             </button>
         </div>
     </div>
 
-    <form method="get" th:action="@{/products}" class="filter-panel catalog-filter-panel p-3 p-lg-4 mb-4" data-catalog-filter>
+    <form class="filter-panel catalog-filter-panel p-3 p-lg-4 mb-4" data-catalog-filter method="get"
+          th:action="@{/products}">
         <div class="filter-toolbar">
             <div class="filter-field filter-field-search">
                 <label class="filter-label" for="productKeyword">Tìm kiếm</label>
                 <div class="filter-search-control">
-                    <input id="productKeyword"
-                           type="search"
+                    <input autocomplete="off"
                            class="form-control form-control-lg"
+                           data-product-search
+                           id="productKeyword"
                            name="keyword"
-                           th:value="${keyword}"
                            placeholder="Tìm theo tên sản phẩm..."
-                           autocomplete="off"
-                           data-product-search>
-                    <button type="button" class="filter-search-clear" aria-label="Xóa từ khóa" data-product-search-clear>×</button>
+                           th:value="${keyword}"
+                           type="search">
+                    <button aria-label="Xóa từ khóa" class="filter-search-clear" data-product-search-clear
+                            type="button">×
+                    </button>
                 </div>
             </div>
 
             <div class="filter-field filter-field-category">
                 <label class="filter-label">Danh mục</label>
-                <div class="filter-combobox" data-filter-combobox data-category-filter>
-                    <input type="hidden" name="categoryId" th:value="${categoryId}" data-category-value>
-                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                <div class="filter-combobox" data-category-filter data-filter-combobox>
+                    <input data-category-value name="categoryId" th:value="${categoryId}" type="hidden">
+                    <button aria-expanded="false" class="filter-combobox-trigger" data-filter-combobox-trigger
+                            type="button">
                         <span class="filter-combobox-value" data-category-label>Tất cả danh mục</span>
-                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                        <span aria-hidden="true" class="filter-combobox-chevron"></span>
                     </button>
                     <div class="filter-combobox-menu category-filter-menu" data-filter-combobox-menu>
                         <div class="filter-combobox-search-wrap">
-                            <input type="search" class="filter-combobox-search" placeholder="Tìm danh mục..." autocomplete="off" data-category-search>
+                            <input autocomplete="off" class="filter-combobox-search" data-category-search
+                                   placeholder="Tìm danh mục..." type="search">
                         </div>
                         <div class="filter-combobox-options" data-category-options>
-                            <button type="button"
-                                    class="filter-combobox-option category-filter-option"
+                            <button class="filter-combobox-option category-filter-option"
                                     data-category-option
-                                    data-value=""
-                                    data-search-text="Tất cả danh mục"
                                     data-label="Tất cả danh mục"
-                                    th:classappend="${categoryId == null ? ' is-selected' : ''}">
+                                    data-search-text="Tất cả danh mục"
+                                    data-value=""
+                                    th:classappend="${categoryId == null ? ' is-selected' : ''}"
+                                    type="button">
                                 <span class="category-filter-dot"></span>
                                 <span>Tất cả danh mục</span>
                                 <span class="filter-option-check">✓</span>
                             </button>
-                            <div class="category-filter-group" th:each="root : ${categories}" data-category-filter-group>
-                                <button type="button"
-                                        class="filter-combobox-option category-filter-option category-filter-root"
+                            <div class="category-filter-group" data-category-filter-group
+                                 th:each="root : ${categories}">
+                                <button class="filter-combobox-option category-filter-option category-filter-root"
                                         data-category-option
                                         th:attr="data-value=${root.id},data-search-text=${root.name},data-label=${root.name}"
-                                        th:classappend="${categoryId == root.id ? ' is-selected' : ''}">
+                                        th:classappend="${categoryId == root.id ? ' is-selected' : ''}"
+                                        type="button">
                                     <span class="category-filter-dot"></span>
                                     <span th:text="${root.name}"></span>
                                     <span class="filter-option-check">✓</span>
                                 </button>
-                                <button type="button"
-                                        class="filter-combobox-option category-filter-option category-filter-child"
-                                        th:each="child : ${root.children}"
+                                <button class="filter-combobox-option category-filter-option category-filter-child"
                                         data-category-option
                                         th:attr="data-value=${child.id},data-search-text=${child.name},data-label=${child.name}"
-                                        th:classappend="${categoryId == child.id ? ' is-selected' : ''}">
+                                        th:classappend="${categoryId == child.id ? ' is-selected' : ''}"
+                                        th:each="child : ${root.children}"
+                                        type="button">
                                     <span class="category-filter-branch"></span>
                                     <span th:text="${child.name}"></span>
                                     <span class="filter-option-check">✓</span>
@@ -98,11 +104,12 @@
 
             <div class="filter-field filter-field-attribute" th:if="${!#lists.isEmpty(attributes)}">
                 <label class="filter-label">Thuộc tính</label>
-                <div class="filter-combobox" data-filter-combobox data-attribute-filter>
-                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                <div class="filter-combobox" data-attribute-filter data-filter-combobox>
+                    <button aria-expanded="false" class="filter-combobox-trigger" data-filter-combobox-trigger
+                            type="button">
                         <span class="filter-combobox-value" data-attribute-label>Tất cả thuộc tính</span>
                         <span class="filter-combobox-count d-none" data-attribute-count></span>
-                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                        <span aria-hidden="true" class="filter-combobox-chevron"></span>
                     </button>
                     <div class="filter-combobox-menu attribute-tree-menu" data-filter-combobox-menu>
                         <div class="attribute-tree-toolbar">
@@ -110,41 +117,45 @@
                                 <div class="fw-bold">Chọn thuộc tính</div>
                                 <div class="small text-secondary">Chọn các đặc điểm phù hợp để lọc sản phẩm.</div>
                             </div>
-                            <button type="button" class="attribute-tree-clear" data-attribute-clear>Xóa chọn</button>
+                            <button class="attribute-tree-clear" data-attribute-clear type="button">Xóa chọn</button>
                         </div>
                         <div class="filter-combobox-search-wrap">
-                            <input type="search" class="filter-combobox-search" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-attribute-search>
+                            <input autocomplete="off" class="filter-combobox-search"
+                                   data-attribute-search placeholder="Tìm thuộc tính hoặc giá trị..."
+                                   type="search">
                         </div>
                         <div class="attribute-tree" data-attribute-tree>
                             <div class="attribute-tree-group"
-                                 th:each="root : ${attributes}"
-                                 th:if="${!#lists.isEmpty(root.children)}"
                                  data-attribute-group
-                                 th:attr="data-search-text=${root.name}">
+                                 th:attr="data-search-text=${root.name}"
+                                 th:each="root : ${attributes}"
+                                 th:if="${!#lists.isEmpty(root.children)}">
                                 <div class="attribute-tree-root-row">
                                     <label class="attribute-tree-root-check">
-                                        <input type="checkbox" class="form-check-input m-0" data-attribute-root-check>
+                                        <input class="form-check-input m-0" data-attribute-root-check type="checkbox">
                                         <span th:text="${root.name}"></span>
                                     </label>
-                                    <button type="button" class="attribute-tree-toggle" aria-expanded="true" data-attribute-tree-toggle>
-                                        <span class="tree-toggle-chevron" aria-hidden="true"></span>
+                                    <button aria-expanded="true" class="attribute-tree-toggle" data-attribute-tree-toggle
+                                            type="button">
+                                        <span aria-hidden="true" class="tree-toggle-chevron"></span>
                                     </button>
                                 </div>
                                 <div class="attribute-tree-children" data-attribute-tree-children>
                                     <label class="attribute-tree-value"
-                                           th:each="child : ${root.children}"
-                                           th:attr="data-search-text=${child.name}">
+                                           th:attr="data-search-text=${child.name}"
+                                           th:each="child : ${root.children}">
                                         <input class="form-check-input m-0"
-                                               type="checkbox"
+                                               data-attribute-child
                                                name="attributeIds"
-                                               th:value="${child.id}"
                                                th:checked="${#lists.contains(attributeIds, child.id)}"
-                                               data-attribute-child>
+                                               th:value="${child.id}"
+                                               type="checkbox">
                                         <span th:text="${child.name}"></span>
                                     </label>
                                 </div>
                             </div>
-                            <div class="filter-combobox-empty d-none" data-attribute-empty>Không tìm thấy thuộc tính.</div>
+                            <div class="filter-combobox-empty d-none" data-attribute-empty>Không tìm thấy thuộc tính.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,24 +164,30 @@
             <div class="filter-field filter-field-sort">
                 <label class="filter-label">Sắp xếp</label>
                 <div class="filter-combobox" data-filter-combobox data-sort-filter>
-                    <input type="hidden" name="sort" th:value="${sort != null ? sort : 'newest'}" data-sort-value>
-                    <button type="button" class="filter-combobox-trigger" aria-expanded="false" data-filter-combobox-trigger>
+                    <input data-sort-value name="sort" th:value="${sort != null ? sort : 'newest'}" type="hidden">
+                    <button aria-expanded="false" class="filter-combobox-trigger" data-filter-combobox-trigger
+                            type="button">
                         <span class="filter-combobox-value" data-sort-label
                               th:text="${sort == 'oldest' ? 'Cũ nhất' : (sort == 'views' ? 'Xem nhiều' : (sort == 'name' ? 'Tên A-Z' : 'Mới nhất'))}">Mới nhất</span>
-                        <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                        <span aria-hidden="true" class="filter-combobox-chevron"></span>
                     </button>
                     <div class="filter-combobox-menu sort-filter-menu" data-filter-combobox-menu>
                         <div class="filter-combobox-options">
-                            <button type="button" class="filter-combobox-option" data-sort-option data-value="newest" data-label="Mới nhất" th:classappend="${sort == null or sort == 'newest' ? ' is-selected' : ''}">
+                            <button class="filter-combobox-option" data-label="Mới nhất" data-sort-option data-value="newest"
+                                    th:classappend="${sort == null or sort == 'newest' ? ' is-selected' : ''}"
+                                    type="button">
                                 <span>Mới nhất</span><span class="filter-option-check">✓</span>
                             </button>
-                            <button type="button" class="filter-combobox-option" data-sort-option data-value="oldest" data-label="Cũ nhất" th:classappend="${sort == 'oldest' ? ' is-selected' : ''}">
+                            <button class="filter-combobox-option" data-label="Cũ nhất" data-sort-option data-value="oldest"
+                                    th:classappend="${sort == 'oldest' ? ' is-selected' : ''}" type="button">
                                 <span>Cũ nhất</span><span class="filter-option-check">✓</span>
                             </button>
-                            <button type="button" class="filter-combobox-option" data-sort-option data-value="views" data-label="Xem nhiều" th:classappend="${sort == 'views' ? ' is-selected' : ''}">
+                            <button class="filter-combobox-option" data-label="Xem nhiều" data-sort-option data-value="views"
+                                    th:classappend="${sort == 'views' ? ' is-selected' : ''}" type="button">
                                 <span>Xem nhiều</span><span class="filter-option-check">✓</span>
                             </button>
-                            <button type="button" class="filter-combobox-option" data-sort-option data-value="name" data-label="Tên A-Z" th:classappend="${sort == 'name' ? ' is-selected' : ''}">
+                            <button class="filter-combobox-option" data-label="Tên A-Z" data-sort-option data-value="name"
+                                    th:classappend="${sort == 'name' ? ' is-selected' : ''}" type="button">
                                 <span>Tên A-Z</span><span class="filter-option-check">✓</span>
                             </button>
                         </div>
@@ -189,52 +206,52 @@
                 <div class="admin-product-visibility-filter" th:if="${isAdmin}">
                     <label class="visually-hidden" for="productVisibility">Trạng thái sản phẩm</label>
                     <div class="filter-combobox" data-single-combobox>
-                        <input id="productVisibility"
-                               type="hidden"
+                        <input data-single-combobox-input
+                               id="productVisibility"
                                name="visibility"
                                th:value="${visibility.name()}"
-                               data-single-combobox-input>
-                        <button type="button"
-                                class="filter-combobox-trigger"
-                                aria-expanded="false"
+                               type="hidden">
+                        <button aria-expanded="false"
                                 aria-label="Trạng thái sản phẩm"
-                                data-single-combobox-trigger>
+                                class="filter-combobox-trigger"
+                                data-single-combobox-trigger
+                                type="button">
                             <span class="filter-combobox-value"
                                   data-single-combobox-value
                                   th:text="${visibility.name() == 'HIDDEN' ? 'Đã ẩn' : (visibility.name() == 'ALL' ? 'Tất cả trạng thái' : 'Đang hiển thị')}">Đang hiển thị</span>
-                            <span class="filter-combobox-chevron" aria-hidden="true"></span>
+                            <span aria-hidden="true" class="filter-combobox-chevron"></span>
                         </button>
                         <div class="filter-combobox-menu" data-single-combobox-menu>
                             <div class="filter-combobox-options">
-                                <button type="button"
-                                        class="filter-combobox-option"
+                                <button class="filter-combobox-option"
+                                        data-label="Đang hiển thị"
                                         data-single-combobox-option
                                         data-value="VISIBLE"
-                                        data-label="Đang hiển thị"
-                                        th:classappend="${visibility.name() == 'VISIBLE' ? ' is-selected' : ''}">
+                                        th:classappend="${visibility.name() == 'VISIBLE' ? ' is-selected' : ''}"
+                                        type="button">
                                     <span>Đang hiển thị</span><span class="filter-option-check">✓</span>
                                 </button>
-                                <button type="button"
-                                        class="filter-combobox-option"
+                                <button class="filter-combobox-option"
+                                        data-label="Đã ẩn"
                                         data-single-combobox-option
                                         data-value="HIDDEN"
-                                        data-label="Đã ẩn"
-                                        th:classappend="${visibility.name() == 'HIDDEN' ? ' is-selected' : ''}">
+                                        th:classappend="${visibility.name() == 'HIDDEN' ? ' is-selected' : ''}"
+                                        type="button">
                                     <span>Đã ẩn</span><span class="filter-option-check">✓</span>
                                 </button>
-                                <button type="button"
-                                        class="filter-combobox-option"
+                                <button class="filter-combobox-option"
+                                        data-label="Tất cả trạng thái"
                                         data-single-combobox-option
                                         data-value="ALL"
-                                        data-label="Tất cả trạng thái"
-                                        th:classappend="${visibility.name() == 'ALL' ? ' is-selected' : ''}">
+                                        th:classappend="${visibility.name() == 'ALL' ? ' is-selected' : ''}"
+                                        type="button">
                                     <span>Tất cả trạng thái</span><span class="filter-option-check">✓</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <a th:href="@{/products}" class="btn btn-outline-secondary rounded-pill px-4">Đặt lại</a>
+                <a class="btn btn-outline-secondary rounded-pill px-4" th:href="@{/products}">Đặt lại</a>
                 <button class="btn btn-dark rounded-pill px-4" type="submit">Lọc sản phẩm</button>
             </div>
         </div>
@@ -242,67 +259,74 @@
 
     <section data-product-load-more
              th:attr="data-load-url=@{/products/more},data-next-page=${products.number + 1},data-last=${products.last}">
-        <div id="productGrid" class="product-grid" th:if="${products.hasContent()}">
+        <div class="product-grid" id="productGrid" th:if="${products.hasContent()}">
             <div th:replace="~{fragments/product-batch :: batch}"></div>
         </div>
 
         <div class="empty-state text-center p-5" th:if="${!products.hasContent()}">
             <h2 class="h4">Không tìm thấy sản phẩm</h2>
             <p class="text-secondary">Thử thay đổi từ khóa hoặc bộ lọc.</p>
-            <a th:href="@{/products}" class="btn btn-dark rounded-pill px-4">Xem tất cả</a>
+            <a class="btn btn-dark rounded-pill px-4" th:href="@{/products}">Xem tất cả</a>
         </div>
 
         <div class="text-center mt-4 pt-4 border-top"
-             th:if="${products.hasContent()}"
-             data-load-more-wrap>
-            <button type="button"
-                    class="btn btn-outline-dark rounded-pill px-4"
+             data-load-more-wrap
+             th:if="${products.hasContent()}">
+            <button class="btn btn-outline-dark rounded-pill px-4"
                     data-load-more-products
+                    th:classappend="${products.last ? ' is-exhausted' : ''}"
                     th:disabled="${products.last}"
-                    th:classappend="${products.last ? ' is-exhausted' : ''}">
-                <span data-load-more-spinner class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
+                    type="button">
+                <span aria-hidden="true" class="spinner-border spinner-border-sm me-2 d-none"
+                      data-load-more-spinner></span>
                 <span data-load-more-label th:text="${products.last ? 'Hết sản phẩm' : 'Xem thêm sản phẩm'}">Xem thêm sản phẩm</span>
             </button>
-            <div class="small text-danger mt-2 d-none" data-load-more-error>Không thể tải thêm sản phẩm. Hãy thử lại.</div>
+            <div class="small text-danger mt-2 d-none" data-load-more-error>Không thể tải thêm sản phẩm. Hãy thử lại.
+            </div>
         </div>
     </section>
 
 </main>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}"
-     data-hierarchy-manager
-     data-save-url="/categories/save"
+<div aria-hidden="true" class="modal fade" data-child-create-label="Thêm danh mục con" data-child-edit-label="Lưu danh mục con" data-child-label="danh mục con"
      data-delete-base="/categories"
-     data-root-label="danh mục"
-     data-child-label="danh mục con"
+     data-error-fallback="Không thể cập nhật danh mục. Hãy thử lại."
+     data-hierarchy-manager
      data-root-create-label="Thêm danh mục"
      data-root-edit-label="Lưu danh mục"
-     data-child-create-label="Thêm danh mục con"
-     data-child-edit-label="Lưu danh mục con"
+     data-root-label="danh mục"
+     data-save-url="/categories/save"
      data-success-fallback="Cập nhật danh mục thành công."
-     data-error-fallback="Không thể cập nhật danh mục. Hãy thử lại.">
+     id="categoryModal"
+     tabindex="-1"
+     th:if="${isAdmin}">
     <div class="modal-dialog modal-lg modal-dialog-centered hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
                 <h2 class="eyebrow mb-0">QUẢN LÝ DANH MỤC</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
             </div>
             <div class="modal-body pt-3 hierarchy-manager-scroll">
                 <div class="hierarchy-manager-stack">
                     <section class="hierarchy-manager-panel hierarchy-root-editor" data-hierarchy-root-editor>
                         <h3 class="h6 fw-bold mb-3" data-hierarchy-root-title>Thêm danh mục</h3>
-                        <form th:action="@{/categories/save}" method="post" data-hierarchy-root-form>
-                            <input type="hidden" name="id" data-hierarchy-root-id>
-                            <input type="hidden" name="parentId" value="">
+                        <form data-hierarchy-root-form method="post" th:action="@{/categories/save}">
+                            <input data-hierarchy-root-id name="id" type="hidden">
+                            <input name="parentId" type="hidden" value="">
                             <div class="hierarchy-root-form-row">
                                 <div class="flex-grow-1">
                                     <label class="form-label fw-semibold" for="categoryRootName">Tên danh mục</label>
-                                    <input id="categoryRootName" class="form-control" type="text" name="name" required maxlength="255"
-                                           data-hierarchy-root-name placeholder="Ví dụ: Thời trang">
+                                    <input class="form-control" data-hierarchy-root-name id="categoryRootName" maxlength="255" name="name"
+                                           placeholder="Ví dụ: Thời trang"
+                                           required type="text">
                                 </div>
                                 <div class="hierarchy-root-form-actions">
-                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel>Hủy sửa</button>
-                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-hierarchy-root-save>Thêm danh mục</button>
+                                    <button class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel
+                                            type="button">Hủy sửa
+                                    </button>
+                                    <button class="btn btn-dark rounded-pill px-4" data-hierarchy-root-save
+                                            type="submit">Thêm danh mục
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -312,10 +336,12 @@
                         <div class="hierarchy-manager-list-header">
                             <div>
                                 <h3 class="h6 fw-bold mb-1">Danh sách danh mục</h3>
-                                <p class="small text-secondary mb-0">Thêm, sửa và xóa mục con ngay trong từng danh mục cha.</p>
+                                <p class="small text-secondary mb-0">Thêm, sửa và xóa mục con ngay trong từng danh mục
+                                    cha.</p>
                             </div>
                             <div class="hierarchy-manager-search-wrap">
-                                <input type="search" class="form-control form-control-sm" placeholder="Tìm danh mục..." autocomplete="off" data-hierarchy-search>
+                                <input autocomplete="off" class="form-control form-control-sm" data-hierarchy-search
+                                       placeholder="Tìm danh mục..." type="search">
                             </div>
                         </div>
 
@@ -324,9 +350,9 @@
                                 Chưa có danh mục. Hãy tạo danh mục đầu tiên.
                             </div>
 
-                            <article class="hierarchy-manager-group" th:each="root : ${categories}"
-                                     data-hierarchy-root
-                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}">
+                            <article class="hierarchy-manager-group" data-hierarchy-root
+                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}"
+                                     th:each="root : ${categories}">
                                 <header class="hierarchy-manager-root-row">
                                     <div class="hierarchy-manager-root-info">
                                         <div class="hierarchy-manager-root-name" th:text="${root.name}"></div>
@@ -335,54 +361,73 @@
                                         </div>
                                     </div>
                                     <div class="hierarchy-manager-root-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                                                data-hierarchy-root-edit
-                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Sửa</button>
-                                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3"
-                                                data-hierarchy-child-add
-                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}">+ Mục con</button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                data-hierarchy-delete
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-root-edit
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}"
+                                                type="button">Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-add
+                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}"
+                                                type="button">+ Mục
+                                            con
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" data-hierarchy-delete
                                                 data-item-kind="root"
-                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Xóa</button>
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}"
+                                                type="button">Xóa
+                                        </button>
                                     </div>
                                 </header>
 
-                                <form th:action="@{/categories/save}" method="post" class="hierarchy-child-editor d-none"
-                                      data-hierarchy-child-form
+                                <form class="hierarchy-child-editor d-none" data-hierarchy-child-form
+                                      method="post"
+                                      th:action="@{/categories/save}"
                                       th:attr="data-parent-id=${root.id}">
-                                    <input type="hidden" name="id" data-hierarchy-child-id>
-                                    <input type="hidden" name="parentId" th:value="${root.id}">
+                                    <input data-hierarchy-child-id name="id" type="hidden">
+                                    <input name="parentId" th:value="${root.id}" type="hidden">
                                     <div class="hierarchy-child-editor-row">
                                         <div class="flex-grow-1">
-                                            <label class="form-label small fw-semibold mb-1" data-hierarchy-child-editor-label>Thêm danh mục con</label>
-                                            <input class="form-control form-control-sm" type="text" name="name" required maxlength="255"
-                                                   data-hierarchy-child-name placeholder="Nhập tên mục con">
+                                            <label class="form-label small fw-semibold mb-1"
+                                                   data-hierarchy-child-editor-label>Thêm danh mục con</label>
+                                            <input class="form-control form-control-sm" data-hierarchy-child-name maxlength="255" name="name"
+                                                   placeholder="Nhập tên mục con"
+                                                   required type="text">
                                         </div>
                                         <div class="hierarchy-child-editor-actions">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-child-cancel>Hủy</button>
-                                            <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save>Thêm danh mục con</button>
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                    data-hierarchy-child-cancel
+                                                    type="button">Hủy
+                                            </button>
+                                            <button class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save
+                                                    type="submit">Thêm danh mục con
+                                            </button>
                                         </div>
                                     </div>
                                 </form>
 
                                 <div class="hierarchy-manager-children" th:if="${!#lists.isEmpty(root.children)}">
-                                    <div class="hierarchy-manager-child-row" th:each="child : ${root.children}"
-                                         data-hierarchy-child
-                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}">
+                                    <div class="hierarchy-manager-child-row" data-hierarchy-child
+                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}"
+                                         th:each="child : ${root.children}">
                                         <span class="hierarchy-manager-child-name" th:text="${child.name}"></span>
                                         <div class="hierarchy-manager-child-actions">
-                                            <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none"
+                                            <button class="btn btn-sm btn-link text-secondary text-decoration-none"
                                                     data-hierarchy-child-edit
-                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}">Sửa</button>
-                                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none"
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}"
+                                                    type="button">
+                                                Sửa
+                                            </button>
+                                            <button class="btn btn-sm btn-link text-danger text-decoration-none"
                                                     data-hierarchy-delete
                                                     data-item-kind="child"
-                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}">Xóa</button>
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}"
+                                                    type="button">Xóa
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">Chưa có danh mục con.</div>
+                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">
+                                    Chưa có danh mục con.
+                                </div>
                             </article>
                         </div>
                     </section>
@@ -392,40 +437,45 @@
     </div>
 </div>
 
-<div class="modal fade" id="attributeModal" tabindex="-1" aria-hidden="true" th:if="${isAdmin}"
-     data-hierarchy-manager
-     data-save-url="/attributes/save"
+<div aria-hidden="true" class="modal fade" data-child-create-label="Thêm giá trị" data-child-edit-label="Lưu giá trị" data-child-label="giá trị"
      data-delete-base="/attributes"
-     data-root-label="thuộc tính"
-     data-child-label="giá trị"
+     data-error-fallback="Không thể cập nhật thuộc tính. Hãy thử lại."
+     data-hierarchy-manager
      data-root-create-label="Thêm thuộc tính"
      data-root-edit-label="Lưu thuộc tính"
-     data-child-create-label="Thêm giá trị"
-     data-child-edit-label="Lưu giá trị"
+     data-root-label="thuộc tính"
+     data-save-url="/attributes/save"
      data-success-fallback="Cập nhật thuộc tính thành công."
-     data-error-fallback="Không thể cập nhật thuộc tính. Hãy thử lại.">
+     id="attributeModal"
+     tabindex="-1"
+     th:if="${isAdmin}">
     <div class="modal-dialog modal-lg modal-dialog-centered hierarchy-manager-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
                 <h2 class="eyebrow mb-0">QUẢN LÝ THUỘC TÍNH</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
             </div>
             <div class="modal-body pt-3 hierarchy-manager-scroll">
                 <div class="hierarchy-manager-stack">
                     <section class="hierarchy-manager-panel hierarchy-root-editor" data-hierarchy-root-editor>
                         <h3 class="h6 fw-bold mb-3" data-hierarchy-root-title>Thêm thuộc tính</h3>
-                        <form th:action="@{/attributes/save}" method="post" data-hierarchy-root-form>
-                            <input type="hidden" name="id" data-hierarchy-root-id>
-                            <input type="hidden" name="parentId" value="">
+                        <form data-hierarchy-root-form method="post" th:action="@{/attributes/save}">
+                            <input data-hierarchy-root-id name="id" type="hidden">
+                            <input name="parentId" type="hidden" value="">
                             <div class="hierarchy-root-form-row">
                                 <div class="flex-grow-1">
                                     <label class="form-label fw-semibold" for="attributeRootName">Tên thuộc tính</label>
-                                    <input id="attributeRootName" class="form-control" type="text" name="name" required maxlength="255"
-                                           data-hierarchy-root-name placeholder="Ví dụ: Màu sắc">
+                                    <input class="form-control" data-hierarchy-root-name id="attributeRootName" maxlength="255" name="name"
+                                           placeholder="Ví dụ: Màu sắc"
+                                           required type="text">
                                 </div>
                                 <div class="hierarchy-root-form-actions">
-                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel>Hủy sửa</button>
-                                    <button class="btn btn-dark rounded-pill px-4" type="submit" data-hierarchy-root-save>Thêm thuộc tính</button>
+                                    <button class="btn btn-outline-secondary rounded-pill px-3 d-none" data-hierarchy-root-cancel
+                                            type="button">Hủy sửa
+                                    </button>
+                                    <button class="btn btn-dark rounded-pill px-4" data-hierarchy-root-save
+                                            type="submit">Thêm thuộc tính
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -435,10 +485,13 @@
                         <div class="hierarchy-manager-list-header">
                             <div>
                                 <h3 class="h6 fw-bold mb-1">Danh sách thuộc tính</h3>
-                                <p class="small text-secondary mb-0">Mỗi nhóm chứa các giá trị dùng để mô tả và lọc sản phẩm.</p>
+                                <p class="small text-secondary mb-0">Mỗi nhóm chứa các giá trị dùng để mô tả và lọc sản
+                                    phẩm.</p>
                             </div>
                             <div class="hierarchy-manager-search-wrap">
-                                <input type="search" class="form-control form-control-sm" placeholder="Tìm thuộc tính hoặc giá trị..." autocomplete="off" data-hierarchy-search>
+                                <input autocomplete="off" class="form-control form-control-sm"
+                                       data-hierarchy-search placeholder="Tìm thuộc tính hoặc giá trị..."
+                                       type="search">
                             </div>
                         </div>
 
@@ -447,60 +500,80 @@
                                 Chưa có thuộc tính. Hãy tạo thuộc tính đầu tiên.
                             </div>
 
-                            <article class="hierarchy-manager-group" th:each="root : ${attributes}"
-                                     data-hierarchy-root
-                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}">
+                            <article class="hierarchy-manager-group" data-hierarchy-root
+                                     th:attr="data-root-id=${root.id},data-root-name=${root.name}"
+                                     th:each="root : ${attributes}">
                                 <header class="hierarchy-manager-root-row">
                                     <div class="hierarchy-manager-root-info">
                                         <div class="hierarchy-manager-root-name" th:text="${root.name}"></div>
-                                        <div class="hierarchy-manager-root-meta"><span th:text="${#lists.size(root.children)} + ' giá trị'"></span></div>
+                                        <div class="hierarchy-manager-root-meta"><span
+                                                th:text="${#lists.size(root.children)} + ' giá trị'"></span></div>
                                     </div>
                                     <div class="hierarchy-manager-root-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                                                data-hierarchy-root-edit
-                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Sửa</button>
-                                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3"
-                                                data-hierarchy-child-add
-                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}">+ Giá trị</button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                data-hierarchy-delete data-item-kind="root"
-                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}">Xóa</button>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-root-edit
+                                                th:attr="data-item-id=${root.id},data-item-name=${root.name}"
+                                                type="button">Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-add
+                                                th:attr="data-parent-id=${root.id},data-parent-name=${root.name}"
+                                                type="button">+ Giá
+                                            trị
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" data-hierarchy-delete
+                                                data-item-kind="root" th:attr="data-item-id=${root.id},data-item-name=${root.name}"
+                                                type="button">Xóa
+                                        </button>
                                     </div>
                                 </header>
 
-                                <form th:action="@{/attributes/save}" method="post" class="hierarchy-child-editor d-none"
-                                      data-hierarchy-child-form th:attr="data-parent-id=${root.id}">
-                                    <input type="hidden" name="id" data-hierarchy-child-id>
-                                    <input type="hidden" name="parentId" th:value="${root.id}">
+                                <form class="hierarchy-child-editor d-none" data-hierarchy-child-form
+                                      method="post"
+                                      th:action="@{/attributes/save}" th:attr="data-parent-id=${root.id}">
+                                    <input data-hierarchy-child-id name="id" type="hidden">
+                                    <input name="parentId" th:value="${root.id}" type="hidden">
                                     <div class="hierarchy-child-editor-row">
                                         <div class="flex-grow-1">
-                                            <label class="form-label small fw-semibold mb-1" data-hierarchy-child-editor-label>Thêm giá trị</label>
-                                            <input class="form-control form-control-sm" type="text" name="name" required maxlength="255"
-                                                   data-hierarchy-child-name placeholder="Ví dụ: Đen">
+                                            <label class="form-label small fw-semibold mb-1"
+                                                   data-hierarchy-child-editor-label>Thêm giá trị</label>
+                                            <input class="form-control form-control-sm" data-hierarchy-child-name maxlength="255" name="name"
+                                                   placeholder="Ví dụ: Đen"
+                                                   required type="text">
                                         </div>
                                         <div class="hierarchy-child-editor-actions">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-hierarchy-child-cancel>Hủy</button>
-                                            <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save>Thêm giá trị</button>
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                    data-hierarchy-child-cancel
+                                                    type="button">Hủy
+                                            </button>
+                                            <button class="btn btn-sm btn-dark rounded-pill px-3" data-hierarchy-child-save
+                                                    type="submit">Thêm giá trị
+                                            </button>
                                         </div>
                                     </div>
                                 </form>
 
                                 <div class="hierarchy-manager-children" th:if="${!#lists.isEmpty(root.children)}">
-                                    <div class="hierarchy-manager-child-row" th:each="child : ${root.children}"
-                                         data-hierarchy-child
-                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}">
+                                    <div class="hierarchy-manager-child-row" data-hierarchy-child
+                                         th:attr="data-child-id=${child.id},data-child-name=${child.name},data-parent-id=${root.id}"
+                                         th:each="child : ${root.children}">
                                         <span class="hierarchy-manager-child-name" th:text="${child.name}"></span>
                                         <div class="hierarchy-manager-child-actions">
-                                            <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none"
+                                            <button class="btn btn-sm btn-link text-secondary text-decoration-none"
                                                     data-hierarchy-child-edit
-                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}">Sửa</button>
-                                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none"
-                                                    data-hierarchy-delete data-item-kind="child"
-                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name}">Xóa</button>
+                                                    th:attr="data-item-id=${child.id},data-item-name=${child.name},data-parent-id=${root.id}"
+                                                    type="button">
+                                                Sửa
+                                            </button>
+                                            <button class="btn btn-sm btn-link text-danger text-decoration-none"
+                                                    data-hierarchy-delete
+                                                    data-item-kind="child" th:attr="data-item-id=${child.id},data-item-name=${child.name}"
+                                                    type="button">Xóa
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">Chưa có giá trị.</div>
+                                <div class="hierarchy-manager-empty-children" th:if="${#lists.isEmpty(root.children)}">
+                                    Chưa có giá trị.
+                                </div>
                             </article>
                         </div>
                     </section>
