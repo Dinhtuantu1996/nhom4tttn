@@ -1,25 +1,46 @@
 package com.nhom4.tttn.service;
 
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class LocalFileStorageService {
-    private final Path uploadRoot;
+    private final S3Client s3Client;
+    private final String bucket;
 
-    public LocalFileStorageService(@Value("${app.upload-dir}") String uploadDir) {
-        this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(uploadRoot);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Không thể khởi tạo thư mục upload.", exception);
-        }
+    public LocalFileStorageService(
+            @Value("${app.r2.endpoint}") String endpoint,
+            @Value("${app.r2.access-key}") String accessKey,
+            @Value("${app.r2.secret-key}") String secretKey,
+            @Value("${app.r2.bucket}") String bucket) {
+        this.bucket = bucket;
+
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+        S3Configuration configuration = S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .chunkedEncodingEnabled(false)
+                .build();
+
+        this.s3Client = S3Client.builder()
+                .endpointOverride(URI.create(endpoint))
+                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .region(Region.of("auto"))
+                .serviceConfiguration(configuration)
+                .build();
     }
 
     public String storeProductFile(Long productId, MultipartFile file) {
@@ -35,28 +56,48 @@ public class LocalFileStorageService {
             throw new IllegalArgumentException("Tên file không hợp lệ.");
         }
 
-        Path productDir = uploadRoot.resolve("products").resolve(productId.toString()).normalize();
-        Path target = productDir.resolve(filename).normalize();
-        if (!target.startsWith(productDir)) {
-            throw new IllegalArgumentException("Tên file không hợp lệ.");
+        String key = productKey(productId, filename);
+        String contentType = file.getContentType();
+        if (contentType == null || contentType.isBlank()) {
+            contentType = "application/octet-stream";
         }
 
         try {
-            Files.createDirectories(productDir);
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(contentType)
+                    .build();
+
+            s3Client.putObject(
+                    request,
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             return filename;
-        } catch (IOException exception) {
+        } catch (IOException | RuntimeException exception) {
             throw new IllegalStateException("Không thể lưu file " + filename, exception);
         }
     }
 
     public void deleteProductFile(Long productId, String filename) {
+        if (filename == null || filename.isBlank()) return;
+
         try {
-            Files.deleteIfExists(uploadRoot.resolve("products").resolve(productId.toString()).resolve(filename).normalize());
-        } catch (IOException exception) {
+            DeleteObjectRequest request = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(productKey(productId, filename))
+                    .build();
+            s3Client.deleteObject(request);
+        } catch (RuntimeException exception) {
             throw new IllegalStateException("Không thể xóa file " + filename, exception);
         }
     }
 
+    private String productKey(Long productId, String filename) {
+        return "products/" + productId + "/" + filename;
+    }
 
+    @PreDestroy
+    public void close() {
+        s3Client.close();
+    }
 }
