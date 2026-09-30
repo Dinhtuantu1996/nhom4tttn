@@ -37,12 +37,8 @@ public class ProductImageDatabaseService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean delete(Long productId, Long imageId) {
-        Optional<ProductImage> image = imageRepository.findByIdAndProduct_Id(imageId, productId);
-        if (image.isEmpty()) return true;
-
-        imageRepository.delete(image.get());
-        imageRepository.flush();
-        return true;
+        imageRepository.deleteByIdAndProductId(imageId, productId);
+        return !imageRepository.existsByIdAndProduct_Id(imageId, productId);
     }
 
     public record ImageRef(Long id, String filename) {

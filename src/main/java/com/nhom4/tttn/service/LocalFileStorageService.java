@@ -55,16 +55,15 @@ public class LocalFileStorageService {
         }
 
         try {
+            byte[] content = file.getBytes();
+
             PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(productKey(productId, filename))
                     .contentType(contentType)
                     .build();
 
-            s3Client.putObject(
-                    request,
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
-            );
+            s3Client.putObject(request, RequestBody.fromBytes(content));
         } catch (IOException | RuntimeException exception) {
             throw new IllegalStateException("Không thể lưu file " + filename, exception);
         }

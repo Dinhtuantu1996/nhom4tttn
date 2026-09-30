@@ -66,6 +66,9 @@ public class ProductImageService {
             try {
                 if (imageDatabase.delete(productId, imageId)) {
                     success++;
+                } else {
+                    log.warn("Ảnh {} của sản phẩm {} đã xóa trên R2 nhưng bản ghi DB vẫn còn.",
+                            imageId, productId);
                 }
             } catch (RuntimeException exception) {
                 log.warn("Ảnh {} của sản phẩm {} đã xóa trên R2 nhưng chưa xóa được bản ghi DB.",
