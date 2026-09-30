@@ -4,11 +4,8 @@ import com.nhom4.tttn.dto.ProductForm;
 import com.nhom4.tttn.entity.Attribute;
 import com.nhom4.tttn.entity.Category;
 import com.nhom4.tttn.entity.Product;
-import com.nhom4.tttn.entity.ProductImage;
 import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.repository.AttributeRepository;
-import com.nhom4.tttn.repository.CategoryRepository;
-import com.nhom4.tttn.repository.ProductImageRepository;
 import com.nhom4.tttn.repository.ProductRepository;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +24,9 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
-    private final ProductImageRepository imageRepository;
-    private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
-    private final LocalFileStorageService fileStorage;
+    private final ProductWriteService productWriteService;
+    private final ProductImageService productImageService;
 
     @Transactional(readOnly = true)
     public Page<Product> search(
@@ -113,36 +109,14 @@ public class ProductService {
         return productRepository.findTop8ByEnableTrueOrderByUpdatedDateDesc();
     }
 
-    @Transactional
-    public Product save(ProductForm form, List<MultipartFile> files) {
-        Product product = form.getId() == null ? new Product() : getDetailed(form.getId());
-
-        List<Long> categoryIds = distinctIds(form.getCategoryIds());
-        List<Category> categories = categoryRepository.findAllById(categoryIds);
-        if (categories.isEmpty() || categories.size() != categoryIds.size()) {
-            throw new IllegalArgumentException("Danh mục sản phẩm không hợp lệ.");
-        }
-
-        List<Long> attributeIds = distinctIds(form.getAttributeIds());
-        List<Attribute> attributes = attributeRepository.findAllById(attributeIds);
-        if (attributes.size() != attributeIds.size()) {
-            throw new IllegalArgumentException("Có thuộc tính không tồn tại trong hệ thống.");
-        }
-        if (attributes.stream().anyMatch(Attribute::isRoot)) {
-            throw new IllegalArgumentException("Sản phẩm chỉ được gán giá trị thuộc tính con.");
-        }
-
-        product.setName(normalize(form.getName()));
-        product.setDescription(form.getDescription().trim());
-        product.setPrice(form.getPrice());
-        product.setQuantity(form.getQuantity());
-        product.setCategories(new LinkedHashSet<>(categories));
-        product.setAttributes(new LinkedHashSet<>(attributes));
-        product = productRepository.saveAndFlush(product);
-
-        deleteImages(product, form.getDeleteImageIds());
-        saveImages(product, files);
-        return product;
+    public ProductSaveResult save(ProductForm form, List<MultipartFile> files) {
+        Product product = productWriteService.save(form);
+        ImageChangeResult images = productImageService.applyChanges(
+                product.getId(),
+                form.getDeleteImageIds(),
+                files
+        );
+        return new ProductSaveResult(product, images);
     }
 
     @Transactional
@@ -191,33 +165,6 @@ public class ProductService {
         return List.copyOf(unique);
     }
 
-    private void saveImages(Product product, List<MultipartFile> files) {
-        if (files == null) return;
-        int order = imageRepository.countByProduct_Id(product.getId());
-        for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) continue;
-            String filename = fileStorage.storeProductFile(product.getId(), file);
-            var existing = imageRepository.findByProduct_IdAndFilename(product.getId(), filename);
-            if (existing.isPresent()) continue;
-
-            ProductImage image = new ProductImage();
-            image.setProduct(product);
-            image.setFilename(filename);
-            image.setDisplayOrder(order++);
-            imageRepository.save(image);
-        }
-    }
-
-    private void deleteImages(Product product, List<Long> imageIds) {
-        if (imageIds == null) return;
-        for (Long imageId : new LinkedHashSet<>(imageIds)) {
-            imageRepository.findByIdAndProduct_Id(imageId, product.getId()).ifPresent(image -> {
-                fileStorage.deleteProductFile(product.getId(), image.getFilename());
-                imageRepository.delete(image);
-            });
-        }
-    }
-
     private Sort sortOf(String value) {
         return switch (value == null ? "newest" : value) {
             case "oldest" -> Sort.by(Sort.Direction.ASC, "createdDate").and(Sort.by("id"));
@@ -227,7 +174,4 @@ public class ProductService {
         };
     }
 
-    private String normalize(String value) {
-        return value.trim().replaceAll("\\s+", " ");
-    }
 }

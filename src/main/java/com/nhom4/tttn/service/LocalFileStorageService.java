@@ -15,7 +15,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
 
 @Service
 public class LocalFileStorageService {
@@ -26,7 +25,8 @@ public class LocalFileStorageService {
             @Value("${app.r2.endpoint}") String endpoint,
             @Value("${app.r2.access-key}") String accessKey,
             @Value("${app.r2.secret-key}") String secretKey,
-            @Value("${app.r2.bucket}") String bucket) {
+            @Value("${app.r2.bucket}") String bucket
+    ) {
         this.bucket = bucket;
 
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
@@ -43,20 +43,12 @@ public class LocalFileStorageService {
                 .build();
     }
 
-    public String storeProductFile(Long productId, MultipartFile file) {
-        if (file == null || file.isEmpty()) return null;
-
-        String originalName = file.getOriginalFilename();
-        if (originalName == null || originalName.isBlank()) {
-            throw new IllegalArgumentException("File không có tên.");
+    public void storeProductFile(Long productId, String filename, MultipartFile file) {
+        validateFilename(filename);
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File ảnh không hợp lệ.");
         }
 
-        String filename = Path.of(originalName).getFileName().toString();
-        if (filename.isBlank() || filename.equals(".") || filename.equals("..")) {
-            throw new IllegalArgumentException("Tên file không hợp lệ.");
-        }
-
-        String key = productKey(productId, filename);
         String contentType = file.getContentType();
         if (contentType == null || contentType.isBlank()) {
             contentType = "application/octet-stream";
@@ -65,21 +57,21 @@ public class LocalFileStorageService {
         try {
             PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucket)
-                    .key(key)
+                    .key(productKey(productId, filename))
                     .contentType(contentType)
                     .build();
 
             s3Client.putObject(
                     request,
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-            return filename;
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+            );
         } catch (IOException | RuntimeException exception) {
             throw new IllegalStateException("Không thể lưu file " + filename, exception);
         }
     }
 
     public void deleteProductFile(Long productId, String filename) {
-        if (filename == null || filename.isBlank()) return;
+        validateFilename(filename);
 
         try {
             DeleteObjectRequest request = DeleteObjectRequest.builder()
@@ -94,6 +86,16 @@ public class LocalFileStorageService {
 
     private String productKey(Long productId, String filename) {
         return "products/" + productId + "/" + filename;
+    }
+
+    private void validateFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            throw new IllegalArgumentException("Tên file không hợp lệ.");
+        }
+        if (filename.contains("/") || filename.contains("\\")
+                || filename.equals(".") || filename.equals("..")) {
+            throw new IllegalArgumentException("Tên file không hợp lệ.");
+        }
     }
 
     @PreDestroy

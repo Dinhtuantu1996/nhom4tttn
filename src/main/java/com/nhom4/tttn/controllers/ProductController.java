@@ -6,6 +6,7 @@ import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.service.AttributeService;
 import com.nhom4.tttn.service.CategoryService;
 import com.nhom4.tttn.service.ProductService;
+import com.nhom4.tttn.service.ProductSaveResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -135,13 +136,15 @@ public class ProductController {
         }
 
         try {
-            Product savedProduct = productService.save(form, imageFiles);
+            ProductSaveResult result = productService.save(form, imageFiles);
+            Product savedProduct = result.product();
+            String successMessage = result.successMessage();
             if (modalRequest) {
                 model.addAttribute("savedProduct", savedProduct);
-                model.addAttribute("successMessage", "Lưu sản phẩm thành công.");
+                model.addAttribute("successMessage", successMessage);
                 return "fragments/product-form-success :: content";
             }
-            redirect.addFlashAttribute("success", "Lưu sản phẩm thành công.");
+            redirect.addFlashAttribute("success", successMessage);
             return safeReturnUrl == null ? "redirect:/products" : "redirect:" + safeReturnUrl;
         } catch (RuntimeException exception) {
             model.addAttribute("error", exception.getMessage());
