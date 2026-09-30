@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @Service
@@ -23,16 +24,32 @@ public class ProductImageDatabaseService {
                 .map(image -> new ImageRef(image.getId(), image.getFilename()));
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public long count(Long productId) {
+        return imageRepository.countByProductId(productId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public long countExisting(Long productId, Collection<Long> imageIds) {
+        if (imageIds == null || imageIds.isEmpty()) return 0;
+        return imageRepository.countByProductIdAndIds(productId, imageIds);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void create(Long productId, String filename) {
+    public boolean create(Long productId, String filename, int maxImages) {
         Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        if (imageRepository.countByProductId(productId) >= maxImages) {
+            return false;
+        }
 
         ProductImage image = new ProductImage();
         image.setProduct(product);
         image.setFilename(filename);
         image.setDisplayOrder(imageRepository.findMaxDisplayOrderByProductId(productId) + 1);
         imageRepository.saveAndFlush(image);
+        return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

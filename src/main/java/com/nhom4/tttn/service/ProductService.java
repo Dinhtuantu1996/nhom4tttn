@@ -110,6 +110,7 @@ public class ProductService {
     }
 
     public ProductSaveResult save(ProductForm form, List<MultipartFile> files) {
+        productImageService.validateLimit(form.getId(), form.getDeleteImageIds(), files);
         Product product = productWriteService.save(form);
         ImageChangeResult images = productImageService.applyChanges(
                 product.getId(),

@@ -613,9 +613,42 @@
                 syncAttributes();
             }
 
+            const imageLimit = Number(form.dataset.productImageLimit || 5);
+            const imageInput = form.querySelector('[data-product-image-input]');
+            const imageCount = form.querySelector('[data-product-image-count]');
+            const existingImages = Array.from(form.querySelectorAll('[data-product-existing-image]'));
+            const deleteImageInputs = Array.from(form.querySelectorAll('[data-product-delete-image]'));
+
+            const selectedImageCount = () => {
+                const deleting = deleteImageInputs.filter((input) => input.checked).length;
+                const newImages = imageInput?.files?.length || 0;
+                return Math.max(existingImages.length - deleting, 0) + newImages;
+            };
+
+            const syncImageCount = () => {
+                if (!imageCount) return;
+                const total = selectedImageCount();
+                imageCount.textContent = `${total}/${imageLimit} ảnh`;
+                imageCount.classList.toggle('text-danger', total > imageLimit);
+                imageCount.classList.toggle('text-secondary', total <= imageLimit);
+            };
+
+            const imageLimitValid = () => selectedImageCount() <= imageLimit;
+            const showImageLimitError = () => {
+                showNotification(`Mỗi sản phẩm chỉ được tối đa ${imageLimit} ảnh.`, 'error');
+            };
+
+            imageInput?.addEventListener('change', syncImageCount);
+            deleteImageInputs.forEach((input) => input.addEventListener('change', syncImageCount));
+            syncImageCount();
+
             if (form.closest('#productFormModal')) {
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();
+                    if (!imageLimitValid()) {
+                        showImageLimitError();
+                        return;
+                    }
                     const button = form.querySelector('[data-product-save-button]');
                     const label = form.querySelector('[data-product-save-label]');
                     const spinner = form.querySelector('[data-product-save-spinner]');
@@ -671,6 +704,12 @@
                         if (label) label.textContent = 'Lưu sản phẩm';
                         spinner?.classList.add('d-none');
                     }
+                });
+            } else {
+                form.addEventListener('submit', (event) => {
+                    if (imageLimitValid()) return;
+                    event.preventDefault();
+                    showImageLimitError();
                 });
             }
         });

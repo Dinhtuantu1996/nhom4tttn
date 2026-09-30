@@ -15,10 +15,32 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ProductImageService {
+    public static final int MAX_IMAGES_PER_PRODUCT = 5;
+
     private static final Logger log = LoggerFactory.getLogger(ProductImageService.class);
 
     private final ProductImageDatabaseService imageDatabase;
     private final LocalFileStorageService fileStorage;
+
+
+    public void validateLimit(
+            Long productId,
+            List<Long> deleteImageIds,
+            List<MultipartFile> files
+    ) {
+        List<Long> deleteIds = validDeleteIds(deleteImageIds);
+        List<MultipartFile> uploadFiles = validFiles(files);
+
+        long currentCount = productId == null ? 0 : imageDatabase.count(productId);
+        long deletingCount = productId == null ? 0 : imageDatabase.countExisting(productId, deleteIds);
+        long finalCount = currentCount - deletingCount + uploadFiles.size();
+
+        if (finalCount > MAX_IMAGES_PER_PRODUCT) {
+            throw new IllegalArgumentException(
+                    "Mỗi sản phẩm chỉ được tối đa " + MAX_IMAGES_PER_PRODUCT + " ảnh."
+            );
+        }
+    }
 
     public ImageChangeResult applyChanges(
             Long productId,
@@ -86,7 +108,11 @@ public class ProductImageService {
             String filename = uniqueFilename(file);
 
             try {
-                imageDatabase.create(productId, filename);
+                if (!imageDatabase.create(productId, filename, MAX_IMAGES_PER_PRODUCT)) {
+                    log.warn("Sản phẩm {} đã đạt giới hạn {} ảnh, bỏ qua ảnh {}.",
+                            productId, MAX_IMAGES_PER_PRODUCT, filename);
+                    continue;
+                }
             } catch (RuntimeException exception) {
                 log.warn("Không thể tạo bản ghi DB cho ảnh {} của sản phẩm {}.", filename, productId, exception);
                 continue;
