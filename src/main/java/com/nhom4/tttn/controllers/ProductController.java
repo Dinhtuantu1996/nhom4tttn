@@ -1,12 +1,13 @@
 package com.nhom4.tttn.controllers;
 
+import com.nhom4.tttn.common.SecurityUtils;
 import com.nhom4.tttn.dto.ProductForm;
 import com.nhom4.tttn.entity.Product;
 import com.nhom4.tttn.enums.ProductVisibility;
 import com.nhom4.tttn.service.AttributeService;
 import com.nhom4.tttn.service.CategoryService;
-import com.nhom4.tttn.service.ProductService;
 import com.nhom4.tttn.service.ProductSaveResult;
+import com.nhom4.tttn.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -66,14 +67,10 @@ public class ProductController {
             Authentication authentication,
             Model model
     ) {
+        List<Long> selectedAttributeIds = attributeIds == null ? List.of() : attributeIds;
         Page<Product> products = productService.search(
-                keyword,
-                categoryId,
-                attributeIds == null ? List.of() : attributeIds,
-                sort,
-                visibilityFor(authentication, visibility),
-                page,
-                PRODUCT_BATCH_SIZE
+                keyword, categoryId, selectedAttributeIds, sort,
+                visibilityFor(authentication, visibility), page, PRODUCT_BATCH_SIZE
         );
         model.addAttribute("products", products);
         return "fragments/product-batch :: batch";
@@ -180,19 +177,14 @@ public class ProductController {
             Authentication authentication,
             Model model
     ) {
-        model.addAttribute("product", productService.view(id, isAdmin(authentication)));
+        model.addAttribute("product", productService.view(id, SecurityUtils.isAdmin(authentication)));
         return "fragments/product-detail-modal-content :: content";
     }
 
 
     private ProductVisibility visibilityFor(Authentication authentication, ProductVisibility requested) {
-        if (!isAdmin(authentication)) return ProductVisibility.VISIBLE;
+        if (!SecurityUtils.isAdmin(authentication)) return ProductVisibility.VISIBLE;
         return requested == null ? ProductVisibility.VISIBLE : requested;
-    }
-
-    private boolean isAdmin(Authentication authentication) {
-        return authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private String normalizeProductsReturnUrl(String referer) {

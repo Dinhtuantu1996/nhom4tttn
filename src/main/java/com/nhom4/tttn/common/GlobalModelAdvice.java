@@ -1,11 +1,9 @@
 package com.nhom4.tttn.common;
 
 import com.nhom4.tttn.entity.User;
-import com.nhom4.tttn.enums.Role;
 import com.nhom4.tttn.repository.UserRepository;
 import com.nhom4.tttn.service.CategoryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -29,15 +27,12 @@ public class GlobalModelAdvice {
 
     @ModelAttribute("currentUser")
     public User currentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return null;
-        }
+        if (!SecurityUtils.isAuthenticated(authentication)) return null;
         return userRepository.findByEmailIgnoreCase(authentication.getName()).orElse(null);
     }
 
     @ModelAttribute("isAdmin")
     public boolean isAdmin(Authentication authentication) {
-        return authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_" + Role.ADMIN.name()));
+        return SecurityUtils.isAdmin(authentication);
     }
 }

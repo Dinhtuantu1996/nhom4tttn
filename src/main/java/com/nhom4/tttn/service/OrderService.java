@@ -207,16 +207,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderReview reviewMine(String email, String code) {
-        return reviewCustomerOrder(code, email);
-    }
-
-    @Transactional(readOnly = true)
-    public OrderReview reviewGuest(String code, String email) {
-        return reviewCustomerOrder(code, email);
-    }
-
-    private OrderReview reviewCustomerOrder(String code, String email) {
+    public OrderReview reviewCustomer(String code, String email) {
         CustomerOrder order = orderRepository
                 .findByCodeIgnoreCaseAndCustomerEmailIgnoreCase(normalizeCode(code), normalizeEmail(email))
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng phù hợp."));

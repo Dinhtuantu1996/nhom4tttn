@@ -1,5 +1,6 @@
 package com.nhom4.tttn.controllers;
 
+import com.nhom4.tttn.common.SecurityUtils;
 import com.nhom4.tttn.dto.CreateOrderRequest;
 import com.nhom4.tttn.dto.CreateOrderResponse;
 import com.nhom4.tttn.dto.OrderSummaryView;
@@ -13,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -83,7 +83,7 @@ public class OrderController {
             Model model
     ) {
         if (currentUser(authentication) != null) {
-            return isAdmin(authentication) ? "redirect:/admin/orders" : "redirect:/orders/my";
+            return SecurityUtils.isAdmin(authentication) ? "redirect:/admin/orders" : "redirect:/orders/my";
         }
         prepareGuestOrdersModel(code, email, page, sort, direction, model);
         return "order-management";
@@ -96,7 +96,7 @@ public class OrderController {
             Model model
     ) {
         try {
-            model.addAttribute("review", orderService.reviewGuest(code, email));
+            model.addAttribute("review", orderService.reviewCustomer(code, email));
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         }
@@ -111,7 +111,7 @@ public class OrderController {
             Model model
     ) {
         try {
-            model.addAttribute("review", orderService.reviewGuest(code, email));
+            model.addAttribute("review", orderService.reviewCustomer(code, email));
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         }
@@ -124,7 +124,7 @@ public class OrderController {
     @GetMapping("/orders/my/{code}/modal")
     public String myOrderDetailModal(@PathVariable String code, Authentication authentication, Model model) {
         String email = requireCustomerEmail(authentication);
-        model.addAttribute("review", orderService.reviewMine(email, code));
+        model.addAttribute("review", orderService.reviewCustomer(code, email));
         model.addAttribute("adminMode", false);
         return "fragments/order-management-detail-modal-content :: content";
     }
@@ -147,7 +147,7 @@ public class OrderController {
     @GetMapping("/orders/my/{code}")
     public String myOrderDetail(@PathVariable String code, Authentication authentication, Model model) {
         String email = requireCustomerEmail(authentication);
-        model.addAttribute("review", orderService.reviewMine(email, code));
+        model.addAttribute("review", orderService.reviewCustomer(code, email));
         model.addAttribute("adminMode", false);
         model.addAttribute("guestMode", false);
         return "order-management-detail";
@@ -239,26 +239,19 @@ public class OrderController {
     }
 
     private User currentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return null;
-        }
+        if (!SecurityUtils.isAuthenticated(authentication)) return null;
         return userRepository.findByEmailIgnoreCase(authentication.getName()).orElse(null);
     }
 
     private String requireCustomerEmail(Authentication authentication) {
-        if (isAdmin(authentication)) {
+        if (SecurityUtils.isAdmin(authentication)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return requireAuthenticatedEmail(authentication);
     }
 
-    private boolean isAdmin(Authentication authentication) {
-        return authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
-    }
-
     private String requireAuthenticatedEmail(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+        if (!SecurityUtils.isAuthenticated(authentication)) {
             throw new IllegalStateException("Bạn cần đăng nhập để xem lịch sử đơn hàng.");
         }
         String email = authentication.getName();
